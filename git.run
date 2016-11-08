@@ -1,5 +1,4 @@
 git add *
 curtime=`date`
 git commit -m "Automatic Backup @ $curtime"
-git pull origin master
 git push origin master
