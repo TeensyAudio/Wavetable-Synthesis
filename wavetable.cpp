@@ -27,107 +27,224 @@
 #include "wavetable.h"
 #include "utility/dspinst.h"
 
-#if defined(KINETISK)
-#define MULTI_UNITYGAIN 65536
-
-static void applyGain(int16_t *data, int32_t mult)
+void AudioWavetable::play(const unsigned int *data, double mult)
 {
-	uint32_t *p = (uint32_t *)data;
-	const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);
-
-	do {
-		uint32_t tmp32 = *p; // read 2 samples from *data
-		int32_t val1 = signed_multiply_32x16b(mult, tmp32);
-		int32_t val2 = signed_multiply_32x16t(mult, tmp32);
-		val1 = signed_saturate_rshift(val1, 16, 0);
-		val2 = signed_saturate_rshift(val2, 16, 0);
-		*p++ = pack_16b_16b(val2, val1);
-	} while (p < end);
+	uint32_t format;
+	multiplier = mult;
+	playing = 0;
+	prior = 0;
+	format = *data++;
+	next = data;
+	beginning = data;
+	length = format & 0xFFFFFF;
+	playing = format >> 24;
 }
 
-static void applyGainThenAdd(int16_t *data, const int16_t *in, int32_t mult)
+void AudioWavetable::stop(void)
 {
-	uint32_t *dst = (uint32_t *)data;
-	const uint32_t *src = (uint32_t *)in;
-	const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);
-
-	if (mult == MULTI_UNITYGAIN) {
-		do {
-			uint32_t tmp32 = *dst;
-			*dst++ = signed_add_16_and_16(tmp32, *src++);
-			tmp32 = *dst;
-			*dst++ = signed_add_16_and_16(tmp32, *src++);
-		} while (dst < end);
-	} else {
-		do {
-			uint32_t tmp32 = *src++; // read 2 samples from *data
-			int32_t val1 = signed_multiply_32x16b(mult, tmp32);
-			int32_t val2 = signed_multiply_32x16t(mult, tmp32);
-			val1 = signed_saturate_rshift(val1, 16, 0);
-			val2 = signed_saturate_rshift(val2, 16, 0);
-			tmp32 = pack_16b_16b(val2, val1);
-			uint32_t tmp32b = *dst;
-			*dst++ = signed_add_16_and_16(tmp32, tmp32b);
-		} while (dst < end);
-	}
+	playing = 0;
 }
 
-#elif defined(KINETISL)
-#define MULTI_UNITYGAIN 256
+extern "C" {
+extern const int16_t ulaw_decode_table[256];
+};
 
-static void applyGain(int16_t *data, int32_t mult)
+void AudioWavetable::update(void)
 {
-	const int16_t *end = data + AUDIO_BLOCK_SAMPLES;
+	audio_block_t *block;
+	const unsigned int *in;
+	int16_t *out;
+	uint32_t tmp32, consumed;
+	int16_t s0, s1, s2, s3, s4;
+	int i;
 
-	do {
-		int32_t val = *data * mult;
-		*data++ = signed_saturate_rshift(val, 16, 0);
-	} while (data < end);
-}
+	if (!playing) return;
+	block = allocate();
+	if (block == NULL) return;
 
-static void applyGainThenAdd(int16_t *dst, const int16_t *src, int32_t mult)
-{
-	const int16_t *end = dst + AUDIO_BLOCK_SAMPLES;
+	//Serial.write('.');
 
-	if (mult == MULTI_UNITYGAIN) {
-		do {
-			int32_t val = *dst + *src++;
-			*dst++ = signed_saturate_rshift(val, 16, 0);
-		} while (dst < end);
-	} else {
-		do {
-			int32_t val = *dst + ((*src++ * mult) >> 8); // overflow possible??
-			*dst++ = signed_saturate_rshift(val, 16, 0);
-		} while (dst < end);
-	}
-}
+	out = block->data;
+	in = next;
+	s0 = prior;
 
-#endif
-
-void Wavetable::update(void)
-{
-	audio_block_t *in, *out=NULL;
-	unsigned int channel;
-
-	for (channel=0; channel < 4; channel++) {
-		if (!out) {
-			out = receiveWritable(channel);
-			if (out) {
-				int32_t mult = multiplier[channel];
-				if (mult != MULTI_UNITYGAIN) applyGain(out->data, mult);
-			}
-		} else {
-			in = receiveReadOnly(channel);
-			if (in) {
-				applyGainThenAdd(out->data, in->data, multiplier[channel]);
-				release(in);
-			}
+	switch (playing) {
+	  case 0x01: // u-law encoded, 44100 Hz
+		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 4) {
+			tmp32 = *in++;
+			*out++ = ulaw_decode_table[(tmp32 >> 0) & 255];
+			*out++ = ulaw_decode_table[(tmp32 >> 8) & 255];
+			*out++ = ulaw_decode_table[(tmp32 >> 16) & 255];
+			*out++ = ulaw_decode_table[(tmp32 >> 24) & 255];
 		}
+		consumed = 128;
+		break;
+
+	  case 0x81: // 16 bit PCM, 44100 Hz
+		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 2) {
+			tmp32 = *in++;
+			*out++ = (int16_t)(tmp32 & 65535);
+			*out++ = (int16_t)(tmp32 >> 16);
+		}
+		consumed = 128;
+		break;
+
+	  case 0x02: // u-law encoded, 22050 Hz 
+		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 8) {
+			tmp32 = *in++;
+			s1 = ulaw_decode_table[(tmp32 >> 0) & 255];
+			s2 = ulaw_decode_table[(tmp32 >> 8) & 255];
+			s3 = ulaw_decode_table[(tmp32 >> 16) & 255];
+			s4 = ulaw_decode_table[(tmp32 >> 24) & 255];
+			*out++ = (s0 + s1) >> 1;
+			*out++ = s1;
+			*out++ = (s1 + s2) >> 1;
+			*out++ = s2;
+			*out++ = (s2 + s3) >> 1;
+			*out++ = s3;
+			*out++ = (s3 + s4) >> 1;
+			*out++ = s4;
+			s0 = s4;
+		}
+		consumed = 64;
+		break;
+
+	  case 0x82: // 16 bits PCM, 22050 Hz
+		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 4) {
+			tmp32 = *in++;
+			s1 = (int16_t)(tmp32 & 65535);
+			s2 = (int16_t)(tmp32 >> 16);
+			*out++ = (s0 + s1) >> 1;
+			*out++ = s1;
+			*out++ = (s1 + s2) >> 1;
+			*out++ = s2;
+			s0 = s2;
+		}
+		consumed = 64;
+		break;
+
+	  case 0x03: // u-law encoded, 11025 Hz
+		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 16) {
+			tmp32 = *in++;
+			s1 = ulaw_decode_table[(tmp32 >> 0) & 255];
+			s2 = ulaw_decode_table[(tmp32 >> 8) & 255];
+			s3 = ulaw_decode_table[(tmp32 >> 16) & 255];
+			s4 = ulaw_decode_table[(tmp32 >> 24) & 255];
+			*out++ = (s0 * 3 + s1) >> 2;
+			*out++ = (s0 + s1)     >> 1;
+			*out++ = (s0 + s1 * 3) >> 2;
+			*out++ = s1;
+			*out++ = (s1 * 3 + s2) >> 2;
+			*out++ = (s1 + s2)     >> 1;
+			*out++ = (s1 + s2 * 3) >> 2;
+			*out++ = s2;
+			*out++ = (s2 * 3 + s3) >> 2;
+			*out++ = (s2 + s3)     >> 1;
+			*out++ = (s2 + s3 * 3) >> 2;
+			*out++ = s3;
+			*out++ = (s3 * 3 + s4) >> 2;
+			*out++ = (s3 + s4)     >> 1;
+			*out++ = (s3 + s4 * 3) >> 2;
+			*out++ = s4;
+			s0 = s4;
+		}
+		consumed = 32;
+		break;
+
+	  case 0x83: // 16 bit PCM, 11025 Hz
+		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 8) {
+			tmp32 = *in++;
+			s1 = (int16_t)(tmp32 & 65535);
+			s2 = (int16_t)(tmp32 >> 16);
+			*out++ = (s0 * 3 + s1) >> 2;
+			*out++ = (s0 + s1)     >> 1;
+			*out++ = (s0 + s1 * 3) >> 2;
+			*out++ = s1;
+			*out++ = (s1 * 3 + s2) >> 2;
+			*out++ = (s1 + s2)     >> 1;
+			*out++ = (s1 + s2 * 3) >> 2;
+			*out++ = s2;
+			s0 = s2;
+		}
+		consumed = 32;
+		break;
+
+	  default:
+		release(block);
+		playing = 0;
+		return;
 	}
-	if (out) {
-		transmit(out);
-		release(out);
+	prior = s0;
+	next = in;
+	if (length > consumed) {
+		length -= consumed;
+	} else {
+		playing = 0;
 	}
+	transmit(block);
+	release(block);
+}
+
+
+#define B2M_88200 (uint32_t)((double)4294967296000.0 / AUDIO_SAMPLE_RATE_EXACT / 2.0)
+#define B2M_44100 (uint32_t)((double)4294967296000.0 / AUDIO_SAMPLE_RATE_EXACT) // 97352592
+#define B2M_22050 (uint32_t)((double)4294967296000.0 / AUDIO_SAMPLE_RATE_EXACT * 2.0)
+#define B2M_11025 (uint32_t)((double)4294967296000.0 / AUDIO_SAMPLE_RATE_EXACT * 4.0)
+
+
+uint32_t AudioWavetable::positionMillis(void)
+{
+	uint8_t p;
+	const uint8_t *n, *b;
+	uint32_t b2m;
+
+	__disable_irq();
+	p = playing;
+	n = (const uint8_t *)next;
+	b = (const uint8_t *)beginning;
+	__enable_irq();
+	switch (p) {
+	  case 0x81: // 16 bit PCM, 44100 Hz
+		b2m = B2M_88200;  break;
+	  case 0x01: // u-law encoded, 44100 Hz
+	  case 0x82: // 16 bits PCM, 22050 Hz
+		b2m = B2M_44100;  break;
+	  case 0x02: // u-law encoded, 22050 Hz
+	  case 0x83: // 16 bit PCM, 11025 Hz
+		b2m = B2M_22050;  break;
+	  case 0x03: // u-law encoded, 11025 Hz
+		b2m = B2M_11025;  break;
+	  default:
+		return 0;
+	}
+	if (p == 0) return 0;
+	return ((uint64_t)(n - b) * b2m) >> 32;
+}
+
+uint32_t AudioWavetable::lengthMillis(void)
+{
+	uint8_t p;
+	const uint32_t *b;
+	uint32_t b2m;
+
+	__disable_irq();
+	p = playing;
+	b = (const uint32_t *)beginning;
+	__enable_irq();
+	switch (p) {
+	  case 0x81: // 16 bit PCM, 44100 Hz
+	  case 0x01: // u-law encoded, 44100 Hz
+		b2m = B2M_44100;  break;
+	  case 0x82: // 16 bits PCM, 22050 Hz
+	  case 0x02: // u-law encoded, 22050 Hz
+		b2m = B2M_22050;  break;
+	  case 0x83: // 16 bit PCM, 11025 Hz
+	  case 0x03: // u-law encoded, 11025 Hz
+		b2m = B2M_11025;  break;
+	  default:
+		return 0;
+	}
+	return ((uint64_t)(*(b - 1) & 0xFFFFFF) * b2m) >> 32;
 }
 
 

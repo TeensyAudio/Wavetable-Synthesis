@@ -30,40 +30,23 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 
-class Wavetable : public AudioStream
+class AudioWavetable : public AudioStream
 {
-#if defined(KINETISK)
 public:
-        Wavetable(void) : AudioStream(4, inputQueueArray) {
-		for (int i=0; i<4; i++) multiplier[i] = 65536;
-	}
-        virtual void update(void);
-	void gain(unsigned int channel, float gain) {
-		if (channel >= 4) return;
-		if (gain > 32767.0f) gain = 32767.0f;
-		else if (gain < -32767.0f) gain = -32767.0f;
-		multiplier[channel] = gain * 65536.0f; // TODO: proper roundoff?
-	}
+	AudioWavetable(void) : AudioStream(0, NULL), playing(0) { }
+	void play(const unsigned int *data, double mult);
+	void stop(void);
+	bool isPlaying(void) { return playing; }
+	uint32_t positionMillis(void);
+	uint32_t lengthMillis(void);
+	virtual void update(void);
 private:
-	int32_t multiplier[4];
-	audio_block_t *inputQueueArray[4];
-
-#elif defined(KINETISL)
-public:
-        Wavetable(void) : AudioStream(4, inputQueueArray) {
-		for (int i=0; i<4; i++) multiplier[i] = 256;
-	}
-        virtual void update(void);
-	void gain(unsigned int channel, float gain) {
-		if (channel >= 4) return;
-		if (gain > 127.0f) gain = 127.0f;
-		else if (gain < -127.0f) gain = -127.0f;
-		multiplier[channel] = gain * 256.0f; // TODO: proper roundoff?
-	}
-private:
-	int16_t multiplier[4];
-	audio_block_t *inputQueueArray[4];
-#endif
+	const unsigned int *next;
+	const unsigned int *beginning;
+	uint32_t length;
+	int16_t prior;
+	volatile uint8_t playing;
+	double multiplier;
 };
 
 #endif
