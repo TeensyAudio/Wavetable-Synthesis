@@ -5,20 +5,23 @@ import struct
 bcount = 0
 
 def main():
-	x = None
+	#Test code: Opens a specified .sf2 and prints out some info using sf2utils
 	with open('piano.sf2', 'rb') as sf2_file:
 		sf2 = Sf2File(sf2_file)
 		sf2.samples[0].sm24_offset = None
+		#Can also export a selected sample array to a .wav file
 		#sf2.instruments[20].bags[4].sample.export('piano.wav')
 		raw_wav_data = sf2.instruments[20].bags[4].sample.raw_sample_data
 		print(raw_wav_data[0:2])
 		print(cc_to_int16(raw_wav_data[0:2]))
 		
+#Copying functionality from wav2sketch.c
 def print_byte(file, b):
 	buf32 = buf32 | (b << (8 * bcount))
 	bcount = bcount + 1
 	file.write(ulaw_encode(buf32))
-	
+
+#Copying functionality from wav2sketch.c
 def cc_to_int16(cc):
 	c1 = float(cc[0])
 	c2 = float(cc[1])
@@ -26,6 +29,7 @@ def cc_to_int16(cc):
 	c2 = c2 & 255
 	return (c2 << 8) | c1
 	
+#Copying functionality from wav2sketch.c
 def ulaw_encode(audio):
 	mag = 0
 	neg = 0
