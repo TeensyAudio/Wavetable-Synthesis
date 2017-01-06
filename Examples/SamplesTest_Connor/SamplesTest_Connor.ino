@@ -15,7 +15,6 @@
 #include <Bounce.h>
 #include <wavetable.h>
 
-
 ///////////////////////////////////
 // copy the Design Tool code here
 ///////////////////////////////////
@@ -45,9 +44,10 @@ Bounce button0 = Bounce(0, 15);
 Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
 Bounce button2 = Bounce(2, 15);
 
+const unsigned int *AudioSample = AudioSampleCashregister;
 const int AudioSample_Size = (int)(sizeof(AudioSampleCashregister)/4);
-unsigned int AudioSampleCashregister_Interpolate[AudioSample_Size];
-unsigned int AudioSampleCashregister_Interpolate1[AudioSample_Size];
+//unsigned int AudioSample_Interpolate[AudioSample_Size];
+unsigned int AudioSample_Interpolate1[AudioSample_Size*2];
 
 void setup() {
   Serial.begin(9600);
@@ -65,26 +65,58 @@ void setup() {
   unsigned int s1;
   float x;
   int x1, x2;
+  
+/*
+  for (int i = 0; i < (int)((AudioSample_Size-1)/2); i++) {
+    s1 = AudioSample[i*2];
+    AudioSample_Interpolate2[i*2] = s1;
+    if (i*2+1 < AudioSample_Size) {
+      AudioSample_Interpolate2[i*2+1] = 0;
+    }
+  } 
+*/
 
- for (int i = 0; i < (int)((AudioSample_Size-1)/2); i++) {
-    s1 = AudioSampleCashregister[i*2];
-    AudioSampleCashregister_Interpolate1[i] = s1;
- } 
+/*
+  for (int i = 0; i < (int)((AudioSample_Size-1)/2); i++) {
+    s1 = AudioSample[i*2];
+    AudioSample_Interpolate1[i] = s1;
+  }
+*/
 
- for (int i = 0; i < AudioSample_Size-1; i++) {
+/*
+for (int i = 0; i < AudioSample_Size-1; i++) {
     x = i*.9;
     if (floor(x) == x) {
-      s1 = AudioSampleCashregister[(int)x];
+      s1 = AudioSample[(int)x];
     }
     else {
       x1 = floor(x);
       x2 = ceil(x);
-      s0 = AudioSampleCashregister[x1];
-      s1 = AudioSampleCashregister[x2];
-      s1 = (max(s0,s1)-min(s0,s1)) + min(s0,s1);
+      s0 = AudioSample[x1];
+      s1 = AudioSample[x2];
+      s1 = min(s0,s1);
     }
-    AudioSampleCashregister_Interpolate[i] = s1;
- } 
+    AudioSample_Interpolate1[i] = s1;
+  }
+*/
+
+/*
+  for (int i = 0; i < AudioSample_Size-1; i++) {
+    x = i*.9;
+    if (floor(x) == x) {
+      s1 = AudioSample[(int)x];
+    }
+    else {
+      x1 = floor(x);
+      x2 = ceil(x);
+      s0 = AudioSample[x1];
+      s1 = AudioSample[x2];
+      s1 = max(s0,s1);
+    }
+    AudioSample_Interpolate[i] = s1;
+  }
+*/
+  
 }
 
 void loop() {
@@ -93,14 +125,61 @@ void loop() {
   button1.update();
   button2.update();
 
+  unsigned int s0;
+  unsigned int s1;
+  float x;
+  int x1, x2;
+  elapsedMillis msecs;
+
   if (button0.fallingEdge()) {
-    playMem1.play(AudioSampleCashregister); 
+    playMem1.play(AudioSample); 
   }
+  
+/*
   if (button1.fallingEdge()) {
-    playMem2.play(AudioSampleCashregister_Interpolate);
+    msecs = 0;
+    for (int i = 0; i < AudioSample_Size; i++) {
+      x = i*.1;
+      if (floor(x) == x) {
+        s1 = AudioSample[(int)x];
+      }
+      else {
+        x1 = floor(x);
+        x2 = ceil(x);
+        s0 = AudioSample[x1];
+        s1 = AudioSample[x2];
+        s1 = max(s0,s1);
+      }
+      AudioSample_Interpolate[i] = s1;
+    }
+    Serial.print(msecs);
+    Serial.print('\n');
+    playMem2.play(AudioSample_Interpolate);
   }
+*/
+
+  if (button1.fallingEdge()) {
+    msecs = 0;
+    for (int i = 0; i < (int)(AudioSample_Size); i++) {
+      AudioSample_Interpolate1[i*2] = AudioSample[i];
+      AudioSample_Interpolate1[i*2+1] = AudioSample[i];
+    }
+    Serial.print(msecs);
+    Serial.print('\n');
+    playMem2.play(AudioSample_Interpolate1);
+  }
+  
   if (button2.fallingEdge()) {
-    playMem3.play(AudioSampleCashregister_Interpolate1);
+    msecs = 0;
+    for (int i = 0; i < (int)((AudioSample_Size-1)/2); i++) {
+      AudioSample_Interpolate1[i] = AudioSample[i*2];
+    }
+    for (int i = (int)((AudioSample_Size-1)/2); i < AudioSample_Size; i++) {
+      AudioSample_Interpolate1[i] = 0;
+    }
+    Serial.print(msecs);
+    Serial.print('\n');
+    playMem3.play(AudioSample_Interpolate1);
   }
 
 /*
