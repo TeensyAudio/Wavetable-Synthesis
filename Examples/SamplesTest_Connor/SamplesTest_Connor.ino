@@ -26,14 +26,20 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioPlayMemory          playMem1;       //xy=163.3333282470703,120.33332824707031
-AudioPlayMemory          playMem2;       //xy=165.3333282470703,196.3333282470703
-AudioPlayMemory          playMem3;       //xy=169.3333282470703,256.3333282470703
+//AudioPlayMemory          playMem1;       //xy=163.3333282470703,120.33332824707031
+AudioWavetable           playWavetable1;
+//AudioPlayMemory          playMem2;       //xy=165.3333282470703,196.3333282470703
+AudioWavetable           playWavetable2;
+//AudioPlayMemory          playMem3;       //xy=169.3333282470703,256.3333282470703
+AudioWavetable           playWavetable3;
 AudioMixer4              mixer1;         //xy=371.3332977294922,158.3333282470703
 AudioOutputI2S           i2s1;           //xy=525.3333282470703,184.3333282470703
-AudioConnection          patchCord1(playMem1, 0, mixer1, 0);
-AudioConnection          patchCord2(playMem2, 0, mixer1, 1);
-AudioConnection          patchCord3(playMem3, 0, mixer1, 2);
+//AudioConnection          patchCord1(playMem1, 0, mixer1, 0);
+AudioConnection          patchCord1(playWavetable1, 0, mixer1, 0);
+//AudioConnection          patchCord2(playMem2, 0, mixer1, 1);
+AudioConnection          patchCord2(playWavetable2, 0, mixer1, 1);
+//AudioConnection          patchCord3(playMem3, 0, mixer1, 2);
+AudioConnection          patchCord3(playWavetable3, 0, mixer1, 2);
 AudioConnection          patchCord4(mixer1, 0, i2s1, 0);
 AudioConnection          patchCord5(mixer1, 0, i2s1, 1);
 AudioControlSGTL5000     sgtl5000_1;     //xy=353.3333282470703,260.33331298828125
@@ -44,9 +50,9 @@ Bounce button0 = Bounce(0, 15);
 Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
 Bounce button2 = Bounce(2, 15);
 
-const unsigned int *AudioSample = AudioSampleCashregister;
-const int AudioSample_Size = (int)(sizeof(AudioSampleCashregister)/4);
-//unsigned int AudioSample_Interpolate[AudioSample_Size];
+const unsigned int *AudioSample = AudioSampleSnare;
+const int AudioSample_Size = (int)(sizeof(AudioSampleSnare)/4);
+unsigned int AudioSample_Interpolate[AudioSample_Size];
 unsigned int AudioSample_Interpolate1[AudioSample_Size*2];
 
 void setup() {
@@ -61,62 +67,7 @@ void setup() {
   mixer1.gain(1, 0.4);
   mixer1.gain(2, 0.4);
   mixer1.gain(3, 0.4);
-  unsigned int s0;
-  unsigned int s1;
-  float x;
-  int x1, x2;
-  
-/*
-  for (int i = 0; i < (int)((AudioSample_Size-1)/2); i++) {
-    s1 = AudioSample[i*2];
-    AudioSample_Interpolate2[i*2] = s1;
-    if (i*2+1 < AudioSample_Size) {
-      AudioSample_Interpolate2[i*2+1] = 0;
-    }
-  } 
-*/
-
-/*
-  for (int i = 0; i < (int)((AudioSample_Size-1)/2); i++) {
-    s1 = AudioSample[i*2];
-    AudioSample_Interpolate1[i] = s1;
-  }
-*/
-
-/*
-for (int i = 0; i < AudioSample_Size-1; i++) {
-    x = i*.9;
-    if (floor(x) == x) {
-      s1 = AudioSample[(int)x];
-    }
-    else {
-      x1 = floor(x);
-      x2 = ceil(x);
-      s0 = AudioSample[x1];
-      s1 = AudioSample[x2];
-      s1 = min(s0,s1);
-    }
-    AudioSample_Interpolate1[i] = s1;
-  }
-*/
-
-/*
-  for (int i = 0; i < AudioSample_Size-1; i++) {
-    x = i*.9;
-    if (floor(x) == x) {
-      s1 = AudioSample[(int)x];
-    }
-    else {
-      x1 = floor(x);
-      x2 = ceil(x);
-      s0 = AudioSample[x1];
-      s1 = AudioSample[x2];
-      s1 = max(s0,s1);
-    }
-    AudioSample_Interpolate[i] = s1;
-  }
-*/
-  
+    
 }
 
 void loop() {
@@ -132,7 +83,7 @@ void loop() {
   elapsedMillis msecs;
 
   if (button0.fallingEdge()) {
-    playMem1.play(AudioSample); 
+    playWavetable1.play(AudioSample, 1); 
   }
   
 /*
@@ -166,7 +117,8 @@ void loop() {
     }
     Serial.print(msecs);
     Serial.print('\n');
-    playMem2.play(AudioSample_Interpolate1);
+    //playMem2.play(AudioSample_Interpolate1);
+    playWavetable2.play(AudioSample_Interpolate1, 1);
   }
   
   if (button2.fallingEdge()) {
@@ -179,7 +131,7 @@ void loop() {
     }
     Serial.print(msecs);
     Serial.print('\n');
-    playMem3.play(AudioSample_Interpolate1);
+    playWavetable3.play(AudioSample_Interpolate1, 1);
   }
 
 /*
