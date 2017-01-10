@@ -7,6 +7,7 @@ WCOUNT = 1
 BUF32 = 0
 
 def main():
+	global BCOUNT
 	#Test code: Opens a specified .sf2 and prints out some info using sf2utils
 	with open('piano.sf2', 'rb') as sf2_file:
 		instr = 20
@@ -29,51 +30,42 @@ def main():
 			start_loop = sf2.instruments[instr].bags[bag].sample.start_loop
 			end_loop = sf2.instruments[instr].bags[bag].sample.end_loop
 			duration = sf2.instruments[instr].bags[bag].sample.duration
-			print(duration)
-			print(end_loop)
-			#print out attack
-			i = 0
-			output_file.write("const unsigned int AudioWaveform_Attack[" + str(start_loop/4) + "] = {\n")
-			while i <= start_loop:
-				audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-				print_bytes(output_file, audio)
-				#consuming 2 chars at a time, so add another increment
-				i = i + 2
-			output_file.write("};")
+			
+			BCOUNT = 0
+			length = (end_loop - start_loop)/2
+			padlength = padding(length, 128)
+			
+			arraylen = ((length + padlength) * 2 + 3) / 4 + 1
+			format = 0x81
 			
 			#print out loop
 			i = start_loop
-			output_file.write("const unsigned int AudioWaveform_Loop[" + str((end_loop - start_loop)/4) + "] = {\n")
+			output_file.write("const unsigned int AudioWaveform_Loop[" + str(arraylen) + "] = {\n")
+			output_file.write("0x%0.8X," % (length | (format << 24)))
 			while i < end_loop:
 				audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 				print_bytes(output_file, audio)
+				print_bytes(output_file, audio >> 8)
 				#consuming 2 chars at a time, so add another increment
 				i = i + 2
-			output_file.write("};")
 			
-			#print out decay
-			#i = end_loop
-			#output_file.write("const unsigned int AudioWaveform_Decay[" + str((duration - end_loop)/2) + "] = {\n")
-			#while i < duration-1:
-			#	audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-			#	print_bytes(output_file, audio)
-			#	#consuming 2 chars at a time, so add another increment
-			#	i = i + 2
-			#output_file.write("};")
+			while padlength > 0:
+				print_bytes(output_file, 0)
+				padlength = padlength - 1
+			
+			output_file.write("};\n")
 		
 		with open("piano.h", "w") as header_file:
-			header_file.write("extern const unsigned int AudioWaveform_Attack[" + str(start_loop/4) + "];\n")
-			header_file.write("extern const unsigned int AudioWaveform_Loop[" + str((end_loop - start_loop)/4) + "];\n")
-			#header_file.write("extern const unsigned int AudioWaveform_Decay[" + str((duration - end_loop)/4) + "];\n")
+			header_file.write("extern const unsigned int AudioWaveform_Loop[" + str(arraylen) + "];\n")
 		
 #Copying functionality from wav2sketch.c
 def print_bytes(file, b):
 	global BCOUNT, WCOUNT, BUF32
 	
-	BCOUNT = BCOUNT + 1
 	BUF32 = BUF32 | (b << (8 * BCOUNT))
-	if BCOUNT >= 2:
-		file.write(str(BUF32))
+	BCOUNT = BCOUNT + 1
+	if BCOUNT >= 4:
+		file.write("0x%0.8X" % BUF32)
 		file.write(",")
 		BUF32 = 0
 		BCOUNT = 0
@@ -81,7 +73,11 @@ def print_bytes(file, b):
 		if WCOUNT >= 8:
 			file.write("\n")
 			WCOUNT = 0
-		
+
+def padding(length, block):
+	extra = length % block
+	if extra == 0: return 0
+	return block - extra
 	
 
 #Copying functionality from wav2sketch.c
