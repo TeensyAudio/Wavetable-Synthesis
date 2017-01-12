@@ -40,9 +40,28 @@ void AudioWavetable::soundOn(const unsigned int *data, double mult)
 	playing = format >> 24;
 }
 
+void AudioWavetable::soundOn(void)
+{
+    uint32_t format;
+    playing = 0;
+    prior = 0;
+    format = *data + 1;
+    //format = *data++;
+    attack_next = data;
+    attack_start = data;
+    attack_length = format & 0xFFFFFF;
+    playing = format >> 24;
+}
+
 void AudioWavetable::soundOff(void)
 {
 	playing = 0;
+}
+
+void AudioWavetable::setData(const unsigned int *data)
+{
+    this->data = data;
+    attack_start = data;
 }
 
 extern "C" {
@@ -180,6 +199,7 @@ void AudioWavetable::update(void)
 		attack_length -= consumed;
 	} else {
 		playing = 0;
+        //data = attack_start;
 	}
 	transmit(block);
 	release(block);

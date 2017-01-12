@@ -54,7 +54,10 @@ class AudioWavetable : public AudioStream
 public:
     AudioWavetable(void) : AudioStream(0, NULL), playing(0) { }
     void soundOn(const unsigned int *data, double mult);
+    void soundOn(void);
     void soundOff(void);
+    void setData(const unsigned int *data);
+    unsigned int getData() { return *data; }
     bool isPlaying(void) { return playing; }
     uint32_t positionMillis(void);
     uint32_t lengthMillis(void);
@@ -62,6 +65,7 @@ public:
     void setFrequency(float frequency);
     void setIntensity(uint8_t intensity);
 private:
+    const unsigned int *data;
     const unsigned int *attack_start;
     const unsigned int *attack_next;
     const unsigned int *sustain_start;
