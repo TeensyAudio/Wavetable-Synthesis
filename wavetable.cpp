@@ -27,20 +27,20 @@
 #include "wavetable.h"
 #include "utility/dspinst.h"
 
-void AudioWavetable::play(const unsigned int *data, double mult)
+void AudioWavetable::soundOn(const unsigned int *data, double mult)
 {
 	uint32_t format;
 	multiplier = mult;
 	playing = 0;
 	prior = 0;
 	format = *data++;
-	next = data;
-	beginning = data;
-	length = format & 0xFFFFFF;
+	attack_next = data;
+	attack_start = data;
+	attack_length = format & 0xFFFFFF;
 	playing = format >> 24;
 }
 
-void AudioWavetable::stop(void)
+void AudioWavetable::soundOff(void)
 {
 	playing = 0;
 }
@@ -65,7 +65,7 @@ void AudioWavetable::update(void)
 	//Serial.write('.');
 
 	out = block->data;
-	in = next;
+	in = attack_next;
 	s0 = prior;
 
 	switch (playing) {
@@ -175,9 +175,9 @@ void AudioWavetable::update(void)
 		return;
 	}
 	prior = s0;
-	next = in;
-	if (length > consumed) {
-		length -= consumed;
+	attack_next = in;
+	if (attack_length > consumed) {
+		attack_length -= consumed;
 	} else {
 		playing = 0;
 	}
@@ -200,8 +200,8 @@ uint32_t AudioWavetable::positionMillis(void)
 
 	__disable_irq();
 	p = playing;
-	n = (const uint8_t *)next;
-	b = (const uint8_t *)beginning;
+	n = (const uint8_t *)attack_next;
+	b = (const uint8_t *)attack_start;
 	__enable_irq();
 	switch (p) {
 	  case 0x81: // 16 bit PCM, 44100 Hz
@@ -229,7 +229,7 @@ uint32_t AudioWavetable::lengthMillis(void)
 
 	__disable_irq();
 	p = playing;
-	b = (const uint32_t *)beginning;
+	b = (const uint32_t *)attack_start;
 	__enable_irq();
 	switch (p) {
 	  case 0x81: // 16 bit PCM, 44100 Hz
