@@ -129,7 +129,7 @@ void loop() {
     button1.update();
     button2.update();
   
-    usbMIDI.read(); // USB MIDI receive
+    //usbMIDI.read(); // USB MIDI receive
 
     if (button0.fallingEdge()) {
       OnNoteOn(0x0, 0x39, 0x0);
@@ -205,7 +205,13 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
     Serial.print(velocity, DEC);
     Serial.println();
 
+    elapsedMillis msecs;
+    msecs = 0;
+
     float fund = note2freq(note);
+
+    Serial.print("freq=");
+    Serial.print(fund);
 
     if (voices.Available() == kNumVoices) {
         perc.frequency(2*fund);
@@ -250,6 +256,11 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
         envelope8.noteOn();
         break;
     }
+
+    Serial.print(", time=");
+    Serial.print(msecs);
+    Serial.print("ms");
+    Serial.println();
 }
 
 void OnNoteOff(byte channel, byte note, byte velocity) {
@@ -355,9 +366,5 @@ void OnPitchChange(byte channel, int pitch) {
 // 69 = 0100 0101 = 0x45
 float note2freq(byte note) {
     float tmp = (note-69) / 12.0;
-    float freq = 440.0 * pow(2.0, tmp);
-    Serial.print("freq=");
-    Serial.print(freq);
-    Serial.println();
-    return freq;
+    return 440.0 * pow(2.0, tmp);
 }
