@@ -53,11 +53,15 @@ class AudioWavetable : public AudioStream
 {
 public:
     AudioWavetable(void) : AudioStream(0, NULL), playing(0) { }
+    AudioWavetable(const unsigned int *data) : AudioStream(0, NULL)
+    {
+        playing = 0;
+        setSample(data);
+    }
     void soundOn(const unsigned int *data, double mult);
     void soundOn(void);
     void soundOff(void);
-    void setData(const unsigned int *data);
-    unsigned int getData() { return *data; }
+    void setSample(const unsigned int *data);
     bool isPlaying(void) { return playing; }
     uint32_t positionMillis(void);
     uint32_t lengthMillis(void);
