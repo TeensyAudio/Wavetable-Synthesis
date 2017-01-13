@@ -25,13 +25,18 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
+const unsigned int *AudioSample = AudioSampleSnare;
+const int AudioSample_Size = (int)(sizeof(AudioSampleSnare)/4);
+unsigned int AudioSample_Interpolate[AudioSample_Size];
+unsigned int AudioSample_Interpolate1[AudioSample_Size*2];
+
 // GUItool: begin automatically generated code
 //AudioPlayMemory          playMem1;       //xy=163.3333282470703,120.33332824707031
-AudioWavetable           playWavetable1;
+AudioWavetable           playWavetable1(AudioSample);
 //AudioPlayMemory          playMem2;       //xy=165.3333282470703,196.3333282470703
-AudioWavetable           playWavetable2;
+AudioWavetable           playWavetable2(AudioSample_Interpolate1);
 //AudioPlayMemory          playMem3;       //xy=169.3333282470703,256.3333282470703
-AudioWavetable           playWavetable3;
+AudioWavetable           playWavetable3(AudioSample_Interpolate);
 AudioMixer4              mixer1;         //xy=371.3332977294922,158.3333282470703
 AudioOutputI2S           i2s1;           //xy=525.3333282470703,184.3333282470703
 //AudioConnection          patchCord1(playMem1, 0, mixer1, 0);
@@ -50,11 +55,6 @@ Bounce button0 = Bounce(0, 15);
 Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
 Bounce button2 = Bounce(2, 15);
 
-const unsigned int *AudioSample = AudioSampleSnare;
-const int AudioSample_Size = (int)(sizeof(AudioSampleSnare)/4);
-unsigned int AudioSample_Interpolate[AudioSample_Size];
-unsigned int AudioSample_Interpolate1[AudioSample_Size*2];
-
 void setup() {
   Serial.begin(9600);
   pinMode(0, INPUT_PULLUP);
@@ -67,7 +67,7 @@ void setup() {
   mixer1.gain(1, 0.4);
   mixer1.gain(2, 0.4);
   mixer1.gain(3, 0.4);
-    
+  
 }
 
 void loop() {
@@ -83,7 +83,8 @@ void loop() {
   elapsedMillis msecs;
 
   if (button0.fallingEdge()) {
-    playWavetable1.play(AudioSample, 1); 
+    //playWavetable1.soundOn(AudioSample, 1);
+    playWavetable1.soundOn();
   }
   
 /*
@@ -118,20 +119,22 @@ void loop() {
     Serial.print(msecs);
     Serial.print('\n');
     //playMem2.play(AudioSample_Interpolate1);
-    playWavetable2.play(AudioSample_Interpolate1, 1);
+    //playWavetable2.soundOn(AudioSample_Interpolate1, 1);
+    playWavetable2.soundOn();
   }
   
   if (button2.fallingEdge()) {
     msecs = 0;
     for (int i = 0; i < (int)((AudioSample_Size-1)/2); i++) {
-      AudioSample_Interpolate1[i] = AudioSample[i*2];
+      AudioSample_Interpolate[i] = AudioSample[i*2];
     }
     for (int i = (int)((AudioSample_Size-1)/2); i < AudioSample_Size; i++) {
-      AudioSample_Interpolate1[i] = 0;
+      AudioSample_Interpolate[i] = 0;
     }
     Serial.print(msecs);
     Serial.print('\n');
-    playWavetable3.play(AudioSample_Interpolate1, 1);
+    //playWavetable3.soundOn(AudioSample_Interpolate1, 1);
+    playWavetable3.soundOn();
   }
 
 /*

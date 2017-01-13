@@ -27,7 +27,7 @@
 #include "wavetable.h"
 #include "utility/dspinst.h"
 
-void AudioWavetable::soundOn(const unsigned int *data, double mult)
+/*void AudioWavetable::soundOn(const unsigned int *data, double mult)
 {
 	uint32_t format;
 	multiplier = mult;
@@ -38,21 +38,9 @@ void AudioWavetable::soundOn(const unsigned int *data, double mult)
 	attack_start = data;
 	attack_length = format & 0xFFFFFF;
 	playing = format >> 24;
-}
+}*/
 
 void AudioWavetable::soundOn(void)
-{
-    uint32_t format;
-    playing = 0;
-    prior = 0;
-    format = *data + 1;
-    attack_next = data;
-    attack_start = data;
-    attack_length = format & 0xFFFFFF;
-    playing = format >> 24;
-}
-
-/*void AudioWavetable::soundOn(void)
 {
     uint32_t format;
     playing = 0;
@@ -61,7 +49,12 @@ void AudioWavetable::soundOn(void)
     attack_next = attack_start;
     attack_length = format & 0xFFFFFF;
     playing = format >> 24;
-}*/
+}
+
+void AudioWavetable::soundOn(float frequency, int intensity)
+{
+    soundOn();
+}
 
 void AudioWavetable::soundOff(void)
 {
@@ -70,7 +63,6 @@ void AudioWavetable::soundOff(void)
 
 void AudioWavetable::setSample(const unsigned int *data)
 {
-    this->data = data;
     attack_start = data;
 }
 
@@ -221,7 +213,7 @@ void AudioWavetable::update(void)
 #define B2M_11025 (uint32_t)((double)4294967296000.0 / AUDIO_SAMPLE_RATE_EXACT * 4.0)
 
 
-uint32_t AudioWavetable::positionMillis(void)
+/*uint32_t AudioWavetable::positionMillis(void)
 {
 	uint8_t p;
 	const uint8_t *n, *b;
@@ -248,9 +240,9 @@ uint32_t AudioWavetable::positionMillis(void)
 	}
 	if (p == 0) return 0;
 	return ((uint64_t)(n - b) * b2m) >> 32;
-}
+}*/
 
-uint32_t AudioWavetable::lengthMillis(void)
+/*uint32_t AudioWavetable::lengthMillis(void)
 {
 	uint8_t p;
 	const uint32_t *b;
@@ -274,6 +266,6 @@ uint32_t AudioWavetable::lengthMillis(void)
 		return 0;
 	}
 	return ((uint64_t)(*(b - 1) & 0xFFFFFF) * b2m) >> 32;
-}
+}*/
 
 

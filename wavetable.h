@@ -58,18 +58,18 @@ public:
         playing = 0;
         setSample(data);
     }
-    void soundOn(const unsigned int *data, double mult);
+    //void soundOn(const unsigned int *data, double mult);
     void soundOn(void);
+    void soundOn(float frequency, int intensity);
     void soundOff(void);
     void setSample(const unsigned int *data);
     bool isPlaying(void) { return playing; }
-    uint32_t positionMillis(void);
-    uint32_t lengthMillis(void);
+    //uint32_t positionMillis(void);
+    //uint32_t lengthMillis(void);
     virtual void update(void);
     void setFrequency(float frequency);
-    void setIntensity(uint8_t intensity);
+    void setIntensity(int intensity);
 private:
-    const unsigned int *data;
     const unsigned int *attack_start;
     const unsigned int *attack_next;
     const unsigned int *sustain_start;
@@ -83,7 +83,7 @@ private:
     volatile uint8_t playing;
     uint8_t intensity;
     uint16_t frequency;
-    double multiplier;
+    //double multiplier;
 };
 
 #endif
