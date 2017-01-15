@@ -14,50 +14,70 @@ def main():
 		bag = 4
 		sf2 = Sf2File(sf2_file)
 		
+		valid = is_sample_valid(sf2.instruments[instr].bags[bag].sample)
+		
+		if valid[0] == False:
+			error(valid[1])
+			#return
+			
 		#Ignore extra 8 bits in the 24 bit specification
 		sf2.instruments[instr].bags[bag].sample.sm24_offset = None
 		
-		#Can also export a selected sample array to a .wav file
-		#sf2.instruments[instr].bags[bag].sample.export('piano.wav')
-		raw_wav_data = sf2.instruments[instr].bags[bag].sample.raw_sample_data
+		#Get sample data from SF2
+		sample = sf2.instruments[instr].bags[bag].sample
 		
-		#Printing raw_wav_data to a text file
-		with open("raw_wav_data.txt", "w") as text_file:
-			text_file.write(raw_wav_data)
+		with open("SF2_Decoded_Samples.cpp", "w") as output_file:
+			with open("SF2_Decoded_Samples.h", "w") as header_file:
+				export_sample(output_file, header_file, sample, True)
+			
+
+#Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
+def export_sample(file, header_file, sample, PCM):
+	name = sample.name
+	file.write("#include \"SF2_Decoded_Samples.h\"\n")
+	raw_wav_data = sample.raw_sample_data
+	start_loop = sample.start_loop
+	end_loop = sample.end_loop
+	duration = sample.duration
+	
+	BCOUNT = 0
+	length = (end_loop - start_loop)/2
+	padlength = padding(length, 128)
+	
+	arraylen = ((length + padlength) * 2 + 3) / 4 + 1
+	format = 0x81
+	
+	#print out loop
+	i = start_loop
+	file.write("const unsigned int " + name + "_Loop[" + str(arraylen) + "] = {\n")
+	file.write("0x%0.8X," % (length | (format << 24)))
+	while i < end_loop:
+		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
+		print_bytes(file, audio)
+		print_bytes(file, audio >> 8)
+		#consuming 2 chars at a time, so add another increment
+		i = i + 2
+	
+	while padlength > 0:
+		print_bytes(file, 0)
+		padlength = padlength - 1
+	
+	file.write("};\n")
+	
+	#Write sample to header file
+	header_file.write("extern const unsigned int " + name + "_Loop[" + str(arraylen) + "];\n")
 		
-		with open("piano.cpp", "w") as output_file:
-			output_file.write("#include \"piano.h\"\n")
-			start_loop = sf2.instruments[instr].bags[bag].sample.start_loop
-			end_loop = sf2.instruments[instr].bags[bag].sample.end_loop
-			duration = sf2.instruments[instr].bags[bag].sample.duration
 			
-			BCOUNT = 0
-			length = (end_loop - start_loop)/2
-			padlength = padding(length, 128)
-			
-			arraylen = ((length + padlength) * 2 + 3) / 4 + 1
-			format = 0x81
-			
-			#print out loop
-			i = start_loop
-			output_file.write("const unsigned int AudioWaveform_Loop[" + str(arraylen) + "] = {\n")
-			output_file.write("0x%0.8X," % (length | (format << 24)))
-			while i < end_loop:
-				audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-				print_bytes(output_file, audio)
-				print_bytes(output_file, audio >> 8)
-				#consuming 2 chars at a time, so add another increment
-				i = i + 2
-			
-			while padlength > 0:
-				print_bytes(output_file, 0)
-				padlength = padlength - 1
-			
-			output_file.write("};\n")
-		
-		with open("piano.h", "w") as header_file:
-			header_file.write("extern const unsigned int AudioWaveform_Loop[" + str(arraylen) + "];\n")
-		
+#Checks if the selected sample is valid. Input is a sample object, and output is 
+#a tuple with (boolean, error_message - if any)
+def is_sample_valid(sample):
+	if sample.loop_duration >= sample.duration: return (False, 'Loop length >= sample length')
+	if sample.end_loop > sample.duration: return (False, 'End loop index is larger than sample end index')
+	return (True, None)
+
+def error(message):
+	print("ERROR: " + message)
+
 #Copying functionality from wav2sketch.c
 def print_bytes(file, b):
 	global BCOUNT, WCOUNT, BUF32
@@ -79,7 +99,6 @@ def padding(length, block):
 	if extra == 0: return 0
 	return block - extra
 	
-
 #Copying functionality from wav2sketch.c
 def cc_to_int16(c1, c2):
 	i1 = int(ord(c1))
