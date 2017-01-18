@@ -73,9 +73,26 @@ def export_sample(file, header_file, sample, PCM):
 	file.write("};\n")
 	
 	#Write sample to header file
+	header_file.write("#include <string>\n\n\n")
 	header_file.write("extern const unsigned int " + name + "_Loop[" + str(arraylen) + "];\n")
+
 		
-			
+	print(sample);
+	print(sample.name);
+	print(sample.sample_rate);
+	print(sample.sample_type);
+	print(sample.is_mono);
+
+	header_file.write("const std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
+	header_file.write("const std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
+	header_file.write("const int SAMPLE_RATE = \"" + str(sample.sample_rate) + "\";\n")
+	header_file.write("const int SAMPLE_NAME = \"" + str(sample.sample_type) + "\";\n")
+	header_file.write("const bool IS_MONO= \"" + str(sample.is_mono) + "\";\n")
+	
+	
+	
+
+		
 #Checks if the selected sample is valid. Input is a sample object, and output is 
 #a tuple with (boolean, error_message - if any)
 def is_sample_valid(sample):
