@@ -42,7 +42,10 @@ void AudioWavetable::play(const unsigned int *data)
 	
 	//Can update this value to produce a different note.
 	//This value just plays back as normal
-	tone_incr = 0x00010000;
+	//tone_incr = 0x00010000;
+	
+	
+	//tone_amp = (uint16_t)(32767.0*.5);
 }
  
 void AudioWavetable::stop(void)
@@ -57,7 +60,8 @@ void AudioWavetable::update(void)
 	int16_t *out;
 	uint32_t tmp32, consumed;
 	uint32_t index, scale;
-	uint32_t s0, s1, s2, s3;
+	int16_t s0, s1, s2, s3;
+	uint32_t v1, v2, v3;
 	int i;
 
 	if (!playing) return;
@@ -71,15 +75,26 @@ void AudioWavetable::update(void)
 	switch (playing) {
 	  case 0x81: // 16 bit PCM, 44100 Hz
 		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
-			index = tone_phase >> 17;
-			tmp32 = beginning[index];
-			s1 = (tmp32 & 0xFFFF);
-			s2 = (tmp32 >> 16) & 0xFFFF;
+			index = tone_phase >> 16;
+			if (index % 2 == 0) {
+				index = index/2;
+				tmp32 = beginning[index];
+				s1 = (tmp32 >> 16) & 0xFFFF;
+				index++;
+				tmp32 = beginning[index];
+				s2 = (tmp32 & 0xFFFF);
+			}
+			else {
+				index = (index - 1) / 2;
+				tmp32 = beginning[index];
+				s1 = (tmp32 & 0xFFFF);
+				s2 = (tmp32 >> 16) & 0xFFFF;
+			}
 			scale = tone_phase & 0xFFFF;
-			s2 *= scale;
-			s1 *= 0xFFFF - scale;
-			s3 = (s1 + s2) >> 16;
-			*out++ = (int16_t)(s3);
+			v2 = s2 * scale;
+			v1 = s1 * (0xFFFF - scale);
+			v3 = (v1 + v2) >> 16;
+			*out++ = (int16_t)(v3);
 			tone_phase += tone_incr;
 		}
 		//consumed = 128 * (tone_incr >> 16);

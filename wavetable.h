@@ -35,17 +35,42 @@ class AudioWavetable : public AudioStream
 public:
 	public:
 	AudioWavetable(void) : AudioStream(0, NULL), playing(0) {
-		tone_amp = 400;
+		tone_phase = 0;
+        tone_incr = 0;
+        tone_amp = 0;
 	}
 	void play(const unsigned int *data);
 	void stop(void);
 	bool isPlaying(void) { return playing; }
 	virtual void update(void);
-	void frequency(float t_freq) {
-		if (t_freq < 0.0) t_freq = 0.0;
-		else if (t_freq > AUDIO_SAMPLE_RATE_EXACT / 2) t_freq = AUDIO_SAMPLE_RATE_EXACT / 2;
-		tone_incr = (t_freq * (0x80000000LL/AUDIO_SAMPLE_RATE_EXACT)) + 0.5;
+    void begin(float freq, float amp) {
+        fundamental(freq);
+        amplitude(amp);
+    }
+
+    void fundamental(float freq) {
+        if (freq < 0.0) {
+            freq = 0.0;
+        } else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2) {
+            freq = AUDIO_SAMPLE_RATE_EXACT / 2;
+        }
+		
+        tone_incr = freq * (0x80000000LL/AUDIO_SAMPLE_RATE_EXACT) + 0.5;
 	}
+
+    void amplitude(float v) {
+        if (v < 0.0) {
+            v = 0.0;
+        } else if (v > 1.0) {
+            v = 1.0;
+        }
+
+        if ((tone_amp == 0) && v) {
+            tone_phase = 0;
+        }
+
+        tone_amp = (uint16_t)(32767.0*v);
+    }
 private:
 	const unsigned int *next;
 	const unsigned int *beginning;
@@ -55,7 +80,7 @@ private:
 	
 	uint32_t tone_phase;
 	volatile uint32_t tone_incr;
-	short    tone_amp;
+	uint16_t tone_amp;
 	short    tone_freq;
 };
 
