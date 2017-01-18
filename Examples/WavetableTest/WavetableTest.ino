@@ -1,6 +1,6 @@
 #include "piano.h" // http://www.freesound.org/people/kiddpark/sounds/201159/
 #include <Bounce.h>
-#include <wavetable.h>
+#include <AudioWavetableSynth.h>
 
 
 ///////////////////////////////////
@@ -14,9 +14,9 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioWavetable          wavetable1;       //xy=163.3333282470703,120.33332824707031
-AudioWavetable          wavetable2;       //xy=165.3333282470703,196.3333282470703
-AudioWavetable          wavetable3;       //xy=169.3333282470703,256.3333282470703
+AudioWavetableSynth          wavetable1;       //xy=163.3333282470703,120.33332824707031
+AudioWavetableSynth          wavetable2;       //xy=165.3333282470703,196.3333282470703
+AudioWavetableSynth          wavetable3;       //xy=169.3333282470703,256.3333282470703
 AudioMixer4              mixer1;         //xy=371.3332977294922,158.3333282470703
 AudioOutputI2S           i2s1;           //xy=525.3333282470703,184.3333282470703
 AudioConnection          patchCord1(wavetable1, 0, mixer1, 0);
