@@ -39,9 +39,6 @@ def export_sample(file, header_file, sample, PCM):
 	end_loop = sample.end_loop
 	duration = sample.duration
 
-
-
-
 	#print out attack
 	length = start_loop/2
 	padlength = padding(length, 128)

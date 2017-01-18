@@ -14,7 +14,7 @@ else:
 
 with open (path, 'rb') as sf2_file:
 	sf2 = Sf2File(sf2_file)
-	for i, j in enumerate(sf2.samples, 1):
+	for i, j in enumerate(sf2.instruments, 1):
 		print("{}. {}".format(i, j.name))
 
 	print('Select an sample')
