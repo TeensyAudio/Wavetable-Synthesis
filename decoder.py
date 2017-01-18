@@ -33,7 +33,8 @@ def main():
 
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
-	name = sample.name
+	nameSplit = sample.name.split()
+	name = nameSplit[0];
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
 	start_loop = sample.start_loop
@@ -142,16 +143,19 @@ def export_sample(file, header_file, sample, PCM):
 	header_file.write("#include <string>\n\n\n")
 	header_file.write("extern const unsigned int " + name + "_Loop[" + str(looplen) + "];\n")
 	header_file.write("extern const unsigned int " + name + "_attack[" + str(attacklen) + "];\n")
+	header_file.write("extern const unsigned int " + name + "_decay[" + str(attacklen) + "];\n")
 
 	#for debugging:	
 	print(sample);
 	print(sample.name);
+	print(sample.original_pitch);
 	print(sample.sample_rate);
 	print(sample.sample_type);
 	print(sample.is_mono);
 
 	header_file.write("const std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
 	header_file.write("const std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
+	header_file.write("const int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("const int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
 	header_file.write("const int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
 	header_file.write("const bool IS_MONO= " + str(sample.is_mono) + ";\n")
