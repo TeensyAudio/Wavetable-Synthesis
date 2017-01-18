@@ -45,7 +45,10 @@ def export_sample(file, header_file, sample, PCM):
 	padlength = padding(length, 128)
 	
 	arraylen = ((length + padlength) * 2 + 3) / 4 + 1
-	format = 0x81
+	if PCM == True:
+		format = 0x81
+	else:
+		format = 0x01
 	
 	#print out loop
 	i = start_loop
@@ -53,10 +56,15 @@ def export_sample(file, header_file, sample, PCM):
 	file.write("0x%0.8X," % (length | (format << 24)))
 	while i < end_loop:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-		print_bytes(file, audio)
-		print_bytes(file, audio >> 8)
-		#consuming 2 chars at a time, so add another increment
-		i = i + 2
+		if PCM == True:
+			# Use PCM Encoding
+			print_bytes(file, audio)
+			print_bytes(file, audio >> 8)
+			#consuming 2 chars at a time, so add another increment
+			i = i + 2
+		else:
+			# Using ulaw encoding
+			print_bytes(file, ulaw_encode(audio))
 	
 	while padlength > 0:
 		print_bytes(file, 0)
