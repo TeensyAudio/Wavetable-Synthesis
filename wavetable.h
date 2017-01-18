@@ -30,60 +30,33 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 
-/*class AudioWavetable : public AudioStream
+class AudioWavetable : public AudioStream
 {
 public:
-	AudioWavetable(void) : AudioStream(0, NULL), playing(0) { }
-	void play(const unsigned int *data, double mult);
+	public:
+	AudioWavetable(void) : AudioStream(0, NULL), playing(0) {
+		tone_amp = 400;
+	}
+	void play(const unsigned int *data);
 	void stop(void);
 	bool isPlaying(void) { return playing; }
-	uint32_t positionMillis(void);
-	uint32_t lengthMillis(void);
 	virtual void update(void);
+	void frequency(float t_freq) {
+		if (t_freq < 0.0) t_freq = 0.0;
+		else if (t_freq > AUDIO_SAMPLE_RATE_EXACT / 2) t_freq = AUDIO_SAMPLE_RATE_EXACT / 2;
+		tone_incr = (t_freq * (0x80000000LL/AUDIO_SAMPLE_RATE_EXACT)) + 0.5;
+	}
 private:
 	const unsigned int *next;
 	const unsigned int *beginning;
 	uint32_t length;
 	int16_t prior;
 	volatile uint8_t playing;
-	double multiplier;
-};*/
-
-class AudioWavetable : public AudioStream
-{
-public:
-    AudioWavetable(void) : AudioStream(0, NULL), playing(0) { }
-    AudioWavetable(const unsigned int *data) : AudioStream(0, NULL)
-    {
-        playing = 0;
-        setSample(data);
-    }
-    //void soundOn(const unsigned int *data, double mult);
-    void soundOn(void);
-    void soundOn(float frequency, int intensity);
-    void soundOff(void);
-    void setSample(const unsigned int *data);
-    bool isPlaying(void) { return playing; }
-    //uint32_t positionMillis(void);
-    //uint32_t lengthMillis(void);
-    virtual void update(void);
-    void setFrequency(float frequency);
-    void setIntensity(int intensity);
-private:
-    const unsigned int *attack_start;
-    const unsigned int *attack_next;
-    const unsigned int *sustain_start;
-    const unsigned int *sustain_next;
-    const unsigned int *release_start;
-    const unsigned int *release_next;
-    uint32_t attack_length;
-    uint32_t sustain_length;
-    uint32_t release_length;
-    int16_t prior;
-    volatile uint8_t playing;
-    uint8_t intensity;
-    uint16_t frequency;
-    //double multiplier;
+	
+	uint32_t tone_phase;
+	volatile uint32_t tone_incr;
+	short    tone_amp;
+	short    tone_freq;
 };
 
 #endif
