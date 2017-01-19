@@ -6,7 +6,7 @@ BCOUNT = 0
 WCOUNT = 1
 BUF32 = 0
 
-def main(path, selection):
+def main(path, selection, count, pcm=True):
 	global BCOUNT
 	#Test code: Opens a specified .sf2 and prints out some info using sf2utils
 	with open(path, 'rb') as sf2_file:
@@ -24,9 +24,13 @@ def main(path, selection):
 		#Get sample data from SF2
 		sample = sf2.samples[selection]
 		
-		with open("SF2_Decoded_Samples.cpp", "w") as output_file:
-			with open("SF2_Decoded_Samples.h", "w") as header_file:
-				export_sample(output_file, header_file, sample, True)
+		mode = "w"
+		if count > 0:
+			mode = "a"
+
+		with open("SF2_Decoded_Samples.cpp", mode) as output_file:
+			with open("SF2_Decoded_Samples.h", mode) as header_file:
+				export_sample(output_file, header_file, sample, pcm)
 			
 
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
