@@ -39,10 +39,15 @@ public:
         tone_incr = 0;
         tone_amp = 0;
 	}
+
 	void play(const unsigned int *data);
-	void stop(void);
+	
+	void stop(void); 
+
 	bool isPlaying(void) { return playing; }
+
 	virtual void update(void);
+
     void begin(float freq, float amp) {
         fundamental(freq);
         amplitude(amp);

@@ -25,7 +25,7 @@
  */
 
 #include "wavetable.h"
-#include "utility/dspinst.h"
+//#include <utlity/dspinst.h>
 
 void AudioWavetable::play(const unsigned int *data)
 {
@@ -36,9 +36,10 @@ void AudioWavetable::play(const unsigned int *data)
 	format = *data++;
 	next = data;
 	beginning = data;
-	length = format & 0xFFFFFF;
+	length_temp = length = format & 0xFFFFFF;
+	length_bits = 1;
+	while (length_temp >>= 1) ++length_bits;
 	playing = format >> 24;
-	
 	
 	//Can update this value to produce a different note.
 	//This value just plays back as normal
@@ -62,6 +63,7 @@ void AudioWavetable::update(void)
 	uint32_t index, scale;
 	int16_t s0, s1, s2, s3;
 	uint32_t v1, v2, v3;
+	int16_t* waveform = (int16_t*)beginning;
 	int i;
 
 	if (!playing) return;
@@ -76,20 +78,8 @@ void AudioWavetable::update(void)
 	  case 0x81: // 16 bit PCM, 44100 Hz
 		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
 			index = tone_phase >> 16;
-			if (index % 2 == 0) {
-				index = index/2;
-				tmp32 = beginning[index];
-				s1 = (tmp32 >> 16) & 0xFFFF;
-				index++;
-				tmp32 = beginning[index];
-				s2 = (tmp32 & 0xFFFF);
-			}
-			else {
-				index = (index - 1) / 2;
-				tmp32 = beginning[index];
-				s1 = (tmp32 & 0xFFFF);
-				s2 = (tmp32 >> 16) & 0xFFFF;
-			}
+			s1 = waveform[index];
+			s2 = waveform[++index];
 			scale = tone_phase & 0xFFFF;
 			v2 = s2 * scale;
 			v1 = s1 * (0xFFFF - scale);
