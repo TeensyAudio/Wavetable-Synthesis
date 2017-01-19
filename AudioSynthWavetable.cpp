@@ -24,9 +24,7 @@
  * THE SOFTWARE.
  */
 
-<<<<<<< HEAD:wavetable.cpp
 #include "AudioSynthWavetable.h"
->>>>>>> d6d9904af05f8bfb102026085c875996d926d43e:AudioSynthWavetable.cpp
 
 void AudioSynthWavetable::play(const unsigned int *data)
 {
