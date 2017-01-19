@@ -24,75 +24,69 @@
  * THE SOFTWARE.
  */
 
-#include "wavetable.h"
-//#include <utlity/dspinst.h>
+#ifndef wavetable_h_
+#define wavetable_h_
 
-void AudioWavetable::play(const unsigned int *data)
+#include "Arduino.h"
+#include "AudioStream.h"
+
+class AudioWavetableSynth : public AudioStream
 {
-	uint32_t format;
-	tone_phase = 0;
-	playing = 0;
-	prior = 0;
-	format = *data++;
-	next = data;
-	beginning = data;
-	length_temp = length = format & 0xFFFFFF;
-	length_bits = 1;
-	while (length_temp >>= 1) ++length_bits;
-	playing = format >> 24;
-	
-	//Can update this value to produce a different note.
-	//This value just plays back as normal
-	//tone_incr = 0x00010000;
-	
-	
-	//tone_amp = (uint16_t)(32767.0*.5);
-}
- 
-void AudioWavetable::stop(void)
-{
-	playing = 0;
-}
-
-void AudioWavetable::update(void)
-{
-	audio_block_t *block;
-	const unsigned int *in;
-	int16_t *out;
-	uint32_t tmp32, consumed;
-	uint32_t index, scale;
-	int16_t s0, s1, s2, s3;
-	uint32_t v1, v2, v3;
-	int16_t* waveform = (int16_t*)beginning;
-	int i;
-
-	if (!playing) return;
-	block = allocate();
-	if (block == NULL) return;
-
-	out = block->data;
-	in = next;
-	s0 = prior;
-
-	switch (playing) {
-	  case 0x81: // 16 bit PCM, 44100 Hz
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
-			index = tone_phase >> 16;
-			s1 = waveform[index];
-			s2 = waveform[++index];
-			scale = tone_phase & 0xFFFF;
-			v2 = s2 * scale;
-			v1 = s1 * (0xFFFF - scale);
-			v3 = (v1 + v2) >> 16;
-			*out++ = (int16_t)(v3);
-			tone_phase += tone_incr;
-		}
-		//consumed = 128 * (tone_incr >> 16);
-		break;
+public:
+	public:
+	AudioWavetableSynth(void) : AudioStream(0, NULL), playing(0) {
+		tone_phase = 0;
+        tone_incr = 0;
+        tone_amp = 0;
 	}
-	prior = s0;
-	next = in;
-	transmit(block);
-	release(block);
-}
 
+	void play(const unsigned int *data);
+	
+	void stop(void); 
+
+	bool isPlaying(void) { return playing; }
+
+	virtual void update(void);
+
+    void begin(float freq, float amp) {
+        fundamental(freq);
+        amplitude(amp);
+    }
+
+    void fundamental(float freq) {
+        if (freq < 0.0) {
+            freq = 0.0;
+        } else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2) {
+            freq = AUDIO_SAMPLE_RATE_EXACT / 2;
+        }
+		
+        tone_incr = freq * (0x80000000LL/AUDIO_SAMPLE_RATE_EXACT) + 0.5;
+	}
+
+    void amplitude(float v) {
+        if (v < 0.0) {
+            v = 0.0;
+        } else if (v > 1.0) {
+            v = 1.0;
+        }
+
+        if ((tone_amp == 0) && v) {
+            tone_phase = 0;
+        }
+
+        tone_amp = (uint16_t)(32767.0*v);
+    }
+private:
+	const unsigned int *next;
+	const unsigned int *beginning;
+	uint32_t length;
+	int16_t prior;
+	volatile uint8_t playing;
+	
+	uint32_t tone_phase;
+	volatile uint32_t tone_incr;
+	uint16_t tone_amp;
+	short    tone_freq;
+};
+
+#endif

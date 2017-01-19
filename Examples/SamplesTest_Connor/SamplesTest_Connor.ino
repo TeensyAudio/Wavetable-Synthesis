@@ -13,7 +13,7 @@
 #include "AudioSampleGong.h"         // http://www.freesound.org/people/juskiddink/sounds/86773/
 #include "AudioSampleCashregister.h" // http://www.freesound.org/people/kiddpark/sounds/201159/
 #include <Bounce.h>
-#include <wavetable.h>
+#include <AudioSynthWavetable.h>
 
 ///////////////////////////////////
 // copy the Design Tool code here
@@ -32,11 +32,11 @@ unsigned int AudioSample_Interpolate1[AudioSample_Size*2];
 
 // GUItool: begin automatically generated code
 //AudioPlayMemory          playMem1;       //xy=163.3333282470703,120.33332824707031
-AudioWavetable           playWavetable1(AudioSample);
+AudioSynthWavetable           playWavetable1(AudioSample);
 //AudioPlayMemory          playMem2;       //xy=165.3333282470703,196.3333282470703
-AudioWavetable           playWavetable2(AudioSample_Interpolate1);
+AudioSynthWavetable           playWavetable2(AudioSample_Interpolate1);
 //AudioPlayMemory          playMem3;       //xy=169.3333282470703,256.3333282470703
-AudioWavetable           playWavetable3(AudioSample_Interpolate);
+AudioSynthWavetable           playWavetable3(AudioSample_Interpolate);
 AudioMixer4              mixer1;         //xy=371.3332977294922,158.3333282470703
 AudioOutputI2S           i2s1;           //xy=525.3333282470703,184.3333282470703
 //AudioConnection          patchCord1(playMem1, 0, mixer1, 0);
