@@ -30,18 +30,23 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 
-class AudioWavetableSynth : public AudioStream
+class AudioSynthWavetable : public AudioStream
 {
-public:
-	AudioWavetableSynth(void) : AudioStream(0, NULL), playing(0) {
+	public:
+	AudioSynthWavetable(void) : AudioStream(0, NULL), playing(0) {
 		tone_phase = 0;
         tone_incr = 0;
         tone_amp = 0;
 	}
+
 	void play(const unsigned int *data);
-	void stop(void);
+	
+	void stop(void); 
+
 	bool isPlaying(void) { return playing; }
+
 	virtual void update(void);
+
     void begin(float freq, float amp) {
         fundamental(freq);
         amplitude(amp);
@@ -71,7 +76,9 @@ public:
 
         tone_amp = (uint16_t)(32767.0*v);
     }
+    
     float getMult() { return mult; }
+    
     const unsigned int* getBeginning() { return beginning; }
     
 private:

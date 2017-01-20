@@ -24,22 +24,22 @@
  * THE SOFTWARE.
  */
 
-#include "AudioWavetableSynth.h"
-#include "utility/dspinst.h"
+#include "AudioSynthWavetable.h"
 
-void AudioWavetableSynth::play(const unsigned int *data)
+void AudioSynthWavetable::play(const unsigned int *data)
 {
+    uint32_t length_temp;
 	uint32_t format;
 	tone_phase = 0;
 	playing = 0;
 	prior = 0;
-	//format = *data++;
     format = *data+1;
 	next = data;
 	beginning = data;
-	length = format & 0xFFFFFF;
+	length_temp = length = format & 0xFFFFFF;
+	uint8_t length_bits = 1;
+	while (length_temp >>= 1) ++length_bits;
 	playing = format >> 24;
-	
 	
 	//Can update this value to produce a different note.
 	//This value just plays back as normal
@@ -49,12 +49,12 @@ void AudioWavetableSynth::play(const unsigned int *data)
 	//tone_amp = (uint16_t)(32767.0*.5);
 }
  
-void AudioWavetableSynth::stop(void)
+void AudioSynthWavetable::stop(void)
 {
 	playing = 0;
 }
 
-void AudioWavetableSynth::update(void)
+void AudioSynthWavetable::update(void)
 {
 	audio_block_t *block;
 	const unsigned int *in;
@@ -63,6 +63,7 @@ void AudioWavetableSynth::update(void)
 	uint32_t index, scale;
 	int16_t s0, s1, s2, s3;
 	uint32_t v1, v2, v3;
+	int16_t* waveform = (int16_t*)beginning;
 	int i;
 
 	if (!playing) return;
@@ -77,20 +78,8 @@ void AudioWavetableSynth::update(void)
 	  case 0x81: // 16 bit PCM, 44100 Hz
 		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
 			index = tone_phase >> 16;
-			if (index % 2 == 0) {
-				index = index/2;
-				tmp32 = beginning[index];
-				s1 = (tmp32 >> 16) & 0xFFFF;
-				index++;
-				tmp32 = beginning[index];
-				s2 = (tmp32 & 0xFFFF);
-			}
-			else {
-				index = (index - 1) / 2;
-				tmp32 = beginning[index];
-				s1 = (tmp32 & 0xFFFF);
-				s2 = (tmp32 >> 16) & 0xFFFF;
-			}
+			s1 = waveform[index];
+			s2 = waveform[++index];
 			scale = tone_phase & 0xFFFF;
 			v2 = s2 * scale;
 			v1 = s1 * (0xFFFF - scale);

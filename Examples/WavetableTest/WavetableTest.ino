@@ -1,7 +1,6 @@
 #include "piano.h" // http://www.freesound.org/people/kiddpark/sounds/201159/
 #include <Bounce.h>
-#include <AudioWavetableSynth.h>
-#include <AudioWavetableAllocator.h>
+#include <AudioAllocWavetable.h>
 
 ///////////////////////////////////
 // copy the Design Tool code here
@@ -14,12 +13,12 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioWavetableAllocator  allocator;
+AudioAllocWavetable      alloc;
 AudioMixer4              mixer1;         //xy=371.3332977294922,158.3333282470703
 AudioOutputI2S           i2s1;           //xy=525.3333282470703,184.3333282470703
-AudioConnection          patchCord1(*allocator.getVoice(0), 0, mixer1, 0);
-AudioConnection          patchCord2(*allocator.getVoice(1), 0, mixer1, 1);
-AudioConnection          patchCord3(*allocator.getVoice(2), 0, mixer1, 2);
+AudioConnection          patchCord1(*alloc.getVoice(0), 0, mixer1, 0);
+AudioConnection          patchCord2(*alloc.getVoice(1), 0, mixer1, 1);
+AudioConnection          patchCord3(*alloc.getVoice(2), 0, mixer1, 2);
 AudioConnection          patchCord4(mixer1, 0, i2s1, 0);
 AudioConnection          patchCord5(mixer1, 0, i2s1, 1);
 AudioControlSGTL5000     sgtl5000_1;     //xy=353.3333282470703,260.33331298828125
@@ -56,22 +55,22 @@ void loop() {
   button2.update();
 
   if (button0.fallingEdge()) {
-    voices[0] = allocator.play(AudioWaveform_Loop, 2, 0.5);
+    voices[0] = alloc.play(AudioWaveform_Loop, 2, 0.5);
   }
   if (button1.fallingEdge()) {
-    voices[1] = allocator.play(AudioWaveform_Loop, 2, 0.5);
+    voices[1] = alloc.play(AudioWaveform_Loop, 1.5, 0.5);
   }
   if (button2.fallingEdge()) {
-    voices[2] = allocator.play(AudioWaveform_Loop, 2, 0.5);
+    voices[2] = alloc.play(AudioWaveform_Loop, 1.8, 0.5);
   }
   if (button0.risingEdge()) {
-    allocator.stop(voices[0]);
+    alloc.stop(voices[0]);
   }
   if (button1.risingEdge()) {
-    allocator.stop(voices[1]);
+    alloc.stop(voices[1]);
   }
   if (button2.risingEdge()) {
-    allocator.stop(voices[2]);
+    alloc.stop(voices[2]);
   }
   
 }
