@@ -33,7 +33,6 @@
 class AudioWavetableSynth : public AudioStream
 {
 public:
-	public:
 	AudioWavetableSynth(void) : AudioStream(0, NULL), playing(0) {
 		tone_phase = 0;
         tone_incr = 0;
@@ -49,6 +48,7 @@ public:
     }
 
     void fundamental(float freq) {
+        mult = freq;
         if (freq < 0.0) {
             freq = 0.0;
         } else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2) {
@@ -71,6 +71,9 @@ public:
 
         tone_amp = (uint16_t)(32767.0*v);
     }
+    float getMult() { return mult; }
+    const unsigned int* getBeginning() { return beginning; }
+    
 private:
 	const unsigned int *next;
 	const unsigned int *beginning;
@@ -82,6 +85,7 @@ private:
 	volatile uint32_t tone_incr;
 	uint16_t tone_amp;
 	short    tone_freq;
+    float    mult;
 };
 
 #endif

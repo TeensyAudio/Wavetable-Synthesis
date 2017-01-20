@@ -33,7 +33,8 @@ void AudioWavetableSynth::play(const unsigned int *data)
 	tone_phase = 0;
 	playing = 0;
 	prior = 0;
-	format = *data++;
+	//format = *data++;
+    format = *data+1;
 	next = data;
 	beginning = data;
 	length = format & 0xFFFFFF;
