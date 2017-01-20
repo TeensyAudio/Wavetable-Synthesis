@@ -34,7 +34,6 @@ void AudioSynthWavetable::play(const unsigned int *data)
 	playing = 0;
 	format = *data++;
 	length_temp = length = format & 0xFFFFFF;
-   length = 8000;
 	uint8_t length_bits = 1;
 	while (length_temp >>= 1) ++length_bits;
 	this->waveform = (uint32_t*)data;
