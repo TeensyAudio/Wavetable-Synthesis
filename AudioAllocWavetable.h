@@ -11,7 +11,7 @@
 
 #include "AudioSynthWavetable.h"
 
-const uint8_t MAX_VOICES = 8;
+const uint8_t MAX_VOICES = 0xFF;
 
 class AudioAllocWavetable
 {
