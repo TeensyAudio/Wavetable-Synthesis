@@ -32,16 +32,14 @@ void AudioSynthWavetable::play(const unsigned int *data)
 	uint32_t format;
 	tone_phase = 0;
 	playing = 0;
-	prior = 0;
 	format = *data++;
-	next = data;
-	beginning = data;
 	length_temp = length = format & 0xFFFFFF;
+   max_phase = length << 16;
 	uint8_t length_bits = 1;
 	while (length_temp >>= 1) ++length_bits;
 	this->waveform = (uint32_t*)data;
 	this->playing = format >> 24;
-	tone_phase = 0;
+   sample_count = format & 0x80 ? length * 2 : length * 4;
 }
 
 void AudioSynthWavetable::stop(void) {
@@ -80,16 +78,21 @@ void AudioSynthWavetable::update(void) {
 			//val3 = (val1 + val2) >> 16;
 			//*bp++ = (short)((val3 * tone_amp) >> 15);
 
-			tone_phase += tone_incr;
 			index = tone_phase >> 16;
 			s1 = waveform[index];
-			s2 = waveform[++index];
+			index++;
+         index = index == sample_count ? 0 : index; //loops if at end of array
+			s2 = waveform[index];
 			scale = tone_phase & 0xFFFF;
 			v2 = s2 * scale;
 			v1 = s1 * (0xFFFF - scale);
 			v3 = (v1 + v2) >> 16;
 			*out++ = (int16_t)(v3);
+
 			tone_phase += tone_incr;
+         if(tone_phase >= max_phase) {
+            tone_phase -= max_phase;
+         }
 		}
 		break;
 	}

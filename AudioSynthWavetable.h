@@ -36,7 +36,9 @@ public:
 	: AudioStream(0, NULL)
 	, length(0)
 	, length_bits(0)
+   , sample_count(0)
 	, playing(0)
+   , max_phase(0)
 	, tone_phase(0)
 	, tone_incr(0)
 	, tone_amp(0)
@@ -62,8 +64,10 @@ public:
 private:
 	uint32_t* waveform = NULL;
 	int length, length_bits;
+   uint16_t sample_count;
 
 	uint8_t playing;
+   uint32_t max_phase;
 	uint32_t tone_phase;
 	uint32_t tone_incr;
 	uint16_t tone_amp;
