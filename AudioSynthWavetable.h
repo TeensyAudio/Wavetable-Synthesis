@@ -53,7 +53,6 @@ class AudioSynthWavetable : public AudioStream
     }
 
     void fundamental(float freq) {
-        mult = freq;
         if (freq < 0.0) {
             freq = 0.0;
         } else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2) {
@@ -88,7 +87,6 @@ private:
 	volatile uint32_t tone_incr;
 	uint16_t tone_amp;
 	short    tone_freq;
-    float    mult;
 };
 
 #endif
