@@ -37,10 +37,13 @@ void AudioSynthWavetable::play(const unsigned int *data)
 	next = data;
 	beginning = data;
 	length_temp = length = format & 0xFFFFFF;
+   length = 8000;
 	uint8_t length_bits = 1;
 	while (length_temp >>= 1) ++length_bits;
 	playing = format >> 24;
-	
+
+   max_phase = length << 16;
+
 	//Can update this value to produce a different note.
 	//This value just plays back as normal
 	//tone_incr = 0x00010000;
@@ -85,7 +88,11 @@ void AudioSynthWavetable::update(void)
 			v1 = s1 * (0xFFFF - scale);
 			v3 = (v1 + v2) >> 16;
 			*out++ = (int16_t)(v3);
-			tone_phase += tone_incr;
+			
+         tone_phase += tone_incr;
+         if(tone_phase >= max_phase) {
+            tone_phase = 0;
+         }
 		}
 		//consumed = 128 * (tone_incr >> 16);
 		break;

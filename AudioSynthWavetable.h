@@ -33,11 +33,8 @@
 class AudioSynthWavetable : public AudioStream
 {
 	public:
-	AudioSynthWavetable(void) : AudioStream(0, NULL), playing(0) {
-		tone_phase = 0;
-        tone_incr = 0;
-        tone_amp = 0;
-	}
+	AudioSynthWavetable(void) : AudioStream(0, NULL), max_phase(0), 
+   playing(0), tone_phase(0), tone_incr(0), tone_amp(0) { }
 
 	void play(const unsigned int *data);
 	
@@ -80,6 +77,7 @@ private:
 	const unsigned int *next;
 	const unsigned int *beginning;
 	uint32_t length;
+   uint32_t max_phase;
 	int16_t prior;
 	volatile uint8_t playing;
 	
