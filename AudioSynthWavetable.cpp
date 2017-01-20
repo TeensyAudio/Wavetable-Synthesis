@@ -26,56 +26,56 @@
 
 #include "AudioSynthWavetable.h"
 
-void AudioSynthWavetable::play(const unsigned int *data)
-{
+void AudioSynthWavetable::play(const unsigned int* data) {
 	uint32_t format;
-	tone_phase = 0;
-	playing = 0;
-	prior = 0;
+	uint32_t length_temp;
+
 	format = *data++;
-	next = data;
-	beginning = data;
-	length_temp = length = format & 0xFFFFFF;
+	length_temp = this->length = format & 0xFFFFFF;
 	length_bits = 1;
 	while (length_temp >>= 1) ++length_bits;
-	playing = format >> 24;
-	
-	//Can update this value to produce a different note.
-	//This value just plays back as normal
-	//tone_incr = 0x00010000;
-	
-	
-	//tone_amp = (uint16_t)(32767.0*.5);
+	this->waveform = (uint32_t*)data;
+	this->playing = format >> 24;
+	tone_phase = 0;
 }
- 
-void AudioSynthWavetable::stop(void)
-{
+
+void AudioSynthWavetable::stop(void) {
 	playing = 0;
 }
 
-void AudioSynthWavetable::update(void)
-{
-	audio_block_t *block;
-	const unsigned int *in;
-	int16_t *out;
-	uint32_t tmp32, consumed;
+void AudioSynthWavetable::update(void) {
+	audio_block_t* block;
+	int16_t* out;
 	uint32_t index, scale;
-	int16_t s0, s1, s2, s3;
+	int16_t s1, s2;
 	uint32_t v1, v2, v3;
-	int16_t* waveform = (int16_t*)beginning;
-	int i;
 
-	if (!playing) return;
+	if (!playing)
+		return;
+
 	block = allocate();
-	if (block == NULL) return;
+	if (block == NULL)
+		return;
 
 	out = block->data;
-	in = next;
-	s0 = prior;
 
 	switch (playing) {
-	  case 0x81: // 16 bit PCM, 44100 Hz
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+	case 0x81: // 16 bit PCM, 44100 Hz
+		int16_t* waveform = (int16_t*)this->waveform;
+		for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+			//tone_phase = tone_phase > max_tone_phase ? tone_phase - max_tone_phase : tone_phase;
+			//index = tone_phase >> 32 - sample_count_magnitude; //enough bits to hold all index values for array
+			//val1 = arbdata[index];
+			//++index;
+			//index = index == sample_count ? 0 : index; //loops if at end of array
+			//val2 = arbdata[index];
+			//scale = (tone_phase >> 32 - sample_count_mag - 16) & 0xFFFF;
+			//val2 *= scale;
+			//val1 *= 0xFFFF - scale;
+			//val3 = (val1 + val2) >> 16;
+			//*bp++ = (short)((val3 * tone_amp) >> 15);
+
+			tone_phase += tone_incr;
 			index = tone_phase >> 16;
 			s1 = waveform[index];
 			s2 = waveform[++index];
@@ -86,12 +86,18 @@ void AudioSynthWavetable::update(void)
 			*out++ = (int16_t)(v3);
 			tone_phase += tone_incr;
 		}
-		//consumed = 128 * (tone_incr >> 16);
 		break;
 	}
-	prior = s0;
-	next = in;
+
 	transmit(block);
 	release(block);
 }
 
+void AudioSynthWavetable::frequency(float freq) {
+	if (freq < 0.0)
+		freq = 0.0;
+	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
+		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
+
+	tone_incr = freq * (0x80000000LL / AUDIO_SAMPLE_RATE_EXACT) + 0.5;
+}

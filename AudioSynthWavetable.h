@@ -24,8 +24,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef wavetable_h_
-#define wavetable_h_
+#pragma once
 
 #include "Arduino.h"
 #include "AudioStream.h"
@@ -33,60 +32,39 @@
 class AudioSynthWavetable : public AudioStream
 {
 public:
-	public:
-	AudioSynthWavetable(void) : AudioStream(0, NULL), playing(0) {
-		tone_phase = 0;
-        tone_incr = 0;
-        tone_amp = 0;
+	AudioSynthWavetable(void)
+	: AudioStream(0, NULL)
+	, length(0)
+	, length_bits(0)
+	, playing(0)
+	, tone_phase(0)
+	, tone_incr(0)
+	, tone_amp(0)
+	{}
+
+	void play(const unsigned int* data);
+	void stop(void);
+	bool isPlaying(void) { return playing; }
+	void frequency(float freq);
+
+	void begin(float freq, float amp) {
+		frequency(freq);
+		amplitude(amp);
 	}
 
-	void play(const unsigned int *data);
-	
-	void stop(void); 
-
-	bool isPlaying(void) { return playing; }
+	void amplitude(float v) {
+		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
+		tone_amp = (uint16_t)(32767.0*v);
+	}
 
 	virtual void update(void);
 
-    void begin(float freq, float amp) {
-        fundamental(freq);
-        amplitude(amp);
-    }
-
-    void fundamental(float freq) {
-        if (freq < 0.0) {
-            freq = 0.0;
-        } else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2) {
-            freq = AUDIO_SAMPLE_RATE_EXACT / 2;
-        }
-		
-        tone_incr = freq * (0x80000000LL/AUDIO_SAMPLE_RATE_EXACT) + 0.5;
-	}
-
-    void amplitude(float v) {
-        if (v < 0.0) {
-            v = 0.0;
-        } else if (v > 1.0) {
-            v = 1.0;
-        }
-
-        if ((tone_amp == 0) && v) {
-            tone_phase = 0;
-        }
-
-        tone_amp = (uint16_t)(32767.0*v);
-    }
 private:
-	const unsigned int *next;
-	const unsigned int *beginning;
-	uint32_t length;
-	int16_t prior;
-	volatile uint8_t playing;
-	
-	uint32_t tone_phase;
-	volatile uint32_t tone_incr;
-	uint16_t tone_amp;
-	short    tone_freq;
-};
+	uint32_t* waveform = NULL;
+	int length, length_bits;
 
-#endif
+	uint8_t playing;
+	uint32_t tone_phase;
+	uint32_t tone_incr;
+	uint16_t tone_amp;
+};
