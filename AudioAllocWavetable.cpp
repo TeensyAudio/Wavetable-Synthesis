@@ -12,7 +12,7 @@
 
 uint8_t AudioAllocWavetable::play(const unsigned int *data, float freq, float amp)
 {
-    for (int i=0; i<max_voices; i++) {
+    for (int i=0; i<MAX_VOICES; i++) {
         if (!voices[i].isPlaying()) {
             voices[i].begin(freq, amp);
             voices[i].play(data);
@@ -25,7 +25,7 @@ uint8_t AudioAllocWavetable::play(const unsigned int *data, float freq, float am
 
 /*void AudioAllocWavetable::play(const unsigned int *data, int tag)
 {
-    if (tag >= 0 && tag < max_voices) {
+    if (tag >= 0 && tag < MAX_VOICES) {
         if (voices[tag].isPlaying()) {
             voices[tag].stop();
         }
@@ -35,7 +35,7 @@ uint8_t AudioAllocWavetable::play(const unsigned int *data, float freq, float am
 
 void AudioAllocWavetable::stop(uint8_t voice)
 {
-    if (voice >= 0 && voice < max_voices) {
+    if (voice >= 0 && voice < MAX_VOICES) {
         voices[voice].stop();
     }
 }
