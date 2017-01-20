@@ -77,10 +77,6 @@ class AudioSynthWavetable : public AudioStream
         tone_amp = (uint16_t)(32767.0*v);
     }
     
-    float getMult() { return mult; }
-    
-    const unsigned int* getBeginning() { return beginning; }
-    
 private:
 	const unsigned int *next;
 	const unsigned int *beginning;
