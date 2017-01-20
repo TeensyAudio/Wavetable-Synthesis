@@ -26,13 +26,18 @@
 
 #include "AudioSynthWavetable.h"
 
-void AudioSynthWavetable::play(const unsigned int* data) {
+void AudioSynthWavetable::play(const unsigned int *data)
+{
+	int32_t length_temp;
 	uint32_t format;
-	uint32_t length_temp;
-
+	tone_phase = 0;
+	playing = 0;
+	prior = 0;
 	format = *data++;
-	length_temp = this->length = format & 0xFFFFFF;
-	length_bits = 1;
+	next = data;
+	beginning = data;
+	length_temp = length = format & 0xFFFFFF;
+	uint8_t length_bits = 1;
 	while (length_temp >>= 1) ++length_bits;
 	this->waveform = (uint32_t*)data;
 	this->playing = format >> 24;

@@ -1,6 +1,6 @@
 #include "piano.h" // http://www.freesound.org/people/kiddpark/sounds/201159/
 #include <Bounce.h>
-#include <AudioSynthWavetable.h>
+#include <AudioAllocWavetable.h>
 
 #include <Audio.h>
 #include <Wire.h>
@@ -22,6 +22,9 @@ AudioControlSGTL5000 sgtl5000_1;
 
 // Bounce objects to read pushbuttons 
 Bounce button[] = { {0, 15}, {1, 15}, {2, 15} };
+
+const int NUM_VOICES = 3;
+uint8_t voices[NUM_VOICES];
 
 void setup() {
 	Serial.begin(9600);
