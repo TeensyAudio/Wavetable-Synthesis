@@ -34,12 +34,19 @@ void AudioSynthWavetable::play(const unsigned int *data)
 	playing = 0;
 	format = *data++;
 	length_temp = length = format & 0xFFFFFF;
-   max_phase = length << 16;
+   length = 8000;
 	uint8_t length_bits = 1;
 	while (length_temp >>= 1) ++length_bits;
 	this->waveform = (uint32_t*)data;
 	this->playing = format >> 24;
-   sample_count = format & 0x80 ? length * 2 : length * 4;
+   
+   if(playing & 0x80) { //16-bit
+      sample_count = length * 2;
+      max_phase = sample_count << 16;
+   } else { //8-bit
+      sample_count = length * 4;
+      max_phase = sample_count << 16;
+   }
 }
 
 void AudioSynthWavetable::stop(void) {
