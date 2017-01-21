@@ -25,81 +25,112 @@
  */
 
 #include "AudioSynthWavetable.h"
+#include <SerialFlash.h>
 
-void AudioSynthWavetable::play(const unsigned int *data)
-{
-    uint32_t length_temp;
+void AudioSynthWavetable::play(const unsigned int *data) {
+	int32_t length_temp;
 	uint32_t format;
-	tone_phase = 0;
-	playing = 0;
-	prior = 0;
-    format = *data++;
-	next = data;
-	beginning = data;
-	length_temp = length = format & 0xFFFFFF;
-   length = 8000;
-	uint8_t length_bits = 1;
-	while (length_temp >>= 1) ++length_bits;
-	playing = format >> 24;
 
-   max_phase = length << 16;
+	this->tone_phase = 0;
+	this->playing = 0;
+	format = *data++;
 
-	//Can update this value to produce a different note.
-	//This value just plays back as normal
-	//tone_incr = 0x00010000;
-	
-	
-	//tone_amp = (uint16_t)(32767.0*.5);
+	// length
+	length_temp = this->length = (format & 0x00FFFFFF) * 2;
+	this->length_bits = 1;
+	while (length_temp >>= 1)
+		++length_bits;
+
+	//scale
+	scale_bits = 1;
+	for(int i=0; i < 32-length_bits; ++i) {
+		scale_bits = (scale_bits << 1) | 0x1;
+	}
+
+	//phase
+	max_phase = length << (32-length_bits);
+	frequency(.7); //better way to do this?
+
+	this->waveform = (uint32_t*)data;
+	this->playing = format >> 24;
+
+	//Serial.printf("length=%i, length_bits=%i, scale_bits=%i, tone_phase=%u, 
+	//tone_incr=%u\n", length, length_bits, scale_bits,  this->tone_phase, this->tone_incr);
 }
- 
-void AudioSynthWavetable::stop(void)
-{
+
+void AudioSynthWavetable::stop(void) {
 	playing = 0;
 }
 
-void AudioSynthWavetable::update(void)
-{
-	audio_block_t *block;
-	const unsigned int *in;
-	int16_t *out;
-	uint32_t tmp32, consumed;
+void AudioSynthWavetable::update(void) {
+	audio_block_t* block;
+	int16_t* out;
 	uint32_t index, scale;
-	int16_t s0, s1, s2, s3;
+	int16_t s1, s2;
 	uint32_t v1, v2, v3;
-	int16_t* waveform = (int16_t*)beginning;
-	int i;
 
-	if (!playing) return;
+	if (!playing)
+		return;
+
 	block = allocate();
-	if (block == NULL) return;
+	if (block == NULL)
+		return;
 
 	out = block->data;
-	in = next;
-	s0 = prior;
 
 	switch (playing) {
-	  case 0x81: // 16 bit PCM, 44100 Hz
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
-			index = tone_phase >> 16;
-			s1 = waveform[index];
-			s2 = waveform[++index];
-			scale = tone_phase & 0xFFFF;
+	case 0x81: // 16 bit PCM, 44100 Hz
+		int16_t* waveform = (int16_t*)this->waveform;
+		for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+/*
+			index = tone_phase >> scale_bits;
+			scale = tone_phase & scale_bits;
+			Serial.printf("length=%i, length_bits=%i, scale_bits=%i, tone_phase=%u, tone_incr=%u\n", length, length_bits, scale_bits,  this->tone_phase, this->tone_incr);
+			switch (length - index) {
+				case 0:
+					Serial.print("0\n");
+					tone_phase -= index;
+					s1 = waveform[0]; s2 = waveform[1];
+					break;
+				case 1:
+					Serial.print("1\n");
+					s1 = waveform[index]; s2 = waveform[0];
+					break;
+				default:
+					Serial.print("default\n");
+					s1 = waveform[index]; s2 = waveform[index+1];
+					break;
+			}
+			//Serial.printf("length=%i, length_bits=%i, scale_bits=%i, tone_phase=%u, 
+			//tone_incr=%u, index=%u, scale=%u \n", length, length_bits, scale_bits,  
+			//this->tone_phase, this->tone_incr, index, scale);
+			*/
+			index = tone_phase >> (32-length_bits);
+			scale = tone_phase & scale_bits;
+			s1 = waveform[index]; 
+			s2 = waveform[index+1];
 			v2 = s2 * scale;
-			v1 = s1 * (0xFFFF - scale);
+			v1 = s1 * (scale_bits - scale);
 			v3 = (v1 + v2) >> 16;
-			*out++ = (int16_t)(v3);
-			
-         tone_phase += tone_incr;
-         if(tone_phase >= max_phase) {
-            tone_phase = 0;
-         }
+			*out++ = (int16_t)v3;
+			//Serial.printf("s1=%u, s2=%u, middle=%u\n", s1, s2, v3);
+			tone_phase += tone_incr;
+			if(tone_phase >= max_phase) {
+				tone_phase -= max_phase;
+			}
 		}
-		//consumed = 128 * (tone_incr >> 16);
 		break;
 	}
-	prior = s0;
-	next = in;
+
 	transmit(block);
 	release(block);
 }
 
+void AudioSynthWavetable::frequency(float freq) {
+	if (freq < 0.0)
+		freq = 0.0;
+	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
+		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
+
+	tone_incr = freq * ((long long)(max_phase) / AUDIO_SAMPLE_RATE_EXACT) + 0.5;
+}
