@@ -16,22 +16,11 @@ uint8_t AudioAllocWavetable::play(const unsigned int *data, float freq, float am
         if (!voices[i].isPlaying()) {
             voices[i].begin(freq, amp);
             voices[i].play(data);
-            //break;
             return i;
         }
     }
     return -1;
 }
-
-/*void AudioAllocWavetable::play(const unsigned int *data, int tag)
-{
-    if (tag >= 0 && tag < MAX_VOICES) {
-        if (voices[tag].isPlaying()) {
-            voices[tag].stop();
-        }
-        voices[tag].play(data);
-    }
-}*/
 
 void AudioAllocWavetable::stop(uint8_t voice)
 {
