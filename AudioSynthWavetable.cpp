@@ -25,21 +25,26 @@
  */
 
 #include "AudioSynthWavetable.h"
+#include <SerialFlash.h>
 
-void AudioSynthWavetable::play(const unsigned int *data)
-{
+void AudioSynthWavetable::play(const unsigned int *data) {
 	int32_t length_temp;
 	uint32_t format;
-	tone_phase = 0;
-	playing = 0;
+
+	this->tone_phase = 0;
+	this->playing = 0;
 	format = *data++;
-	length_temp = length = format & 0xFFFFFF;
-   max_phase = length << 16;
-	uint8_t length_bits = 1;
-	while (length_temp >>= 1) ++length_bits;
+	//switch (format >>= 24) {
+	//	case 0x81: // 16 bit PCM, 44100 Hz
+	length_temp = this->length = (format & 0x00FFFFFF) * 2;
+	//		break;
+	//}
+	this->length_bits = 1;
+	while (length_temp >>= 1)
+		++length_bits;
 	this->waveform = (uint32_t*)data;
-	this->playing = format >> 24;
-   sample_count = format & 0x80 ? length * 2 : length * 4;
+	Serial.printf("length=%i, length_bits=%i, tone_phase=%u")
+	this->playing = format;
 }
 
 void AudioSynthWavetable::stop(void) {
@@ -66,33 +71,26 @@ void AudioSynthWavetable::update(void) {
 	case 0x81: // 16 bit PCM, 44100 Hz
 		int16_t* waveform = (int16_t*)this->waveform;
 		for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-			//tone_phase = tone_phase > max_tone_phase ? tone_phase - max_tone_phase : tone_phase;
-			//index = tone_phase >> 32 - sample_count_magnitude; //enough bits to hold all index values for array
-			//val1 = arbdata[index];
-			//++index;
-			//index = index == sample_count ? 0 : index; //loops if at end of array
-			//val2 = arbdata[index];
-			//scale = (tone_phase >> 32 - sample_count_mag - 16) & 0xFFFF;
-			//val2 *= scale;
-			//val1 *= 0xFFFF - scale;
-			//val3 = (val1 + val2) >> 16;
-			//*bp++ = (short)((val3 * tone_amp) >> 15);
-
-			index = tone_phase >> 16;
-			s1 = waveform[index];
-			index++;
-         index = index == sample_count ? 0 : index; //loops if at end of array
-			s2 = waveform[index];
-			scale = tone_phase & 0xFFFF;
+			index = tone_phase >> length_bits;
+			scale = (tone_phase << (32-17)) >> 16;//length_bits) >> 16;
+			switch (length - index) {
+			case 0:
+				tone_phase -= index;
+				s1 = waveform[0]; s2 = waveform[1];
+				break;
+			case 1:
+				s1 = waveform[index]; s2 = waveform[0];
+				break;
+			default:
+				s1 = waveform[index]; s2 = waveform[index+1];
+				break;
+			}
 			v2 = s2 * scale;
 			v1 = s1 * (0xFFFF - scale);
 			v3 = (v1 + v2) >> 16;
-			*out++ = (int16_t)(v3);
-
+			*out++ = (int16_t)v3;
+			//*out++ = (int16_t)((v3 * tone_amp) >> 16);
 			tone_phase += tone_incr;
-         if(tone_phase >= max_phase) {
-            tone_phase -= max_phase;
-         }
 		}
 		break;
 	}
