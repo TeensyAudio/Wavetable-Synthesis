@@ -43,7 +43,7 @@ void AudioSynthWavetable::play(const unsigned int *data) {
 	while (length_temp >>= 1)
 		++length_bits;
 	this->waveform = (uint32_t*)data;
-	Serial.printf("length=%i, length_bits=%i, tone_phase=%u")
+	Serial.printf("length=%i, length_bits=%i, tone_phase=%u", length, length_bits, this->tone_phase);
 	this->playing = format;
 }
 
