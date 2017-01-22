@@ -49,8 +49,11 @@ def main():
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
 
-	nameSplit = sample.name.split()
-	name = nameSplit[0]; #trimming white space from sample name (uses only up to the first whitespace character)
+	nameSplit = sample.name.split('-') #removing anything starting with a dash
+	name = nameSplit[0]; 
+	
+	#replace spaces with underscores
+	name.replace(" ", "_")
 
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
