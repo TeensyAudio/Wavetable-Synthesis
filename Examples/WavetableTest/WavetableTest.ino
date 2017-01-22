@@ -46,6 +46,7 @@ void setup() {
 
 void loop() {
 	// Update all the button objects
+
 	for (int i = 0; i < 3; ++i) {
 		button[i].update();
 		if (button[i].fallingEdge())
