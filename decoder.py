@@ -6,25 +6,23 @@ BCOUNT = 0
 WCOUNT = 1
 BUF32 = 0
 
-def main():
+def main(path, selection):
 	global BCOUNT
 	#Test code: Opens a specified .sf2 and prints out some info using sf2utils
-	with open('piano.sf2', 'rb') as sf2_file:
-		instr = 20
-		bag = 4
+	with open(path, 'rb') as sf2_file:
 		sf2 = Sf2File(sf2_file)
 		
-		valid = is_sample_valid(sf2.instruments[instr].bags[bag].sample)
+		valid = is_sample_valid(sf2.samples[selection])
 		
 		if valid[0] == False:
 			error(valid[1])
 			#return
 			
 		#Ignore extra 8 bits in the 24 bit specification
-		sf2.instruments[instr].bags[bag].sample.sm24_offset = None
+		sf2.samples[selection].sm24_offset = None
 		
 		#Get sample data from SF2
-		sample = sf2.instruments[instr].bags[bag].sample
+		sample = sf2.samples[selection]
 		
 		with open("SF2_Decoded_Samples.cpp", "w") as output_file:
 			with open("SF2_Decoded_Samples.h", "w") as header_file:
@@ -42,7 +40,6 @@ def export_sample(file, header_file, sample, PCM):
 	start_loop = sample.start_loop
 	end_loop = sample.end_loop
 	duration = sample.duration
-
 
 	#calculating lengths of each section#
 	a_length = start_loop/2
