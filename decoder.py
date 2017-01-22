@@ -1,16 +1,32 @@
 # Python script for decoding a .SF2 file for use with Wavetable library.
 from sf2utils.sf2parse import Sf2File
 import struct
+import sys
+import logging
 
 BCOUNT = 0
 WCOUNT = 1
 BUF32 = 0
 
-def main(path, selection):
+def main():
 	global BCOUNT
-	#Test code: Opens a specified .sf2 and prints out some info using sf2utils
+	#Disable warning logging to prevent sf2utils from logging any un-needed messages
+	logging.disable(logging.WARNING)
+	
+	if len(sys.argv) < 2:
+		path = raw_input("Please provide filepath to an SF2: ")
+	else:
+		path = sys.argv[1]
+
 	with open(path, 'rb') as sf2_file:
 		sf2 = Sf2File(sf2_file)
+		for i, j in enumerate(sf2.instruments, 1):
+			print("{}. {}".format(i, j.name))
+
+		print('Select an sample')
+		selection = int(input('Input the corresponding number: '))
+		selection = selection -1
+		print(sf2.samples[selection])
 		
 		valid = is_sample_valid(sf2.samples[selection])
 		
@@ -140,13 +156,6 @@ def export_sample(file, header_file, sample, PCM):
 	header_file.write("extern const unsigned int " + name + "_attack[" + str(attacklen) + "];\n")
 	header_file.write("extern const unsigned int " + name + "_decay[" + str(attacklen) + "];\n")
 
-	#for debugging:	
-	print(sample);
-	print(sample.name);
-	print(sample.original_pitch);
-	print(sample.sample_rate);
-	print(sample.sample_type);
-	print(sample.is_mono);
 
 	header_file.write("const std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
 	header_file.write("const std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
