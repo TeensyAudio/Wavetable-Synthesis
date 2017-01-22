@@ -103,9 +103,9 @@ def export_sample(file, header_file, sample, PCM):
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
 	header_file.write("\tconst int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
-	header_file.write("\tconst bool IS_MONO= " + str(sample.is_mono) + ";\n")
-	header_file.write("\tconst int LOOP_START " + str(start_loop) + ";\n")
-	header_file.write("\tconst int LOOP_END " + str(end_loop) + ";\n")
+	header_file.write("\tconst bool IS_MONO = " + str(sample.is_mono) + ";\n")
+	header_file.write("\tconst int LOOP_START = " + str(start_loop) + ";\n")
+	header_file.write("\tconst int LOOP_END = " + str(end_loop) + ";\n")
 	header_file.write("};\n")
 	
 	
