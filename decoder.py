@@ -3,6 +3,7 @@ from sf2utils.sf2parse import Sf2File
 import struct
 import sys
 import logging
+import sys, getopt
 
 BCOUNT = 0
 WCOUNT = 1
@@ -47,91 +48,32 @@ def main():
 
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
+
 	nameSplit = sample.name.split()
-	name = nameSplit[0];
+	name = nameSplit[0]; #trimming white space from sample name (uses only up to the first whitespace character)
+
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
 	start_loop = sample.start_loop
 	end_loop = sample.end_loop
 	duration = sample.duration
 
-	#print out attack
-	length = start_loop/2
+	B_COUNT = 0;
+	length = (sample.end - sample.start)/2
 	padlength = padding(length, 128)
-	attacklen = ((length + padlength) * 2 + 3)/4 + 1
+
+	#generating all three sections as one array
+	file.write("const unsigned int " + name + "_sample[" + str(length + padlength) + "] = {\n")
+	
+	#print out attack
 	if PCM == True:
 		format = 0x81
 	else:
 		format = 0x01
 
 	i = 0
-	file.write("const unsigned int " + name + "_attack[" + str(attacklen) + "] = {\n")
 	file.write("0x%0.8X," % (length | (format << 24)))
-	while i < start_loop:
-		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-		if PCM == True:
-			# Use PCM Encoding
-			print_bytes(file, audio)
-			print_bytes(file, audio >> 8)
-			#consuming 2 chars at a time, so add another increment
-			i = i + 2
-		else:
-			# Using ulaw encoding
-			print_bytes(file, ulaw_encode(audio))
-	
-	while padlength > 0:
-		print_bytes(file, 0)
-		padlength = padlength - 1
-	
-	file.write("};\n")
-
-	
-	#print out loop
-	BCOUNT = 0
-	length = (end_loop - start_loop)/2
-	padlength = padding(length, 128)
-	
-	looplen = ((length + padlength) * 2 + 3) / 4 + 1
-	if PCM == True:
-		format = 0x81
-	else:
-		format = 0x01
-
-	i = start_loop
-	file.write("const unsigned int " + name + "_Loop[" + str(looplen) + "] = {\n")
-	file.write("0x%0.8X," % (length | (format << 24)))
-	while i < end_loop:
-		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-		if PCM == True:
-			# Use PCM Encoding
-			print_bytes(file, audio)
-			print_bytes(file, audio >> 8)
-			#consuming 2 chars at a time, so add another increment
-			i = i + 2
-		else:
-			# Using ulaw encoding
-			print_bytes(file, ulaw_encode(audio))
-	
-	while padlength > 0:
-		print_bytes(file, 0)
-		padlength = padlength - 1
-	
-	file.write("};\n")
-
-	#print out decay
-	length = (sample.end - (sample.start + sample.end_loop))/2
-	padlength = padding(length, 128)
-	decaylen = ((length + padlength) * 2 + 3)/4 + 1
-	if PCM == True:
-		format = 0x81
-	else:
-		format = 0x01
-
-	end_index = sample.end - sample.start
-	i = sample.end_loop
-	file.write("const unsigned int " + name + "_decay[" + str(decaylen) + "] = {\n")
-	file.write("0x%0.8X," % (length | (format << 24)))
-	while i < end_index:
+	while i < length:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
 			# Use PCM Encoding
@@ -152,22 +94,21 @@ def export_sample(file, header_file, sample, PCM):
 
 	#Write sample to header file
 	header_file.write("#include <string>\n\n\n")
-	header_file.write("extern const unsigned int " + name + "_Loop[" + str(looplen) + "];\n")
-	header_file.write("extern const unsigned int " + name + "_attack[" + str(attacklen) + "];\n")
-	header_file.write("extern const unsigned int " + name + "_decay[" + str(attacklen) + "];\n")
+	
+	header_file.write("extern const unsigned int " + name + "_sample[" + str(length + padlength) + "];\n")
 
-
-	header_file.write("const std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
-	header_file.write("const std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
-	header_file.write("const int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
-	header_file.write("const int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
-	header_file.write("const int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
-	header_file.write("const bool IS_MONO= " + str(sample.is_mono) + ";\n")
+	header_file.write("struct " + name + "_info {\n")
+	header_file.write("\tconst std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
+	header_file.write("\tconst std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
+	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
+	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
+	header_file.write("\tconst int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
+	header_file.write("\tconst bool IS_MONO= " + str(sample.is_mono) + ";\n")
+	header_file.write("\tconst int LOOP_START " + str(start_loop) + ";\n")
+	header_file.write("\tconst int LOOP_END " + str(end_loop) + ";\n")
+	header_file.write("};\n")
 	
 	
-	
-
-		
 #Checks if the selected sample is valid. Input is a sample object, and output is 
 #a tuple with (boolean, error_message - if any)
 def is_sample_valid(sample):
