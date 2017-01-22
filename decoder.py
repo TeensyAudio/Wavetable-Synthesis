@@ -24,22 +24,33 @@ def main():
 		for i, j in enumerate(sf2.instruments, 1):
 			print("{}. {}".format(i, j.name))
 
-		print('Select an sample')
+		print('Select an instrument:')
 		selection = int(input('Input the corresponding number: '))
 		selection = selection -1
-		print(sf2.samples[selection])
 		
-		valid = is_sample_valid(sf2.samples[selection])
+		samples = []
+		notes = []
+		
+		print('Select a note:')
+		for bag in sf2.instruments[selection].bags:
+			if bag.sample != None and bag.sample.original_pitch not in notes:
+				samples.append(bag.sample)
+				notes.append(bag.sample.original_pitch)
+				
+		for i, j in enumerate(samples, 1):
+			print("{}. {}".format(i, j.original_pitch))
+		
+		sample_selection = int(input('Input the corresponding number: '))
+		
+		sample = samples[sample_selection]
+		valid = is_sample_valid(sample)
 		
 		if valid[0] == False:
 			error(valid[1])
 			#return
 			
 		#Ignore extra 8 bits in the 24 bit specification
-		sf2.samples[selection].sm24_offset = None
-		
-		#Get sample data from SF2
-		sample = sf2.samples[selection]
+		sample.sm24_offset = None
 		
 		with open("SF2_Decoded_Samples.cpp", "w") as output_file:
 			with open("SF2_Decoded_Samples.h", "w") as header_file:
@@ -103,9 +114,9 @@ def export_sample(file, header_file, sample, PCM):
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
 	header_file.write("\tconst int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
-	header_file.write("\tconst bool IS_MONO= " + str(sample.is_mono) + ";\n")
-	header_file.write("\tconst int LOOP_START " + str(start_loop) + ";\n")
-	header_file.write("\tconst int LOOP_END " + str(end_loop) + ";\n")
+	header_file.write("\tconst bool IS_MONO = " + str(sample.is_mono) + ";\n")
+	header_file.write("\tconst int LOOP_START = " + str(start_loop) + ";\n")
+	header_file.write("\tconst int LOOP_END = " + str(end_loop) + ";\n")
 	header_file.write("};\n")
 	
 	
