@@ -1,17 +1,20 @@
 # Python script for decoding a .SF2 file for use with Wavetable library.
 from sf2utils.sf2parse import Sf2File
 import struct
+import sys, getopt
 
 BCOUNT = 0
 WCOUNT = 1
 BUF32 = 0
 
-def main(path, selection):
+#def main(path, selection):
+def main():
 	global BCOUNT
 	#Test code: Opens a specified .sf2 and prints out some info using sf2utils
-	with open(path, 'rb') as sf2_file:
+	with open(sys.argv[1], 'rb') as sf2_file:
 		sf2 = Sf2File(sf2_file)
-		
+		selection = int(sys.argv[2])
+		print("SELECTION: " + str(selection))	
 		valid = is_sample_valid(sf2.samples[selection])
 		
 		if valid[0] == False:
@@ -41,6 +44,7 @@ def export_sample(file, header_file, sample, PCM):
 	end_loop = sample.end_loop
 	duration = sample.duration
 
+	B_COUNT = 0;
 	#calculating lengths of each section#
 	a_length = start_loop/2
 	padlength = padding(a_length, 128)
