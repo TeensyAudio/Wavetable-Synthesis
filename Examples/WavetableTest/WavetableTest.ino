@@ -39,9 +39,13 @@ void setup() {
 	for (int i = 0; i < 3; ++i)
 		mixer.gain(i, 0.4);
 
-	wavetable[0].begin(1.5, 0.5);
-	wavetable[1].begin(1.8, 0.5);
-	wavetable[2].begin(2, 0.5);
+	for (int i = 0; i < 3; ++i) {
+		wavetable[i].setSample(AudioWaveform_Loop);
+	}
+
+	wavetable[0].setFreqAmp(220.0, 0.5);
+	wavetable[1].setFreqAmp(440.0, 0.5);
+	wavetable[2].setFreqAmp(880.0, 0.5);
 }
 
 void loop() {
@@ -50,7 +54,7 @@ void loop() {
 	for (int i = 0; i < 3; ++i) {
 		button[i].update();
 		if (button[i].fallingEdge())
-			wavetable[i].play(AudioWaveform_Loop);
+			wavetable[i].play();
 		if (button[i].risingEdge())
 			wavetable[i].stop();
 	}

@@ -34,20 +34,24 @@ class AudioSynthWavetable : public AudioStream
 public:
 	AudioSynthWavetable(void)
 		: AudioStream(0, NULL)
+		, waveform(NULL)
 		, length(0)
 		, length_bits(0)
+		, sample_freq(440.0)
 		, playing(0)
 		, tone_phase(0)
+		, max_phase(0)
 		, tone_incr(0)
 		, tone_amp(0)
 	{}
 
-	void play(const unsigned int* data);
+	void setSample(const unsigned int* data);
+	void play(void);
 	void stop(void);
 	bool isPlaying(void) { return playing; }
 	void frequency(float freq);
 
-	void setNote(float freq, float amp) {
+	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
 		amplitude(amp);
 	}
@@ -60,12 +64,12 @@ public:
 	virtual void update(void);
 
 private:
-	uint32_t* waveform = NULL;
+	uint32_t* waveform;
 	int length, length_bits;
-
 	float sample_freq;
 	uint8_t playing;
 	uint32_t tone_phase;
+	uint32_t max_phase;
 	uint32_t tone_incr;
 	uint16_t tone_amp;
 };

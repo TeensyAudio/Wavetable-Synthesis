@@ -28,28 +28,26 @@
 #include <SerialFlash.h>
 
 void AudioSynthWavetable::setSample(const unsigned int *data) {
-	int32_t length_temp;
 	uint32_t format;
 
 	this->tone_phase = 0;
 	this->playing = 0;
-	format = *data++;
-	//switch (format >> 24) {
-	//	case 0x81: // 16 bit PCM, 44100 Hz
-	length_temp = this->length = (format & 0x00FFFFFF) * 2;
-	//		break;
-	//}
-	this->length_bits = 1;
-	while (length_temp >>= 1)
-		++length_bits;
+
+	//note: assuming 16-bit PCM at 44100 Hz for now
+	this->length = (*data++ & 0x00FFFFFF) * 2;
 	this->waveform = (uint32_t*)data;
-	Serial.printf("length=%i, length_bits=%i, tone_phase=%u, format=%u", length, length_bits, tone_phase, format);
+
+	this->length_bits = 1;
+	for (int len = this->length; len >>= 1; ++length_bits);
+	this->max_phase = (length - 1) << (32 - length_bits);
+
+	Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
 }
 
 void AudioSynthWavetable::play(void) {
 	if (waveform == NULL)
 		return;
-	this->playing = (this->waveform - 1) >> 24;
+	this->playing = 1;
 }
 
 void AudioSynthWavetable::stop(void) {
@@ -72,32 +70,22 @@ void AudioSynthWavetable::update(void) {
 
 	out = block->data;
 
-	switch (playing) {
-	case 0x81: // 16 bit PCM, 44100 Hz
-		int16_t* waveform = (int16_t*)this->waveform;
-		for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-			index = tone_phase >> (32 - length_bits);
-			scale = (tone_phase << length_bits) >> 16;
-			switch (length - index) {
-			case 0:
-				tone_phase -= index;
-				s1 = waveform[0]; s2 = waveform[1];
-				break;
-			case 1:
-				s1 = waveform[index]; s2 = waveform[0];
-				break;
-			default:
-				s1 = waveform[index]; s2 = waveform[index+1];
-				break;
-			}
-			v2 = s2 * scale;
-			v1 = s1 * (0xFFFF - scale);
-			v3 = (v1 + v2) >> 16;
-			*out++ = (int16_t)v3;
-			//*out++ = (int16_t)((v3 * tone_amp) >> 16);
-			tone_phase += tone_incr;
-		}
-		break;
+	//assuming 16 bit PCM, 44100 Hz
+	int16_t* waveform = (int16_t*)this->waveform;
+	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
+	Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
+	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+		tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - max_phase;
+		index = tone_phase >> (32 - length_bits);
+		scale = (tone_phase << length_bits) >> 16;
+		s1 = waveform[index];
+		s2 = waveform[index + 1];
+		v2 = s2 * scale;
+		v1 = s1 * (0xFFFF - scale);
+		v3 = (v1 + v2) >> 16;
+		*out++ = (int16_t)v3;
+		//*out++ = (int16_t)((v3 * tone_amp) >> 16);
+		tone_phase += tone_incr;
 	}
 
 	transmit(block);
@@ -110,9 +98,8 @@ void AudioSynthWavetable::frequency(float freq) {
 	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
 		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
 
-	//(0x80000000 >> (length_bits - 1) should give a bit in the proper place
-	//such that we are iterating through the sample exactly by one
-	//element. From there we merely need to adjust that value based on a ratio
-	//of the desired frequency to the frequency of what is in the sample
-	tone_incr = freq/sample_freq * (0x80000000 >> (length_bits - 1)) + 0.5;
+	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
+	//steps trhough the wavetable sample one element at a time; from there we
+	//only need to scale based a ratio of freq/sample_freq for the desired increment
+	tone_incr = (freq / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
 }
