@@ -33,8 +33,10 @@ def main():
 
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
+
 	nameSplit = sample.name.split()
-	name = nameSplit[0];
+	name = nameSplit[0]; #trimming white space from sample name (uses only up to the first whitespace character)
+
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
 	start_loop = sample.start_loop
@@ -42,20 +44,32 @@ def export_sample(file, header_file, sample, PCM):
 	duration = sample.duration
 
 
+	#calculating lengths of each section#
+	a_length = start_loop/2
+	padlength = padding(a_length, 128)
+	attacklen = ((a_length + padlength) * 2 + 3)/4 + 1
+	
+	l_length = (end_loop - start_loop)/2
+	padlength = padding(l_length, 128)
+	looplen = ((l_length + padlength) * 2 + 3) / 4 + 1
+	
+	d_length = (sample.end - (sample.start + sample.end_loop))/2
+	padlength = padding(d_length, 128)
+	decaylen = ((d_length + padlength) * 2 + 3)/4 + 1
 
-
+	#generating all three sections as one array
+	file.write("const unsigned int " + name + "_sample[" + str(attacklen+looplen+decaylen) + "] = {\n")
+	
 	#print out attack
-	length = start_loop/2
-	padlength = padding(length, 128)
-	attacklen = ((length + padlength) * 2 + 3)/4 + 1
 	if PCM == True:
 		format = 0x81
 	else:
 		format = 0x01
 
 	i = 0
-	file.write("const unsigned int " + name + "_attack[" + str(attacklen) + "] = {\n")
-	file.write("0x%0.8X," % (length | (format << 24)))
+	#file.write("const unsigned int " + name + "_attack[" + str(attacklen) + "] = {\n")
+	file.write("\n//********************attack********************//:\n");
+	file.write("0x%0.8X," % (a_length | (format << 24)))
 	while i < start_loop:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
@@ -72,23 +86,14 @@ def export_sample(file, header_file, sample, PCM):
 		print_bytes(file, 0)
 		padlength = padlength - 1
 	
-	file.write("};\n")
+	#file.write("};\n")
 
 	
 	#print out loop
-	BCOUNT = 0
-	length = (end_loop - start_loop)/2
-	padlength = padding(length, 128)
-	
-	looplen = ((length + padlength) * 2 + 3) / 4 + 1
-	if PCM == True:
-		format = 0x81
-	else:
-		format = 0x01
-
 	i = start_loop
-	file.write("const unsigned int " + name + "_Loop[" + str(looplen) + "] = {\n")
-	file.write("0x%0.8X," % (length | (format << 24)))
+	#file.write("const unsigned int " + name + "_Loop[" + str(looplen) + "] = {\n")
+	file.write("\n//*********************loop*********************//:\n");
+	file.write("0x%0.8X," % (l_length | (format << 24)))
 	while i < end_loop:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
@@ -105,21 +110,14 @@ def export_sample(file, header_file, sample, PCM):
 		print_bytes(file, 0)
 		padlength = padlength - 1
 	
-	file.write("};\n")
+	#file.write("};\n")
 
 	#print out decay
-	length = (sample.end - (sample.start + sample.end_loop))/2
-	padlength = padding(length, 128)
-	decaylen = ((length + padlength) * 2 + 3)/4 + 1
-	if PCM == True:
-		format = 0x81
-	else:
-		format = 0x01
-
 	end_index = sample.end - sample.start
 	i = sample.end_loop
-	file.write("const unsigned int " + name + "_decay[" + str(decaylen) + "] = {\n")
-	file.write("0x%0.8X," % (length | (format << 24)))
+	#file.write("const unsigned int " + name + "_decay[" + str(decaylen) + "] = {\n")
+	file.write("\n//********************decay********************//:\n");
+	file.write("0x%0.8X," % (d_length | (format << 24)))
 	while i < end_index:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
@@ -141,10 +139,12 @@ def export_sample(file, header_file, sample, PCM):
 
 	#Write sample to header file
 	header_file.write("#include <string>\n\n\n")
-	header_file.write("extern const unsigned int " + name + "_Loop[" + str(looplen) + "];\n")
-	header_file.write("extern const unsigned int " + name + "_attack[" + str(attacklen) + "];\n")
-	header_file.write("extern const unsigned int " + name + "_decay[" + str(attacklen) + "];\n")
+	
+	#header_file.write("extern const unsigned int " + name + "_Loop[" + str(looplen) + "];\n")
+	#header_file.write("extern const unsigned int " + name + "_attack[" + str(attacklen) + "];\n")
+	#header_file.write("extern const unsigned int " + name + "_decay[" + str(decaylen) + "];\n")
 
+	header_file.write("extern const unsigned int " + name + "_sample[" + str(attacklen+looplen+decaylen) + "];\n")
 	#for debugging:	
 	print(sample);
 	print(sample.name);
@@ -153,12 +153,17 @@ def export_sample(file, header_file, sample, PCM):
 	print(sample.sample_type);
 	print(sample.is_mono);
 
-	header_file.write("const std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
-	header_file.write("const std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
-	header_file.write("const int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
-	header_file.write("const int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
-	header_file.write("const int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
-	header_file.write("const bool IS_MONO= " + str(sample.is_mono) + ";\n")
+	header_file.write("struct " + name + "_info {\n")
+	header_file.write("\tconst std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
+	header_file.write("\tconst std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
+	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
+	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
+	header_file.write("\tconst int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
+	header_file.write("\tconst bool IS_MONO= " + str(sample.is_mono) + ";\n")
+	header_file.write("\tconst int ATTACK_LENGTH " + str(attacklen) + ";\n")
+	header_file.write("\tconst int LOOP_LENGTH " + str(looplen) + ";\n")
+	header_file.write("\tconst int DECAY_LENGTH " + str(decaylen) + ";\n")
+	header_file.write("};\n")
 	
 	
 	
