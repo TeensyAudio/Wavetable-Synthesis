@@ -43,9 +43,9 @@ void setup() {
 		wavetable[i].setSample(AudioWaveform_Loop);
 	}
 
-	wavetable[0].setFreqAmp(220.0, 0.5);
-	wavetable[1].setFreqAmp(440.0, 0.5);
-	wavetable[2].setFreqAmp(880.0, 0.5);
+	wavetable[0].setFreqAmp(523.25, 0.5);
+	wavetable[1].setFreqAmp(659.25, 0.5);
+	wavetable[2].setFreqAmp(783.99, 0.5);
 }
 
 void loop() {

@@ -47,6 +47,7 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 void AudioSynthWavetable::play(void) {
 	if (waveform == NULL)
 		return;
+	tone_phase = 0;
 	this->playing = 1;
 }
 
