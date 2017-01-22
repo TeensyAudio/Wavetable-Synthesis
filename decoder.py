@@ -26,7 +26,7 @@ def main():
 
 		print('Select an instrument:')
 		selection = int(input('Input the corresponding number: '))
-		selection = selection -1
+		selection = selection - 1
 		
 		samples = []
 		notes = []
@@ -41,6 +41,7 @@ def main():
 			print("{}. {}".format(i, j.original_pitch))
 		
 		sample_selection = int(input('Input the corresponding number: '))
+		sample_selection = sample_selection - 1
 		
 		sample = samples[sample_selection]
 		valid = is_sample_valid(sample)
