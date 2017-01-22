@@ -47,7 +47,7 @@ public:
 	bool isPlaying(void) { return playing; }
 	void frequency(float freq);
 
-	void begin(float freq, float amp) {
+	void setNote(float freq, float amp) {
 		frequency(freq);
 		amplitude(amp);
 	}
@@ -63,6 +63,7 @@ private:
 	uint32_t* waveform = NULL;
 	int length, length_bits;
 
+	float sample_freq;
 	uint8_t playing;
 	uint32_t tone_phase;
 	uint32_t tone_incr;

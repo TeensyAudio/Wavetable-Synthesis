@@ -27,14 +27,14 @@
 #include "AudioSynthWavetable.h"
 #include <SerialFlash.h>
 
-void AudioSynthWavetable::play(const unsigned int *data) {
+void AudioSynthWavetable::setSample(const unsigned int *data) {
 	int32_t length_temp;
 	uint32_t format;
 
 	this->tone_phase = 0;
 	this->playing = 0;
 	format = *data++;
-	//switch (format >>= 24) {
+	//switch (format >> 24) {
 	//	case 0x81: // 16 bit PCM, 44100 Hz
 	length_temp = this->length = (format & 0x00FFFFFF) * 2;
 	//		break;
@@ -43,8 +43,13 @@ void AudioSynthWavetable::play(const unsigned int *data) {
 	while (length_temp >>= 1)
 		++length_bits;
 	this->waveform = (uint32_t*)data;
-	Serial.printf("length=%i, length_bits=%i, tone_phase=%u")
-	this->playing = format;
+	Serial.printf("length=%i, length_bits=%i, tone_phase=%u, format=%u", length, length_bits, tone_phase, format);
+}
+
+void AudioSynthWavetable::play(void) {
+	if (waveform == NULL)
+		return;
+	this->playing = (this->waveform - 1) >> 24;
 }
 
 void AudioSynthWavetable::stop(void) {
@@ -71,8 +76,8 @@ void AudioSynthWavetable::update(void) {
 	case 0x81: // 16 bit PCM, 44100 Hz
 		int16_t* waveform = (int16_t*)this->waveform;
 		for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-			index = tone_phase >> length_bits;
-			scale = (tone_phase << (32-17)) >> 16;//length_bits) >> 16;
+			index = tone_phase >> (32 - length_bits);
+			scale = (tone_phase << length_bits) >> 16;
 			switch (length - index) {
 			case 0:
 				tone_phase -= index;
@@ -105,5 +110,9 @@ void AudioSynthWavetable::frequency(float freq) {
 	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
 		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
 
-	tone_incr = freq * (0x80000000LL / AUDIO_SAMPLE_RATE_EXACT) + 0.5;
+	//(0x80000000 >> (length_bits - 1) should give a bit in the proper place
+	//such that we are iterating through the sample exactly by one
+	//element. From there we merely need to adjust that value based on a ratio
+	//of the desired frequency to the frequency of what is in the sample
+	tone_incr = freq/sample_freq * (0x80000000 >> (length_bits - 1)) + 0.5;
 }
