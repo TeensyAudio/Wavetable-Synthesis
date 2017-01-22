@@ -41,16 +41,21 @@ void AudioSynthWavetable::play(const unsigned int *data) {
 	while (length_temp >>= 1)
 		++length_bits;
 
-	//scale
-	scale_bits = 1;
-	for(int i=0; i < 32-length_bits; ++i) {
-		scale_bits = (scale_bits << 1) | 0x1;
+	// scale & phase
+	// scale can't go higher than 0xFFFF because it causes the v1, v2, v3 values
+	// to overflow in the update loop causing static
+	if(length_bits <= 16) {
+		scale_bits = 0xFFFF; 
+		max_phase = length << 16;
+	} else {
+		scale_bits = 1;
+		for(int i=0; i < 32-length_bits; ++i) {
+			scale_bits = (scale_bits << 1) | 0x1;
+		}
+		max_phase = length << (32-length_bits);
 	}
-
-	//phase
-	max_phase = length << (32-length_bits);
+	
 	frequency(.7); //better way to do this?
-
 	this->waveform = (uint32_t*)data;
 	this->playing = format >> 24;
 
@@ -109,8 +114,8 @@ void AudioSynthWavetable::update(void) {
 			scale = tone_phase & scale_bits;
 			s1 = waveform[index]; 
 			s2 = waveform[index+1];
-			v2 = s2 * scale;
-			v1 = s1 * (scale_bits - scale);
+			v2 = (s2 * scale);
+			v1 = (s1 * (scale_bits - scale));
 			v3 = (v1 + v2) >> 16;
 			*out++ = (int16_t)v3;
 			//Serial.printf("s1=%u, s2=%u, middle=%u\n", s1, s2, v3);
