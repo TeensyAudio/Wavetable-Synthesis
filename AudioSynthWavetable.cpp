@@ -32,7 +32,7 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	this->playing = 0;
 
 	//note: assuming 16-bit PCM at 44100 Hz for now
-	this->length = (*data++ & 0x00FFFFFF) * 2;
+	this->length = (*data++ & 0x00FFFFFF);
 	this->waveform = (uint32_t*)data;
 
 	this->length_bits = 1;
