@@ -9,6 +9,7 @@ import time
 BCOUNT = 0
 WCOUNT = 1
 BUF32 = 0
+DCOUNT = 0
 
 def print_menu(menu_items):
     if len(menu_items) < 1:
@@ -71,7 +72,6 @@ def animate(num=5, time_=0.1, pad=' ', smbl=' '):
 def main():
     global BCOUNT
     global DCOUNT
-    DCOUNT = 0
     #Disable warning logging to prevent sf2utils from logging any un-needed messages
     logging.disable(logging.WARNING)
     print 150*'\n'
@@ -117,8 +117,9 @@ def main():
                 print '{} contains {} samples.'.format(sf2.instruments[instrument].name, len(samples))
                 print_menu(samples)
                 sample = safe_input('Select Sample [1-{}]: '.format(len(samples)), int, 1, len(samples))
-                animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
-                decodeIt(path, sample-1, DCOUNT=DCOUNT+1)
+                #animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
+                DCOUNT=DCOUNT+1
+                decodeIt(path, sample-1, DCOUNT)
                 i_result = menu(options2)
                 if i_result == 1:
                     continue
@@ -141,8 +142,9 @@ def main():
             while True:
                 sample = safe_input('Select Sample [1-{}]: '.format(
                     len(samples)), int, 1, len(samples))
-                animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
-                decodeIt(path, sample-1, DCOUNT=DCOUNT+1)
+                #animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
+                DCOUNT=DCOUNT+1
+                decodeIt(path, sample-1, DCOUNT)
                 s_result = menu(options2)
                 if s_result == 1:
                     continue
@@ -157,7 +159,7 @@ def main():
                     sys.exit('Program Terminated by User')
 
         elif choice == 3:
-            animate(num=15, time_=0.16, smbl=' Exiting ')
+            #animate(num=15, time_=0.16, smbl=' Exiting ')
             sys.exit('Program Terminated by User')
         else:   #shouldn't be reached
             raw_input("Wrong option selection. Enter any key to try again..")
@@ -207,9 +209,12 @@ def decodeIt(path, sample_selection, DCOUNT):
 
         #If a sample has already been exported, set mode to
         #append rather than overwrite
+        print 'DCOUNT is {}'.format(DCOUNT)
         mode = 'w'
         if DCOUNT > 1:
             mode = 'a'
+
+
 
         with open("SF2_Decoded_Samples.cpp", mode) as output_file:
             with open("SF2_Decoded_Samples.h", mode) as header_file:
