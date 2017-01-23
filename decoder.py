@@ -57,6 +57,7 @@ def menu(choices):
 #['|','/','--','\\']
 def animate(num=5, time_=0.1, pad=' ', smbl=' '):
     for i in range(num):
+        sys.stdout.flush()
         sys.stdout.write("\r{}{}{}{}{}{}".format(pad*i,
             smbl[i%len(smbl)], smbl[(i+1)%len(smbl)],
             smbl[(i+2)%len(smbl)], smbl[(i+3)%len(smbl)],
@@ -151,11 +152,11 @@ def main():
                 elif s_result == 3:
                     break
                 elif s_result == 4:
-                    animate(num=15, time_=0.16, smbl='  Exiting ')
+                    animate(num=15, time_=0.16, smbl=' Exiting ')
                     sys.exit('Program Terminated by User')
 
         elif choice == 3:
-            animate(num=15, time_=0.16, smbl='  Exiting ')
+            animate(num=15, time_=0.16, smbl=' Exiting ')
             sys.exit('Program Terminated by User')
         else:   #shouldn't be reached
             raw_input("Wrong option selection. Enter any key to try again..")
