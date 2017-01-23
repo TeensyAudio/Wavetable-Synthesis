@@ -57,9 +57,10 @@ def menu(choices):
 #['|','/','--','\\']
 def animate(num=5, time_=0.1, pad=' ', smbl=' '):
     for i in range(num):
-        sys.stdout.write("\r{}{}{}{}{}".format(pad*i,
+        sys.stdout.write("\r{}{}{}{}{}{}".format(pad*i,
             smbl[i%len(smbl)], smbl[(i+1)%len(smbl)],
-            smbl[(i+2)%len(smbl)], smbl[(i+3)%len(smbl)]))
+            smbl[(i+2)%len(smbl)], smbl[(i+3)%len(smbl)],
+            smbl[(i+4)%len(smbl)]))
         sys.stdout.flush()
         time.sleep(time_)
     sys.stdout.write('\r{}{}'.format(pad*(num+1), ' '))
@@ -114,7 +115,7 @@ def main():
                 print '{} contains {} samples.'.format(sf2.instruments[instrument].name, len(samples))
                 print_menu(samples)
                 sample = safe_input('Select Sample [1-{}]: '.format(len(samples)), int, 1, len(samples))
-                print 'Exporting Sample...'
+                animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
                 decodeIt(path, sample-1, count=count+1)
                 i_result = menu(options2)
                 if i_result == 1:
@@ -138,7 +139,7 @@ def main():
             while True:
                 sample = safe_input('Select Sample [1-{}]: '.format(
                     len(samples)), int, 1, len(samples))
-                print 'Exporting Sample...'
+                animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
                 decodeIt(path, sample-1, count=count+1)
                 s_result = menu(options2)
                 if s_result == 1:
