@@ -232,7 +232,8 @@ def export_sample(file, header_file, sample, PCM):
 	duration = sample.duration
 
 	B_COUNT = 0;
-	length = (sample.end - sample.start)/2
+	length_16 = sample.end - sample.start
+	length = length_16/2
 	padlength = padding(length, 128)
 
 	#Write array init to header file.
@@ -248,7 +249,7 @@ def export_sample(file, header_file, sample, PCM):
 		format = 0x01
 
 	i = 0
-	file.write("0x%0.8X," % (length | (format << 24)))
+	file.write("0x%0.8X," % (length_16 | (format << 24)))
 	while i < length:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
