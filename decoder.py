@@ -224,11 +224,6 @@ def decodeIt(path, sample_selection, DCOUNT):
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
 
-	nameSplit = sample.name.split('-') #removing anything starting with a dash
-	name = nameSplit[0];
-
-	#replace spaces with underscores
-	name.replace(" ", "_")
 
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
@@ -237,10 +232,14 @@ def export_sample(file, header_file, sample, PCM):
 	duration = sample.duration
 
 	B_COUNT = 0;
-	length = (sample.end - sample.start)/2
+	length_16 = sample.end - sample.start
+	length = length_16/2
 	padlength = padding(length, 128)
 
-	#generating all three sections as one array
+	#Write array init to header file.
+	header_file.write("extern const unsigned int " + name + "_sample[" + str(length + padlength) + "];\n")
+	
+	#Write array contents to .cpp
 	file.write("const unsigned int " + name + "_sample[" + str(length + padlength) + "] = {\n")
 
 	#print out attack
@@ -250,7 +249,7 @@ def export_sample(file, header_file, sample, PCM):
 		format = 0x01
 
 	i = 0
-	file.write("0x%0.8X," % (length | (format << 24)))
+	file.write("0x%0.8X," % (length_16 | (format << 24)))
 	while i < length:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
@@ -271,19 +270,12 @@ def export_sample(file, header_file, sample, PCM):
 
 
 	#Write sample to header file
-	header_file.write("#include <string>\n\n\n")
-
-	header_file.write("extern const unsigned int " + name + "_sample[" + str(length + padlength) + "];\n")
-
-	header_file.write("struct " + name + "_info {\n")
-	header_file.write("\tconst std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
-	header_file.write("\tconst std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
+	header_file.write("struct sample_info {\n")
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
-	header_file.write("\tconst int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
 	header_file.write("\tconst bool IS_MONO = " + str(sample.is_mono) + ";\n")
 	header_file.write("\tconst int LOOP_START = " + str(start_loop) + ";\n")
-	header_file.write("\tconst int LOOP_END = " + str(end_loop) + ";\n")
+	header_file.write("\tconst int LOOP_END = " + str(end_loop/2) + ";\n")
 	header_file.write("};\n")
 
 
