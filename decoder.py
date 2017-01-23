@@ -235,7 +235,10 @@ def export_sample(file, header_file, sample, PCM):
 	length = (sample.end - sample.start)/2
 	padlength = padding(length, 128)
 
-	#generating all three sections as one array
+	#Write array init to header file.
+	header_file.write("extern const unsigned int " + name + "_sample[" + str(length + padlength) + "];\n")
+	
+	#Write array contents to .cpp
 	file.write("const unsigned int " + name + "_sample[" + str(length + padlength) + "] = {\n")
 
 	#print out attack
@@ -268,14 +271,11 @@ def export_sample(file, header_file, sample, PCM):
 	#Write sample to header file
 	header_file.write("#include <string>\n\n\n")
 
-	header_file.write("extern const unsigned int " + name + "_sample[" + str(length + padlength) + "];\n")
-
 	header_file.write("struct " + name + "_info {\n")
 	header_file.write("\tconst std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
 	header_file.write("\tconst std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
-	header_file.write("\tconst int SAMPLE_NAME = " + str(sample.sample_type) + ";\n")
 	header_file.write("\tconst bool IS_MONO = " + str(sample.is_mono) + ";\n")
 	header_file.write("\tconst int LOOP_START = " + str(start_loop) + ";\n")
 	header_file.write("\tconst int LOOP_END = " + str(end_loop/2) + ";\n")
