@@ -70,6 +70,8 @@ def animate(num=5, time_=0.1, pad=' ', smbl=' '):
 
 def main():
     global BCOUNT
+    global DCOUNT
+    DCOUNT = 0
     #Disable warning logging to prevent sf2utils from logging any un-needed messages
     logging.disable(logging.WARNING)
     print 150*'\n'
@@ -85,7 +87,6 @@ def main():
     with open (path, 'rb') as sf2_file:
         sf2 = Sf2File(sf2_file)
 
-    count = 0
     options = ('Select by Instrument', 'Select by Sample', 'Quit')
     options2 = ('Select Again', 'Repeat List', 'Back', 'Quit')
     while True:
@@ -117,7 +118,7 @@ def main():
                 print_menu(samples)
                 sample = safe_input('Select Sample [1-{}]: '.format(len(samples)), int, 1, len(samples))
                 animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
-                decodeIt(path, sample-1, count=count+1)
+                decodeIt(path, sample-1, DCOUNT=DCOUNT+1)
                 i_result = menu(options2)
                 if i_result == 1:
                     continue
@@ -141,7 +142,7 @@ def main():
                 sample = safe_input('Select Sample [1-{}]: '.format(
                     len(samples)), int, 1, len(samples))
                 animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
-                decodeIt(path, sample-1, count=count+1)
+                decodeIt(path, sample-1, DCOUNT=DCOUNT+1)
                 s_result = menu(options2)
                 if s_result == 1:
                     continue
@@ -190,7 +191,7 @@ def main():
 		#sample_selection = int(input('Input the corresponding number: '))
 		#sample_selection = sample_selection - 1
 
-def decodeIt(path, sample_selection, count):
+def decodeIt(path, sample_selection, DCOUNT):
     with open(path, 'rb') as sf2_file:
         sf2 = Sf2File(sf2_file)
 
@@ -207,7 +208,7 @@ def decodeIt(path, sample_selection, count):
         #If a sample has already been exported, set mode to
         #append rather than overwrite
         mode = 'w'
-        if count >1:
+        if DCOUNT > 1:
             mode = 'a'
 
         with open("SF2_Decoded_Samples.cpp", mode) as output_file:
