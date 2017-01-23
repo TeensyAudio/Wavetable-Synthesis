@@ -47,6 +47,8 @@ public:
 
 	void setSample(const unsigned int* data);
 	void play(void);
+	void playFrequency(float freq);
+	void playNote(byte note);
 	void stop(void);
 	bool isPlaying(void) { return playing; }
 	void frequency(float freq);

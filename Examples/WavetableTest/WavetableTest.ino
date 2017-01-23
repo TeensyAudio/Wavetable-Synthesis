@@ -36,16 +36,10 @@ void setup() {
 	sgtl5000_1.enable();
 	sgtl5000_1.volume(0.5);
 
-	for (int i = 0; i < 3; ++i)
-		mixer.gain(i, 0.4);
-
 	for (int i = 0; i < 3; ++i) {
+		mixer.gain(i, 0.4);
 		wavetable[i].setSample(AudioWaveform_Loop);
 	}
-
-	wavetable[0].setFreqAmp(523.25, 0.5);
-	wavetable[1].setFreqAmp(659.25, 0.5);
-	wavetable[2].setFreqAmp(783.99, 0.5);
 }
 
 void loop() {
@@ -53,8 +47,14 @@ void loop() {
 
 	for (int i = 0; i < 3; ++i) {
 		button[i].update();
+		byte note = 0;
+		switch (i) {
+		case 0: note = 72; break;
+		case 1: note = 76; break;
+		case 2: note = 79; break;
+		}
 		if (button[i].fallingEdge())
-			wavetable[i].play();
+			wavetable[i].playNote(note);
 		if (button[i].risingEdge())
 			wavetable[i].stop();
 	}

@@ -41,7 +41,7 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	for (int len = this->length; len >>= 1; ++length_bits);
 	this->max_phase = (length - 1) << (32 - length_bits);
 
-	Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
+	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
 }
 
 void AudioSynthWavetable::play(void) {
@@ -49,6 +49,19 @@ void AudioSynthWavetable::play(void) {
 		return;
 	tone_phase = 0;
 	this->playing = 1;
+}
+
+void AudioSynthWavetable::playFrequency(float freq) {
+	if (waveform == NULL)
+		return;
+	frequency(freq);
+	tone_phase = 0;
+	this->playing = 1;
+}
+
+void AudioSynthWavetable::playNote(byte note) {
+	float freq = 440.0 * pow(2.0, (note - 69) / 12.0);
+	playFrequency(freq);
 }
 
 void AudioSynthWavetable::stop(void) {
@@ -74,7 +87,7 @@ void AudioSynthWavetable::update(void) {
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)this->waveform;
 	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
-	Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
+	//Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - max_phase;
 		index = tone_phase >> (32 - length_bits);
