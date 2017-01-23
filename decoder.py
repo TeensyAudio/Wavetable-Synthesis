@@ -219,11 +219,6 @@ def decodeIt(path, sample_selection, DCOUNT):
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
 
-	nameSplit = sample.name.split('-') #removing anything starting with a dash
-	name = nameSplit[0];
-
-	#replace spaces with underscores
-	name.replace(" ", "_")
 
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
@@ -270,11 +265,7 @@ def export_sample(file, header_file, sample, PCM):
 
 
 	#Write sample to header file
-	header_file.write("#include <string>\n\n\n")
-
-	header_file.write("struct " + name + "_info {\n")
-	header_file.write("\tconst std::string SAMPLE_INFO = \"" + str(sample) + "\";\n")
-	header_file.write("\tconst std::string SAMPLE_NAME = \"" + str(sample.name) + "\";\n")
+	header_file.write("struct sample_info {\n")
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
 	header_file.write("\tconst bool IS_MONO = " + str(sample.is_mono) + ";\n")
