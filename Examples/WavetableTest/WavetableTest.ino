@@ -2,76 +2,61 @@
 #include <Bounce.h>
 #include <AudioAllocWavetable.h>
 
-///////////////////////////////////
-// copy the Design Tool code here
-///////////////////////////////////
-
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
 
-// GUItool: begin automatically generated code
-AudioAllocWavetable      alloc;
-AudioMixer4              mixer1;         //xy=371.3332977294922,158.3333282470703
-AudioOutputI2S           i2s1;           //xy=525.3333282470703,184.3333282470703
-AudioConnection          patchCord1(*alloc.getVoice(0), 0, mixer1, 0);
-AudioConnection          patchCord2(*alloc.getVoice(1), 0, mixer1, 1);
-AudioConnection          patchCord3(*alloc.getVoice(2), 0, mixer1, 2);
-AudioConnection          patchCord4(mixer1, 0, i2s1, 0);
-AudioConnection          patchCord5(mixer1, 0, i2s1, 1);
-AudioControlSGTL5000     sgtl5000_1;     //xy=353.3333282470703,260.33331298828125
-// GUItool: end automatically generated code
+AudioSynthWavetable wavetable[3];
+AudioMixer4 mixer;
+AudioOutputI2S i2s1;
+AudioConnection patchCord[] = {
+	{wavetable[0], 0, mixer, 0},
+	{wavetable[1], 0, mixer, 1},
+	{wavetable[2], 0, mixer, 2},
+	{mixer, 0, i2s1, 0},
+	{mixer, 0, i2s1, 1}
+};
+AudioControlSGTL5000 sgtl5000_1;
 
 // Bounce objects to read pushbuttons 
-Bounce button0 = Bounce(0, 15);
-Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
-Bounce button2 = Bounce(2, 15);
+Bounce button[] = { {0, 15}, {1, 15}, {2, 15} };
 
 const int NUM_VOICES = 3;
 uint8_t voices[NUM_VOICES];
 
 void setup() {
-  Serial.begin(9600);
-  pinMode(0, INPUT_PULLUP);
-  pinMode(1, INPUT_PULLUP);
-  pinMode(2, INPUT_PULLUP);
-  AudioMemory(10);
-  sgtl5000_1.enable();
-  sgtl5000_1.volume(0.5);
-  mixer1.gain(0, 0.4);
-  mixer1.gain(1, 0.4);
-  mixer1.gain(2, 0.4);
-  for (int i=0; i<NUM_VOICES; i++) {
-    voices[i]=0;
-  }
+	Serial.begin(9600);
+
+	for (int i = 0; i < 3; ++i)
+		pinMode(i, INPUT_PULLUP);
+
+	AudioMemory(10);
+	sgtl5000_1.enable();
+	sgtl5000_1.volume(0.5);
+
+	for (int i = 0; i < 3; ++i) {
+		mixer.gain(i, 0.4);
+		wavetable[i].setSample(AudioWaveform_Loop);
+	}
 }
 
 void loop() {
-  // Update all the button objects
-  button0.update();
-  button1.update();
-  button2.update();
+	// Update all the button objects
 
-  if (button0.fallingEdge()) {
-    voices[0] = alloc.play(AudioWaveform_Loop, 2, 0.5);
-  }
-  if (button1.fallingEdge()) {
-    voices[1] = alloc.play(AudioWaveform_Loop, 1.5, 0.5);
-  }
-  if (button2.fallingEdge()) {
-    voices[2] = alloc.play(AudioWaveform_Loop, 1.8, 0.5);
-  }
-  if (button0.risingEdge()) {
-    alloc.stop(voices[0]);
-  }
-  if (button1.risingEdge()) {
-    alloc.stop(voices[1]);
-  }
-  if (button2.risingEdge()) {
-    alloc.stop(voices[2]);
-  }
-  
+	for (int i = 0; i < 3; ++i) {
+		button[i].update();
+		byte note = 0;
+		switch (i) {
+		case 0: note = 72; break;
+		case 1: note = 76; break;
+		case 2: note = 79; break;
+		}
+		if (button[i].fallingEdge())
+			wavetable[i].playNote(note);
+		if (button[i].risingEdge())
+			wavetable[i].stop();
+	}
 }
 
