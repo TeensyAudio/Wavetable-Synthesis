@@ -11,48 +11,41 @@
 
 #include "AudioSynthWavetable.h"
 
-const uint8_t MAX_VOICES = 0xFF;    // Number of voices
+const float AMP_DEF = 0.5
 
 class AudioAllocWavetable
 {
 public:
-    AudioAllocWavetable(void) { }
-    
-    // Find an available voice and make it play audio data.
-    // Return the index of the voice found.
-    // If there are no available voices, return -1.
-    // data:    pointer to audio sample byte data
-    // freq:    frequency multiplier
-    // amp:     set amplitude
-    uint8_t play(const unsigned int *data, float freq, float amp);
-    
-    // If a voice is playing, stop it.
-    // voice:   the voice to stop playing
-    void stop(uint8_t voice);
-    
-    // Return the number of available voices.
-    uint8_t available(void)
+    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t length)
     {
-        int ret = 0;
-        for (int i=0; i<MAX_VOICES; i++) {
-            if (!voices[i].isPlaying()) {
-                ret++;
-            }
-        }
-        return ret;
+        init(voices, length, NULL, AMP_DEF);
     }
     
-    // Return a pointer to the voice at index tag.
-    // If tag is invalid, return pointer to beginning of array.
-    AudioSynthWavetable* getVoice(uint8_t tag)
+    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t length, const unsigned int* data)
     {
-        if (tag >= 0 && tag < MAX_VOICES) {
-            return &(voices[tag]);
-        }
-        return voices;
+        init(voices, length, data, AMP_DEF);
     }
+    
+    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t length, const unsigned int* data, float amp)
+    {
+        init(voices, length, data, amp);
+    }
+    
+    void setSample(const unsigned int* data);
+    void setAmplitude(float amp);
+    void playFreq(float freq);
+    void playNote(byte note);
+    void stopFreq(float freq);
+    void stopNote(byte note);
+    uint8_t playing(void);
     
 private:
-    AudioSynthWavetable voices[MAX_VOICES];     // Array of voices
+    void init(AudioSynthWavetable* voices, uint8_t length, const unsigned int* data, float amp);
+    
+    AudioSynthWavetable* voices;
+    uint8_t length;
+    float playingFreqs[256];
+    unsigned int* sample;
+    float amplitude;
 };
 #endif
