@@ -25,74 +25,93 @@
  */
 
 #include "AudioSynthWavetable.h"
+#include <SerialFlash.h>
 
-void AudioSynthWavetable::play(const unsigned int *data)
-{
-    uint32_t length_temp;
-	uint32_t format;
+void AudioSynthWavetable::setSample(const unsigned int *data) {
+	this->tone_phase = 0;
+	this->playing = 0;
+
+	//note: assuming 16-bit PCM at 44100 Hz for now
+	this->length = (*data++ & 0x00FFFFFF);
+	this->waveform = (uint32_t*)data;
+
+	this->length_bits = 1;
+	for (int len = this->length; len >>= 1; ++length_bits);
+	this->max_phase = (length - 1) << (32 - length_bits);
+
+	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
+}
+
+void AudioSynthWavetable::play(void) {
+	if (waveform == NULL)
+		return;
 	tone_phase = 0;
-	playing = 0;
-	prior = 0;
-    format = *data++;
-	next = data;
-	beginning = data;
-	length_temp = length = format & 0xFFFFFF;
-	uint8_t length_bits = 1;
-	while (length_temp >>= 1) ++length_bits;
-	playing = format >> 24;
-	
-	//Can update this value to produce a different note.
-	//This value just plays back as normal
-	//tone_incr = 0x00010000;
-	
-	
-	//tone_amp = (uint16_t)(32767.0*.5);
+	this->playing = 1;
 }
- 
-void AudioSynthWavetable::stop(void)
-{
+
+void AudioSynthWavetable::playFrequency(float freq) {
+	if (waveform == NULL)
+		return;
+	frequency(freq);
+	tone_phase = 0;
+	this->playing = 1;
+}
+
+void AudioSynthWavetable::playNote(byte note) {
+	float freq = 440.0 * pow(2.0, (note - 69) / 12.0);
+	playFrequency(freq);
+}
+
+void AudioSynthWavetable::stop(void) {
 	playing = 0;
 }
 
-void AudioSynthWavetable::update(void)
-{
-	audio_block_t *block;
-	const unsigned int *in;
-	int16_t *out;
-	uint32_t tmp32, consumed;
+void AudioSynthWavetable::update(void) {
+	audio_block_t* block;
+	int16_t* out;
 	uint32_t index, scale;
-	int16_t s0, s1, s2, s3;
+	int16_t s1, s2;
 	uint32_t v1, v2, v3;
-	int16_t* waveform = (int16_t*)beginning;
-	int i;
 
-	if (!playing) return;
+	if (!playing)
+		return;
+
 	block = allocate();
-	if (block == NULL) return;
+	if (block == NULL)
+		return;
 
 	out = block->data;
-	in = next;
-	s0 = prior;
 
-	switch (playing) {
-	  case 0x81: // 16 bit PCM, 44100 Hz
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
-			index = tone_phase >> 16;
-			s1 = waveform[index];
-			s2 = waveform[++index];
-			scale = tone_phase & 0xFFFF;
-			v2 = s2 * scale;
-			v1 = s1 * (0xFFFF - scale);
-			v3 = (v1 + v2) >> 16;
-			*out++ = (int16_t)(v3);
-			tone_phase += tone_incr;
-		}
-		//consumed = 128 * (tone_incr >> 16);
-		break;
+	//assuming 16 bit PCM, 44100 Hz
+	int16_t* waveform = (int16_t*)this->waveform;
+	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
+	//Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
+	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+		tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - max_phase;
+		index = tone_phase >> (32 - length_bits);
+		scale = (tone_phase << length_bits) >> 16;
+		s1 = waveform[index];
+		s2 = waveform[index + 1];
+		v2 = s2 * scale;
+		v1 = s1 * (0xFFFF - scale);
+		v3 = (v1 + v2) >> 16;
+		*out++ = (int16_t)v3;
+		//*out++ = (int16_t)((v3 * tone_amp) >> 16);
+		tone_phase += tone_incr;
 	}
-	prior = s0;
-	next = in;
+
 	transmit(block);
 	release(block);
 }
 
+void AudioSynthWavetable::frequency(float freq) {
+	if (freq < 0.0)
+		freq = 0.0;
+	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
+		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
+
+	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
+	//steps trhough the wavetable sample one element at a time; from there we
+	//only need to scale based a ratio of freq/sample_freq for the desired increment
+	tone_incr = (freq / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
+}

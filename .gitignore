@@ -1,0 +1,7 @@
+*.filters
+*.vcxproj
+*.sln
+**/Debug/
+**/Release/
+**/__vm/
+**/.vs/
