@@ -175,12 +175,12 @@ def decodeIt(path, sample_selection, DCOUNT):
 def export_sample(file, header_file, sample, PCM):
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
-	start_loop = (sample.start_loop / 2)
-	end_loop = (sample.end_loop / 2)
+	start_loop = sample.start_loop
+	end_loop = sample.end_loop
 
 	B_COUNT = 0;
-	length_8 = sample.end - sample.start
-	length_16 = length_8/2
+	length_16 = sample.end - sample.start
+	length_8 = length_16 * 2
 	length_32 = length_16/2
 	padlength = padding(length_32, 128)
 	
@@ -216,8 +216,9 @@ def export_sample(file, header_file, sample, PCM):
 			#consuming 2 chars at a time, so add another increment
 			i = i + 2
 		else:
+			pass
 			# Using ulaw encoding
-			print_bytes(file, ulaw_encode(audio))
+			#TODO
 
 	while padlength > 0:
 		print_bytes(file, 0)
