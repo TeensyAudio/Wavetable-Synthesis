@@ -173,14 +173,14 @@ def decodeIt(path, sample_selection, DCOUNT):
 
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
-	print(sample.name)
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
 	start_loop = (sample.start_loop / 2)
 	end_loop = (sample.end_loop / 2)
 
 	B_COUNT = 0;
-	length_16 = (sample.end - sample.start)/2
+	length_8 = sample.end - sample.start
+	length_16 = length_8/2
 	length_32 = length_16/2
 	padlength = padding(length_32, 128)
 	
@@ -189,7 +189,8 @@ def export_sample(file, header_file, sample, PCM):
 	if array_length > MAX_LENGTH: 
 		length_32 = MAX_LENGTH - padlength
 		array_length = MAX_LENGTH
-		length_16 = (array_length*2)
+		length_16 = array_length * 2
+		length_8 = length_16 * 2
 		sample.end = length_16
 		end_loop = length_16
 
@@ -206,7 +207,7 @@ def export_sample(file, header_file, sample, PCM):
 
 	i = 0
 	file.write("0x%0.8X," % (length_16 | (format << 24)))
-	while i < length_32:
+	while i < length_8:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
 			# Use PCM Encoding
