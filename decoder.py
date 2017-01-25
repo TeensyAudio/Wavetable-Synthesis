@@ -6,6 +6,8 @@ import logging
 import sys, getopt
 import time
 
+MAX_LENGTH = 58000
+
 BCOUNT = 0
 WCOUNT = 1
 BUF32 = 0
@@ -53,21 +55,6 @@ def menu(choices):
     choice = safe_input('Select [1-{}]: '.format(len(choices)), int,
             1, len(choices))
     return choice
-
-#['_','|','-','|']
-#['|','/','--','\\']
-def animate(num=5, time_=0.1, pad=' ', smbl=' '):
-    for i in range(num):
-        sys.stdout.flush()
-        sys.stdout.write("\r{}{}{}{}{}{}".format(pad*i,
-            smbl[i%len(smbl)], smbl[(i+1)%len(smbl)],
-            smbl[(i+2)%len(smbl)], smbl[(i+3)%len(smbl)],
-            smbl[(i+4)%len(smbl)]))
-        sys.stdout.flush()
-        time.sleep(time_)
-    sys.stdout.write('\r{}{}'.format(pad*(num+1), ' '))
-    sys.stdout.flush()
-    print''
 
 def main():
     global BCOUNT
@@ -117,7 +104,6 @@ def main():
                 print '{} contains {} samples.'.format(sf2.instruments[instrument].name, len(samples))
                 print_menu(samples)
                 sample = safe_input('Select Sample [1-{}]: '.format(len(samples)), int, 1, len(samples))
-                #animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
                 DCOUNT=DCOUNT+1
                 decodeIt(path, sample-1, DCOUNT)
                 i_result = menu(options2)
@@ -130,7 +116,6 @@ def main():
                 elif i_result == 3:
                     break
                 elif i_result == 4:
-                    animate(num=15, time_=0.16, smbl=' Exiting ')
                     sys.exit('Program Terminated by User')
         elif choice == 2:
                     # Returns a List of sf2Sample.name
@@ -142,7 +127,6 @@ def main():
             while True:
                 sample = safe_input('Select Sample [1-{}]: '.format(
                     len(samples)), int, 1, len(samples))
-                #animate(num=15, time_=0.17, smbl=' Decoding Sample  ')
                 DCOUNT=DCOUNT+1
                 decodeIt(path, sample-1, DCOUNT)
                 s_result = menu(options2)
@@ -155,43 +139,12 @@ def main():
                 elif s_result == 3:
                     break
                 elif s_result == 4:
-                    animate(num=15, time_=0.16, smbl=' Exiting ')
                     sys.exit('Program Terminated by User')
 
         elif choice == 3:
-            #animate(num=15, time_=0.16, smbl=' Exiting ')
             sys.exit('Program Terminated by User')
         else:   #shouldn't be reached
             raw_input("Wrong option selection. Enter any key to try again..")
-
-	#if len(sys.argv) < 2:
-		#path = raw_input("Please provide filepath to an SF2: ")
-	#else:
-		#path = sys.argv[1]
-
-	#with open(path, 'rb') as sf2_file:
-		#sf2 = Sf2File(sf2_file)
-		#for i, j in enumerate(sf2.instruments, 1):
-			#print("{}. {}".format(i, j.name))
-
-		#print('Select an instrument:')
-		#selection = int(input('Input the corresponding number: '))
-		#selection = selection - 1
-
-		#samples = []
-		#notes = []
-
-		#print('Select a note:')
-		#for bag in sf2.instruments[selection].bags:
-			#if bag.sample != None and bag.sample.original_pitch not in notes:
-				#samples.append(bag.sample)
-				#notes.append(bag.sample.original_pitch)
-
-		#for i, j in enumerate(samples, 1):
-			#print("{}. {}".format(i, j.original_pitch))
-
-		#sample_selection = int(input('Input the corresponding number: '))
-		#sample_selection = sample_selection - 1
 
 def decodeIt(path, sample_selection, DCOUNT):
     with open(path, 'rb') as sf2_file:
@@ -209,12 +162,9 @@ def decodeIt(path, sample_selection, DCOUNT):
 
         #If a sample has already been exported, set mode to
         #append rather than overwrite
-        print 'DCOUNT is {}'.format(DCOUNT)
         mode = 'w'
         if DCOUNT > 1:
             mode = 'a'
-
-
 
         with open("SF2_Decoded_Samples.cpp", mode) as output_file:
             with open("SF2_Decoded_Samples.h", mode) as header_file:
@@ -223,26 +173,32 @@ def decodeIt(path, sample_selection, DCOUNT):
 
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
-
-
+	print(sample.name)
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
-	start_loop = sample.start_loop
-	end_loop = sample.end_loop
-	duration = sample.duration
+	start_loop = (sample.start_loop / 2)
+	end_loop = (sample.end_loop / 2)
 
 	B_COUNT = 0;
-	length_16 = sample.end - sample.start
-	length = length_16/2
-	padlength = padding(length, 128)
+	length_16 = (sample.end - sample.start)/2
+	length_32 = length_16/2
+	padlength = padding(length_32, 128)
+	
+	array_length = length_32 + padlength
+	
+	if array_length > MAX_LENGTH: 
+		length_32 = MAX_LENGTH - padlength
+		array_length = MAX_LENGTH
+		length_16 = (array_length*2)
+		sample.end = length_16
+		end_loop = length_16
 
 	#Write array init to header file.
-	header_file.write("extern const unsigned int sample[" + str(length + padlength) + "];\n")
+	header_file.write("extern const unsigned int sample[" + str(array_length) + "];\n")
 	
 	#Write array contents to .cpp
-	file.write("const unsigned int sample[" + str(length + padlength) + "] = {\n")
+	file.write("const unsigned int sample[" + str(array_length) + "] = {\n")
 
-	#print out attack
 	if PCM == True:
 		format = 0x81
 	else:
@@ -250,7 +206,7 @@ def export_sample(file, header_file, sample, PCM):
 
 	i = 0
 	file.write("0x%0.8X," % (length_16 | (format << 24)))
-	while i < length:
+	while i < length_32:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
 			# Use PCM Encoding
@@ -268,14 +224,13 @@ def export_sample(file, header_file, sample, PCM):
 
 	file.write("};\n")
 
-
 	#Write sample to header file
 	header_file.write("struct sample_info {\n")
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
 	header_file.write("\tconst bool IS_MONO = " + str(sample.is_mono) + ";\n")
 	header_file.write("\tconst int LOOP_START = " + str(start_loop) + ";\n")
-	header_file.write("\tconst int LOOP_END = " + str(end_loop/2) + ";\n")
+	header_file.write("\tconst int LOOP_END = " + str(end_loop) + ";\n")
 	header_file.write("};\n")
 
 

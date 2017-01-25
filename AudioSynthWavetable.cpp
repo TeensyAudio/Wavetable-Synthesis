@@ -57,8 +57,9 @@ void AudioSynthWavetable::playFrequency(float freq) {
 	this->playing = 1;
 }
 
-void AudioSynthWavetable::playNote(byte note) {
-	float freq = 440.0 * pow(2.0, (note - 69) / 12.0);
+void AudioSynthWavetable::playNote(int note) {
+	float freq = noteToFreq(note);
+	Serial.println(freq);
 	playFrequency(freq);
 }
 
