@@ -11,24 +11,30 @@
 
 #include "AudioSynthWavetable.h"
 
-const float AMP_DEF = 0.5
+struct freqTrack_t
+{
+    float freq;
+    unsigned int count;
+};
+
+const float AMP_DEF = 0;
 
 class AudioAllocWavetable
 {
 public:
-    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t length)
+    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t numVoices)
     {
-        init(voices, length, NULL, AMP_DEF);
+        init(voices, numVoices, NULL, AMP_DEF);
     }
     
-    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t length, const unsigned int* data)
+    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data)
     {
-        init(voices, length, data, AMP_DEF);
+        init(voices, numVoices, data, AMP_DEF);
     }
     
-    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t length, const unsigned int* data, float amp)
+    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data, float amp)
     {
-        init(voices, length, data, amp);
+        init(voices, numVoices, data, amp);
     }
     
     void setSample(const unsigned int* data);
@@ -37,15 +43,17 @@ public:
     void playNote(byte note);
     void stopFreq(float freq);
     void stopNote(byte note);
-    uint8_t playing(void);
+    uint8_t voicesPlaying(void);
+    float noteToFreq(byte note);
+    float getAmplitude() { return amplitude; }
+    float getFrequency(uint8_t index) { return freqTrack[index].freq; }
     
 private:
-    void init(AudioSynthWavetable* voices, uint8_t length, const unsigned int* data, float amp);
+    void init(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data, float amp);
     
     AudioSynthWavetable* voices;
-    uint8_t length;
-    float playingFreqs[256];
-    unsigned int* sample;
+    uint8_t numVoices;
+    freqTrack_t freqTrack[256];
     float amplitude;
 };
 #endif

@@ -6,14 +6,12 @@
 //
 //
 
-#include <stdio.h>
 #include "AudioAllocWavetable.h"
 #include <SerialFlash.h>
 
 void AudioAllocWavetable::setSample(const unsigned int* data)
 {
-    sample = data;
-    for (int i=0; i<length; i++) {
+    for (int i=0; i<numVoices; i++) {
         voices[i].setSample(data);
     }
 }
@@ -21,7 +19,7 @@ void AudioAllocWavetable::setSample(const unsigned int* data)
 void AudioAllocWavetable::setAmplitude(float amp)
 {
     amplitude = amp;
-    for (int i=0; i<length; i++) {
+    for (int i=0; i<numVoices; i++) {
         voices[i].amplitude(amp);
     }
 }
@@ -32,24 +30,26 @@ void AudioAllocWavetable::playFreq(float freq)
         return;
     }
     
-    for (int i=0; i<length; i++) {
-        if (playingFreqs[i] == freq) {
+    for (int i=0; i<numVoices; i++) {
+        if (freqTrack[i].freq == freq) {
+            freqTrack[i].count++;
             return;
         }
     }
     
-    for (int i=0; i<length; i++) {
+    for (int i=0; i<numVoices; i++) {
         if (!voices[i].isPlaying()) {
             voices[i].playFrequency(freq);
-            playingFreqs[i] = freq;
+            freqTrack[i].freq = freq;
+            freqTrack[i].count++;
+            return;
         }
     }
 }
 
 void AudioAllocWavetable::playNote(byte note)
 {
-    float freq = 440.0 * pow(2.0, (note - 69) / 12.0);
-    playFreq(freq);
+    playFreq(noteToFreq(note));
 }
 
 void AudioAllocWavetable::stopFreq(float freq)
@@ -58,24 +58,26 @@ void AudioAllocWavetable::stopFreq(float freq)
         return;
     }
     
-    for (int i=0; i<length; i++) {
-        if (playingFreqs[i] == freq) {
-            voices[i].stop();
-            playingFreqs[i] = -1;
+    for (int i=0; i<numVoices; i++) {
+        if (freqTrack[i].freq == freq) {
+            if (freqTrack[i].count == 1) {
+                voices[i].stop();
+                freqTrack[i].freq = -1;
+            }
+            freqTrack[i].count--;
         }
     }
 }
 
 void AudioAllocWavetable::stopNote(byte note)
 {
-    float freq = 440.0 * pow(2.0, (note - 69) / 12.0);
-    stop(freq);
+    stopFreq(noteToFreq(note));
 }
 
-uint8_t AudioAllocWavetable::playing(void)
+uint8_t AudioAllocWavetable::voicesPlaying(void)
 {
     int ret = 0;
-    for (int i=0; i<length; i++) {
+    for (int i=0; i<numVoices; i++) {
         if (voices[i].isPlaying()) {
             ret++;
         }
@@ -83,14 +85,19 @@ uint8_t AudioAllocWavetable::playing(void)
     return ret;
 }
 
-void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t length, const unsigned int* data, float amp)
+float AudioAllocWavetable::noteToFreq(byte note) {
+    return 440.0 * pow(2.0, (note - 69) / 12.0);
+}
+
+void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data, float amp)
 {
     this->voices = voices;
-    this->length = length;
+    this->numVoices = numVoices;
     setSample(data);
     setAmplitude(amp);
-    for (int i=0; i<length; i++) {
+    for (int i=0; i<numVoices; i++) {
         voices[i].stop();
-        playingFreqs[i] = -1;
+        freqTrack[i].freq = -1;
+        freqTrack[i].count = 0;
     }
 }
