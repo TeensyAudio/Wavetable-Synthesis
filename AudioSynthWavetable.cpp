@@ -28,16 +28,16 @@
 #include <SerialFlash.h>
 
 void AudioSynthWavetable::setSample(const unsigned int *data) {
-	this->tone_phase = 0;
-	this->playing = 0;
+	tone_phase = 0;
+	playing = 0;
 
 	//note: assuming 16-bit PCM at 44100 Hz for now
-	this->length = (*data++ & 0x00FFFFFF);
-	this->waveform = (uint32_t*)data;
+	length = (*data++ & 0x00FFFFFF);
+	waveform = (uint32_t*)data;
 
-	this->length_bits = 1;
-	for (int len = this->length; len >>= 1; ++length_bits);
-	this->max_phase = (length - 1) << (32 - length_bits);
+	length_bits = 1;
+	for (int len = length; len >>= 1; ++length_bits);
+	max_phase = (length - 1) << (32 - length_bits);
 
 	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
 }
@@ -46,7 +46,7 @@ void AudioSynthWavetable::play(void) {
 	if (waveform == NULL)
 		return;
 	tone_phase = 0;
-	this->playing = 1;
+	playing = 1;
 }
 
 void AudioSynthWavetable::playFrequency(float freq) {
@@ -54,7 +54,7 @@ void AudioSynthWavetable::playFrequency(float freq) {
 		return;
 	frequency(freq);
 	tone_phase = 0;
-	this->playing = 1;
+	playing = 1;
 }
 
 void AudioSynthWavetable::playNote(int note) {
