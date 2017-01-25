@@ -30,6 +30,7 @@ void AudioAllocWavetable::playFreq(float freq)
         return;
     }
     
+    // Check for voices playing this frequency.
     for (int i=0; i<numVoices; i++) {
         if (freqTrack[i].freq == freq) {
             freqTrack[i].count++;
@@ -37,6 +38,7 @@ void AudioAllocWavetable::playFreq(float freq)
         }
     }
     
+    // If none, find one to play it.
     for (int i=0; i<numVoices; i++) {
         if (!voices[i].isPlaying()) {
             voices[i].playFrequency(freq);
@@ -60,11 +62,11 @@ void AudioAllocWavetable::stopFreq(float freq)
     
     for (int i=0; i<numVoices; i++) {
         if (freqTrack[i].freq == freq) {
-            if (freqTrack[i].count == 1) {
+            if (--freqTrack[i].count == 0) {
                 voices[i].stop();
                 freqTrack[i].freq = -1;
             }
-            freqTrack[i].count--;
+            return;
         }
     }
 }
