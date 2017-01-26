@@ -8,7 +8,7 @@ import time
 import getopt
 import inspect
 
-MAX_LENGTH = 58000
+MAX_LENGTH = 52000
 
 BCOUNT = 0
 WCOUNT = 1
@@ -219,7 +219,7 @@ def export_sample(file, header_file, sample, PCM):
 
 	if array_length > MAX_LENGTH:
 		length_32 = MAX_LENGTH - padlength
-		array_length = MAX_LENGTH
+		array_length = length_32
 		length_16 = array_length * 2
 		length_8 = length_16 * 2
 		sample.end = length_16
