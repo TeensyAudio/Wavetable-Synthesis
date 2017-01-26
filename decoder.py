@@ -239,10 +239,10 @@ def export_sample(file, header_file, sample, PCM):
 	padlength = padding(length, 128)
 
 	#Write array init to header file.
-	header_file.write("extern const unsigned int " + name + "_sample[" + str(length + padlength) + "];\n")
+	header_file.write("extern const unsigned int sample[" + str(length + padlength) + "];\n")
 
 	#Write array contents to .cpp
-	file.write("const unsigned int " + name + "_sample[" + str(length + padlength) + "] = {\n")
+	file.write("const unsigned int sample[" + str(length + padlength) + "] = {\n")
 
 	#print out attack
 	if PCM == True:
