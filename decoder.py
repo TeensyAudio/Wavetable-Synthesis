@@ -5,6 +5,8 @@ import sys
 import logging
 import sys, getopt
 import time
+import getopt
+import inspect
 
 MAX_LENGTH = 58000
 
@@ -12,6 +14,19 @@ BCOUNT = 0
 WCOUNT = 1
 BUF32 = 0
 DCOUNT = 0
+DEBUG_FLAG = False
+
+def print_debug(flag, message, function=None):
+    if flag == True:
+        debug = '-----DEBUG-----'
+        if function == None:
+            caller = inspect.stack()[1][3]
+        else:
+            caller = function
+        print(debug)
+        print('In function: {}'.format(caller))
+        print(message)
+        print(debug)
 
 def print_menu(menu_items):
     if len(menu_items) < 1:
@@ -56,20 +71,30 @@ def menu(choices):
             1, len(choices))
     return choice
 
-def main():
+def main(argv):
     global BCOUNT
     global DCOUNT
+    global DEBUG_FLAG
     #Disable warning logging to prevent sf2utils from logging any un-needed messages
     logging.disable(logging.WARNING)
+
+    try:
+        opts, args = getopt.getopt(argv,'di:o:',['ifile=','ofile='])
+    except getopt.GetoptError:
+        print 'INVALID ARGUMENTS'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-d':
+            DEBUG_FLAG = True
+        elif opt in ('-i', '--ifile'):
+            path = arg
+        elif opt in ('-o', '--ofile'):
+            outFile = arg
+
     print 150*'\n'
     print('       WELCOME  ')
     #print out some info:
     #version, date, etc...
-
-    if len(sys.argv) < 2:
-        sys.exit('ERROR: INVALID ARGUMENT LIST')
-    else:
-        path = sys.argv[1]
 
     with open (path, 'rb') as sf2_file:
         sf2 = Sf2File(sf2_file)
@@ -100,12 +125,18 @@ def main():
 				samples.append(bag.sample)
 				#notes.append(bag.sample.original_pitch)
 
-                samples = map(lambda x: x.name, samples)
-                print '{} contains {} samples.'.format(sf2.instruments[instrument].name, len(samples))
-                print_menu(samples)
-                sample = safe_input('Select Sample [1-{}]: '.format(len(samples)), int, 1, len(samples))
+                sampleNames = map(lambda x: x.name, samples)
+                print '{} contains {} samples.'.format(sf2.instruments[instrument].name, len(sampleNames))
+                print_menu(sampleNames)
+                sample = safe_input('Select Sample [1-{}]: '.format(len(sampleNames)), int, 1, len(sampleNames))
+                sampleCounter = 0
+                for samp in sf2.samples:
+                    sampleCounter = sampleCounter+1
+                    if sampleNames[sample-1] == samp.name:
+                        break
+                print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(sf2.samples[sampleCounter-1].name))
                 DCOUNT=DCOUNT+1
-                decodeIt(path, sample-1, DCOUNT)
+                decodeIt(path, sampleCounter-1, DCOUNT)
                 i_result = menu(options2)
                 if i_result == 1:
                     continue
@@ -149,7 +180,6 @@ def main():
 def decodeIt(path, sample_selection, DCOUNT):
     with open(path, 'rb') as sf2_file:
         sf2 = Sf2File(sf2_file)
-
         sample = sf2.samples[sample_selection]
         valid = is_sample_valid(sample)
 
@@ -159,6 +189,7 @@ def decodeIt(path, sample_selection, DCOUNT):
 
         #Ignore extra 8 bits in the 24 bit specification
         sample.sm24_offset = None
+        print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(sample.name))
 
         #If a sample has already been exported, set mode to
         #append rather than overwrite
@@ -299,4 +330,4 @@ def ulaw_encode(audio):
 	return neg | 0x00 | ((mag >> 3) & 0x0F)   # 0000 0000 1wxy z000
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
