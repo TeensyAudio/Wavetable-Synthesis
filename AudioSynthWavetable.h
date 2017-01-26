@@ -43,12 +43,14 @@ public:
 		, max_phase(0)
 		, tone_incr(0)
 		, tone_amp(0)
+		, loop_start(0)
+		, loop_end(0)
 	{}
 
 	void setSample(const unsigned int* data);
 	void play(void);
 	void playFrequency(float freq);
-	void playNote(byte note);
+	void playNote(int note);
 	void stop(void);
 	bool isPlaying(void) { return playing; }
 	void frequency(float freq);
@@ -57,17 +59,26 @@ public:
 		frequency(freq);
 		amplitude(amp);
 	}
+	
+	void setSampleNote(int note) {
+		sample_freq = noteToFreq(note);
+	}
 
 	void amplitude(float v) {
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
 		tone_amp = (uint16_t)(32767.0*v);
+	}
+	
+	float noteToFreq(int note) {
+		//return 440.0 * (((note - 69) / 12.0) * ((note - 69) / 12.0));
+		return 27.5 * pow(2, (float)(note - 21)/12);
 	}
 
 	virtual void update(void);
 
 private:
 	uint32_t* waveform;
-	int length, length_bits;
+	int length, length_bits, loop_start, loop_end;
 	float sample_freq;
 	uint8_t playing;
 	uint32_t tone_phase;
