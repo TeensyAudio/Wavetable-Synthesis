@@ -116,10 +116,6 @@ def main():
                 elif i_result == 3:
                     break
                 elif i_result == 4:
-<<<<<<< HEAD
-                    #animate(num=15, time_=0.16, smbl=' Exiting ')
-=======
->>>>>>> dc1117dda0efb2fb3d3a7e69dc5d64b12947e6d2
                     sys.exit('Program Terminated by User')
         elif choice == 2:
                     # Returns a List of sf2Sample.name
@@ -143,10 +139,6 @@ def main():
                 elif s_result == 3:
                     break
                 elif s_result == 4:
-<<<<<<< HEAD
-                    #animate(num=15, time_=0.16, smbl=' Exiting ')
-=======
->>>>>>> dc1117dda0efb2fb3d3a7e69dc5d64b12947e6d2
                     sys.exit('Program Terminated by User')
 
         elif choice == 3:
@@ -170,10 +162,6 @@ def decodeIt(path, sample_selection, DCOUNT):
 
         #If a sample has already been exported, set mode to
         #append rather than overwrite
-<<<<<<< HEAD
-        #print 'DCOUNT is {}'.format(DCOUNT)
-=======
->>>>>>> dc1117dda0efb2fb3d3a7e69dc5d64b12947e6d2
         mode = 'w'
         if DCOUNT > 1:
             mode = 'a'
@@ -185,13 +173,6 @@ def decodeIt(path, sample_selection, DCOUNT):
 
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, PCM):
-<<<<<<< HEAD
-
-#TODO   we should modify this first line to execute only for
-#       the first sample that is exported. The global variable
-#       DCOUNT keeps track of exported samples.
-=======
->>>>>>> dc1117dda0efb2fb3d3a7e69dc5d64b12947e6d2
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
 	start_loop = sample.start_loop
