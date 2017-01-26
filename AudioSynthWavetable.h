@@ -40,6 +40,7 @@ public:
 		, sample_freq(440.0)
 		, playing(0)
 		, tone_phase(0)
+		, loop_phase(0)
 		, max_phase(0)
 		, tone_incr(0)
 		, tone_amp(0)
@@ -48,6 +49,14 @@ public:
 	{}
 
 	void setSample(const unsigned int* data);
+	void setLoop(int start, int end) {
+		loop_start = start;
+		loop_end = end;
+
+		length_bits = 1;
+		for (int len = loop_start; len >>= 1; ++length_bits);
+		loop_phase = (loop_start - 1) << (32 - length_bits);
+	}
 	void play(void);
 	void playFrequency(float freq);
 	void playNote(int note);
@@ -81,7 +90,7 @@ private:
 	int length, length_bits, loop_start, loop_end;
 	float sample_freq;
 	uint8_t playing;
-	uint32_t tone_phase;
+	uint32_t tone_phase, loop_phase;
 	uint32_t max_phase;
 	uint32_t tone_incr;
 	uint16_t tone_amp;

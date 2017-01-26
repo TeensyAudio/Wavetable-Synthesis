@@ -34,6 +34,8 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	//note: assuming 16-bit PCM at 44100 Hz for now
 	length = (*data++ & 0x00FFFFFF);
 	waveform = (uint32_t*)data;
+	
+	length = loop_end;
 
 	length_bits = 1;
 	for (int len = length; len >>= 1; ++length_bits);
@@ -88,7 +90,7 @@ void AudioSynthWavetable::update(void) {
 	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
 	//Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-		tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - max_phase;
+		tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
 		index = tone_phase >> (32 - length_bits);
 		scale = (tone_phase << length_bits) >> 16;
 		s1 = waveform[index];
