@@ -29,11 +29,19 @@
 
 void AudioSynthWavetable::setSample(const unsigned int *data) {
 
-	//extracting header data
+	/**********extracting header data 
+	Index 0 = Format & Sample size. Same as before.
+	Index 1 = Original Pitch
+	Index 2 = Sample Rate
+	Index 3 = Loop Start
+	Index 4 = Loop End
+	Index 5 = Top 16-bits Delay envelope | Bottom 16-bits Hold Envelope
+	Index 6 = Attack envelope
+	Index 7 = Decay envelope
+	Index 8 = Sustain envelope
+	Index 9 = Release envelope
 
-
-	//------------------------------------------------
-
+	*****************************************/
 	tone_phase = 0;
 	playing = 0;
 
