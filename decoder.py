@@ -262,8 +262,8 @@ def export_sample(file, header_file, sample, aBag, PCM):
 	header_file.write("struct sample_info {\n")
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
-	header_file.write("\tconst int LOOP_START = " + str(sample.start_loop) + ";\n")
-	header_file.write("\tconst int LOOP_END = " + str(sample.end_loop) + ";\n")
+	header_file.write("\tconst int LOOP_START = " + str(aBag.cooked_loop_start) + ";\n")
+	header_file.write("\tconst int LOOP_END = " + str(aBag.cooked_loop_end) + ";\n")
 	header_file.write("\tconst int DELAY_ENV = " + str(volume_envelope_delay(aBag)) + ";\n")
 	header_file.write("\tconst int ATTACK_ENV = " + str(aBag.volume_envelope_attack) + ";\n")
 	header_file.write("\tconst int HOLD_ENV = " + str(aBag.volume_envelope_hold) + ";\n")
@@ -277,8 +277,8 @@ def print_metadata(file, sample, aBag, length_16, format):
     file.write("0x%0.8X," % (length_16 | (format << 24))) #length
     file.write("0x%0.8X," % (sample.original_pitch)) #original pitch
     file.write("0x%0.8X," % (sample.sample_rate)) #sample rate
-    file.write("0x%0.8X," % (sample.start_loop)) #loop start
-    file.write("0x%0.8X," % (sample.end_loop)) #loop end
+    file.write("0x%0.8X," % (aBag.cooked_loop_start)) #loop start
+    file.write("0x%0.8X," % (aBag.cooked_loop_end)) #loop end
     file.write("0x%0.8X," % 
             ((checkGenValue(volume_envelope_delay(aBag))) << 16 | #delay_env
             (checkGenValue(aBag.volume_envelope_hold)))) #hold_env
