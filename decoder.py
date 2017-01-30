@@ -11,7 +11,7 @@ import inspect
 MAX_LENGTH = 52000
 
 BCOUNT = 0
-WCOUNT = 1
+WCOUNT = 6
 BUF32 = 0
 DCOUNT = 0
 DEBUG_FLAG = False
@@ -117,26 +117,24 @@ def main(argv):
                 #for the selected instrument, go through all bags and
                 #retrieve sample(s)
                 instrument = instrument - 1
-		samples = []
-		#notes = []
+		bagToSample = [] #lists a bag's index with its sample as a pair
+                bagIndex = 0
 
-		for bag in sf2.instruments[instrument].bags:
-			if bag.sample != None and bag.sample not in samples:
-				samples.append(bag.sample)
-				#notes.append(bag.sample.original_pitch)
+                # Create a list of tuples that hold bagIndex to sample pairs
+                for bag in sf2.instruments[instrument].bags:
+                    if bag.sample != None and bag.sample not in bagToSample:
+                        bagToSample.append((bagIndex, bag.sample))
+                    bagIndex += 1
 
+                samples = [x[1] for x in bagToSample]
                 sampleNames = map(lambda x: x.name, samples)
                 print '{} contains {} samples.'.format(sf2.instruments[instrument].name, len(sampleNames))
                 print_menu(sampleNames)
                 sample = safe_input('Select Sample [1-{}]: '.format(len(sampleNames)), int, 1, len(sampleNames))
-                sampleCounter = 0
-                for samp in sf2.samples:
-                    sampleCounter = sampleCounter+1
-                    if sampleNames[sample-1] == samp.name:
-                        break
-                print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(sf2.samples[sampleCounter-1].name))
+                print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(samples[sample-1].name))
                 DCOUNT=DCOUNT+1
-                decodeIt(path, sampleCounter-1, DCOUNT)
+                bagIndex = bagToSample[sample-1][0]
+                decodeIt(path, instrument, bagIndex, DCOUNT) 
                 i_result = menu(options2)
                 if i_result == 1:
                     continue
@@ -177,10 +175,11 @@ def main(argv):
         else:   #shouldn't be reached
             raw_input("Wrong option selection. Enter any key to try again..")
 
-def decodeIt(path, sample_selection, DCOUNT):
+def decodeIt(path, instIndex, bagIndex, DCOUNT):
     with open(path, 'rb') as sf2_file:
         sf2 = Sf2File(sf2_file)
-        sample = sf2.samples[sample_selection]
+        aBag = sf2.instruments[instIndex].bags[bagIndex]
+        sample = aBag.sample
         valid = is_sample_valid(sample)
 
         if valid[0] == False:
@@ -195,19 +194,43 @@ def decodeIt(path, sample_selection, DCOUNT):
         #append rather than overwrite
         mode = 'w'
         if DCOUNT > 1:
-            mode = 'a'
+          mode = 'a'
+
+        print sample.name
 
         with open("SF2_Decoded_Samples.cpp", mode) as output_file:
             with open("SF2_Decoded_Samples.h", mode) as header_file:
-                    export_sample(output_file, header_file, sample, True)
+                export_sample(output_file, header_file, sample, aBag, True)
 
+
+#def decodeIt(path, sample_selection, DCOUNT):
+#    with open(path, 'rb') as sf2_file:
+#        sf2 = Sf2File(sf2_file)
+#        sample = sf2.samples[sample_selection]
+#        valid = is_sample_valid(sample)
+#
+#        if valid[0] == False:
+#            error(valid[1])
+#            #return
+#
+#        #Ignore extra 8 bits in the 24 bit specification
+#        sample.sm24_offset = None
+#        print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(sample.name))
+#
+#        #If a sample has already been exported, set mode to
+#        #append rather than overwrite
+#        mode = 'w'
+#        if DCOUNT > 1:
+#            mode = 'a'
+#
+#        with open("SF2_Decoded_Samples.cpp", mode) as output_file:
+#            with open("SF2_Decoded_Samples.h", mode) as header_file:
+#                    export_sample(output_file, header_file, sample, True)
 
 #Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
-def export_sample(file, header_file, sample, PCM):
+def export_sample(file, header_file, sample, aBag, PCM):
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
-	start_loop = sample.start_loop
-	end_loop = sample.end_loop
 
 	B_COUNT = 0;
 	length_16 = sample.end - sample.start
@@ -236,8 +259,16 @@ def export_sample(file, header_file, sample, PCM):
 	else:
 		format = 0x01
 
+        file.write("0x%0.8X," % (length_16 | (format << 24))) #header
+        file.write("0x%0.8X," % 
+                ((checkGenValue(volume_envelope_delay(aBag))) << 16 | #delay_env
+                (checkGenValue(aBag.volume_envelope_hold)))) #hold_env
+        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_attack))) #attack_env
+        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_decay))) #decay_env
+        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_sustain))) #sustain_env
+        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_release))) #release_env
+
 	i = 0
-	file.write("0x%0.8X," % (length_16 | (format << 24)))
 	while i < length_8:
 		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
 		if PCM == True:
@@ -258,14 +289,40 @@ def export_sample(file, header_file, sample, PCM):
 	file.write("};\n")
 
 	#Write sample to header file
+        OPER_DELAY_MOD_ENV = 25
 	header_file.write("struct sample_info {\n")
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
-	header_file.write("\tconst bool IS_MONO = " + str(sample.is_mono) + ";\n")
-	header_file.write("\tconst int LOOP_START = " + str(start_loop) + ";\n")
-	header_file.write("\tconst int LOOP_END = " + str(end_loop) + ";\n")
+	header_file.write("\tconst int LOOP_START = " + str(sample.start_loop) + ";\n")
+	header_file.write("\tconst int LOOP_END = " + str(sample.end_loop) + ";\n")
+	header_file.write("\tconst int DELAY_ENV = " + str(volume_envelope_delay(aBag)) + ";\n")
+	header_file.write("\tconst int ATTACK_ENV = " + str(aBag.volume_envelope_attack) + ";\n")
+	header_file.write("\tconst int HOLD_ENV = " + str(aBag.volume_envelope_hold) + ";\n")
+	header_file.write("\tconst int DECAY_ENV = " + str(aBag.volume_envelope_decay) + ";\n")
+	header_file.write("\tconst int SUSTAIN_ENV = " + str(aBag.volume_envelope_sustain) + ";\n")
+	header_file.write("\tconst int RELEASE_ENV = " + str(aBag.volume_envelope_release) + ";\n")
 	header_file.write("};\n")
 
+# A function that returns the value of a generator (a float value) multiplied 
+# by 1000. This is done to save the decimal of the float to the thousandths 
+# place before being coverted to an int.
+# If the generator was set to None 0 is returned instead.
+def checkGenValue(genValue):
+    if(genValue == None):
+        return 0
+    return int(genValue*1000)
+
+# This function retrives the volume_envelope_delay generator value.
+# There is no bag property in Sf2Utils to get the volume_envelope_delay value
+# so it's necessary to grab that generator from the bag manually. 
+# Each bag has a dictionary that maps a specified # from the SF2 manual to 
+# each of its generators. The # for the delay envelope generator is 33.
+def volume_envelope_delay(aBag):
+    try:
+        aGen = aBag.gens[33]
+        return aGen.cents
+    except KeyError:
+        return None
 
 #Checks if the selected sample is valid. Input is a sample object, and output is
 #a tuple with (boolean, error_message - if any)
