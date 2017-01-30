@@ -77,7 +77,7 @@ private:
         // # of 8-sample units to process
         // Add 7 to round up
 		uint32_t c = ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
-        if (c > 1103) return 1103; // allow up to 1000 ms
+        if (c > 5513) return 5513; // allow up to 1000 ms
 		return c;
 	}
 	audio_block_t *inputQueueArray[1];

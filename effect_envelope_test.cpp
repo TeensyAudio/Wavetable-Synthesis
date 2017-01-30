@@ -25,6 +25,7 @@
  */
 
 #include "effect_envelope_test.h"
+#include <SerialFlash.h>
 
 #define STATE_IDLE	0
 #define STATE_DELAY	1
@@ -44,11 +45,13 @@ void AudioEffectEnvelopeTest::noteOn(void)
 	if (count > 0) {
 		state = STATE_DELAY;
 		inc = 0;
+        Serial.println("DELAY: %f", inc);
 	} else {
 		state = STATE_ATTACK;
 		count = attack_count;
         // 2^16 divided by the number of samples
 		inc = (0x10000 / (count << 3));
+        Serial.println("ATTACK: %f", inc);
 	}
 	__enable_irq();
 }
@@ -88,23 +91,27 @@ void AudioEffectEnvelopeTest::update(void)
 					state = STATE_HOLD;
 					mult = 0x10000;
 					inc = 0;
+                    Serial.println("HOLD: %f", inc);
 				} else {
 					count = decay_count;
 					state = STATE_DECAY;
                     // increment linearly
                     inc = ((sustain_mult - 0x10000) / ((int32_t)count << 3));
+                    Serial.println("DECAY: %f", inc);
 				}
 				continue;
 			} else if (state == STATE_HOLD) {
 				state = STATE_DECAY;
 				count = decay_count;
 				inc = ((sustain_mult - 0x10000) / ((int32_t)count << 3));
+                Serial.println("DECAY: %f", inc);
 				continue;
 			} else if (state == STATE_DECAY) {
 				state = STATE_SUSTAIN;
 				count = 0xFFFF;
 				mult = sustain_mult;
 				inc = 0;
+                Serial.println("SUSTAIN: %f", inc);
 			} else if (state == STATE_SUSTAIN) {
 				count = 0xFFFF;
 			} else if (state == STATE_RELEASE) {
