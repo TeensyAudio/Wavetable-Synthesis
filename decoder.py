@@ -11,7 +11,7 @@ import inspect
 MAX_LENGTH = 52000
 
 BCOUNT = 0
-WCOUNT = 6
+WCOUNT = 2
 BUF32 = 0
 DCOUNT = 0
 DEBUG_FLAG = False
@@ -203,37 +203,14 @@ def decodeIt(path, instIndex, bagIndex, DCOUNT):
                 export_sample(output_file, header_file, sample, aBag, True)
 
 
-#def decodeIt(path, sample_selection, DCOUNT):
-#    with open(path, 'rb') as sf2_file:
-#        sf2 = Sf2File(sf2_file)
-#        sample = sf2.samples[sample_selection]
-#        valid = is_sample_valid(sample)
-#
-#        if valid[0] == False:
-#            error(valid[1])
-#            #return
-#
-#        #Ignore extra 8 bits in the 24 bit specification
-#        sample.sm24_offset = None
-#        print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(sample.name))
-#
-#        #If a sample has already been exported, set mode to
-#        #append rather than overwrite
-#        mode = 'w'
-#        if DCOUNT > 1:
-#            mode = 'a'
-#
-#        with open("SF2_Decoded_Samples.cpp", mode) as output_file:
-#            with open("SF2_Decoded_Samples.h", mode) as header_file:
-#                    export_sample(output_file, header_file, sample, True)
-
-#Write a sample out to C++ style data files. PCM is a bool which when True encodes in PCM. Otherwise, encode in ulaw.
+# Write a sample out to C++ style data files. PCM is a bool which when True 
+# encodes in PCM. Otherwise, encode in ulaw.
 def export_sample(file, header_file, sample, aBag, PCM):
 	file.write("#include \"SF2_Decoded_Samples.h\"\n")
 	raw_wav_data = sample.raw_sample_data
 
 	B_COUNT = 0;
-	length_16 = sample.end - sample.start
+	length_16 = sample.duration
 	length_8 = length_16 * 2
 	length_32 = length_16/2
 	padlength = padding(length_32, 128)
@@ -259,14 +236,7 @@ def export_sample(file, header_file, sample, aBag, PCM):
 	else:
 		format = 0x01
 
-        file.write("0x%0.8X," % (length_16 | (format << 24))) #header
-        file.write("0x%0.8X," % 
-                ((checkGenValue(volume_envelope_delay(aBag))) << 16 | #delay_env
-                (checkGenValue(aBag.volume_envelope_hold)))) #hold_env
-        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_attack))) #attack_env
-        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_decay))) #decay_env
-        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_sustain))) #sustain_env
-        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_release))) #release_env
+        print_metadata(file, sample, aBag, length_16, format)
 
 	i = 0
 	while i < length_8:
@@ -289,7 +259,6 @@ def export_sample(file, header_file, sample, aBag, PCM):
 	file.write("};\n")
 
 	#Write sample to header file
-        OPER_DELAY_MOD_ENV = 25
 	header_file.write("struct sample_info {\n")
 	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
@@ -302,6 +271,22 @@ def export_sample(file, header_file, sample, aBag, PCM):
 	header_file.write("\tconst int SUSTAIN_ENV = " + str(aBag.volume_envelope_sustain) + ";\n")
 	header_file.write("\tconst int RELEASE_ENV = " + str(aBag.volume_envelope_release) + ";\n")
 	header_file.write("};\n")
+
+#prints out the sample metadata into the first portion of the sample array
+def print_metadata(file, sample, aBag, length_16, format):
+    file.write("0x%0.8X," % (length_16 | (format << 24))) #length
+    file.write("0x%0.8X," % (sample.original_pitch)) #original pitch
+    file.write("0x%0.8X," % (sample.sample_rate)) #sample rate
+    file.write("0x%0.8X," % (sample.start_loop)) #loop start
+    file.write("0x%0.8X," % (sample.end_loop)) #loop end
+    file.write("0x%0.8X," % 
+            ((checkGenValue(volume_envelope_delay(aBag))) << 16 | #delay_env
+            (checkGenValue(aBag.volume_envelope_hold)))) #hold_env
+    file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_attack))) #attack_env
+    file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_decay))) #decay_env
+    file.write("\n") # 8 entries so far new line
+    file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_sustain))) #sustain_env
+    file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_release))) #release_env
 
 # A function that returns the value of a generator (a float value) multiplied 
 # by 1000. This is done to save the decimal of the float to the thousandths 
