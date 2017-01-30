@@ -9,6 +9,19 @@
 #include "AudioAllocWavetable.h"
 #include <SerialFlash.h>
 
+void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data, float amp)
+{
+    this->voices = voices;
+    this->numVoices = numVoices;
+    setSample(data);
+    setAmplitude(amp);
+    for (int i=0; i<numVoices; i++) {
+        voices[i].stop();
+        freqTrack[i].freq = -1;
+        freqTrack[i].count = 0;
+    }
+}
+
 void AudioAllocWavetable::setSample(const unsigned int* data)
 {
     for (int i=0; i<numVoices; i++) {
@@ -87,19 +100,7 @@ uint8_t AudioAllocWavetable::voicesPlaying(void)
     return ret;
 }
 
-float AudioAllocWavetable::noteToFreq(byte note) {
-    return 440.0 * pow(2.0, (note - 69) / 12.0);
-}
-
-void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data, float amp)
+float AudioAllocWavetable::noteToFreq(byte note)
 {
-    this->voices = voices;
-    this->numVoices = numVoices;
-    setSample(data);
-    setAmplitude(amp);
-    for (int i=0; i<numVoices; i++) {
-        voices[i].stop();
-        freqTrack[i].freq = -1;
-        freqTrack[i].count = 0;
-    }
+    return AudioSynthWavetable::noteToFreq(note);
 }
