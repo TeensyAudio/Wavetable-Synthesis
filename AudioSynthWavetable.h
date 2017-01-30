@@ -68,11 +68,10 @@ public:
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
 		tone_amp = (uint16_t)(32767.0*v);
 	}
-	
-	float noteToFreq(int note) {
-		//return 440.0 * (((note - 69) / 12.0) * ((note - 69) / 12.0));
-		return 27.5 * pow(2, (float)(note - 21)/12);
-	}
+    
+    static float noteToFreq(int note) {
+        return 27.5 * pow(2, (float)(note - 21)/12);
+    }
 
 	virtual void update(void);
 
