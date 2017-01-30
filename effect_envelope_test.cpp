@@ -44,14 +44,14 @@ void AudioEffectEnvelopeTest::noteOn(void)
 	count = delay_count;
 	if (count > 0) {
 		state = STATE_DELAY;
-		inc = 0;
-        //Serial.println("DELAY: %f", inc);
+        inc = 0;
+        Serial.printf("DELAY: %f\n", inc);
 	} else {
 		state = STATE_ATTACK;
 		count = attack_count;
         // 2^16 divided by the number of samples
 		inc = (0x10000 / (count << 3));
-        //Serial.println("ATTACK: %f", inc);
+        Serial.printf("ATTACK: %f\n", inc);
 	}
 	__enable_irq();
 }
@@ -63,6 +63,7 @@ void AudioEffectEnvelopeTest::noteOff(void)
 	count = release_count;
 	mult = sustain_mult;
 	inc = (-mult / ((int32_t)count << 3));
+    Serial.printf("RELEASE: %f\n", inc);
 	__enable_irq();
 }
 
@@ -91,27 +92,27 @@ void AudioEffectEnvelopeTest::update(void)
 					state = STATE_HOLD;
 					mult = 0x10000;
 					inc = 0;
-                    //Serial.println("HOLD: %f", inc);
+                    Serial.printf("HOLD: %f\n", inc);
 				} else {
 					count = decay_count;
 					state = STATE_DECAY;
                     // increment linearly
                     inc = ((sustain_mult - 0x10000) / ((int32_t)count << 3));
-                    //Serial.println("DECAY: %f", inc);
+                    Serial.printf("DECAY: %f\n", inc);
 				}
 				continue;
 			} else if (state == STATE_HOLD) {
 				state = STATE_DECAY;
 				count = decay_count;
 				inc = ((sustain_mult - 0x10000) / ((int32_t)count << 3));
-                //Serial.println("DECAY: %f", inc);
+                Serial.printf("DECAY: %f\n", inc);
 				continue;
 			} else if (state == STATE_DECAY) {
 				state = STATE_SUSTAIN;
 				count = 0xFFFF;
 				mult = sustain_mult;
 				inc = 0;
-                //Serial.println("SUSTAIN: %f", inc);
+                Serial.printf("SUSTAIN: %f\n", inc);
 			} else if (state == STATE_SUSTAIN) {
 				count = 0xFFFF;
 			} else if (state == STATE_RELEASE) {
@@ -127,6 +128,7 @@ void AudioEffectEnvelopeTest::update(void)
 				state = STATE_ATTACK;
 				count = attack_count;
 				inc = (float)(0x10000 / (count << 3));
+                Serial.printf("ATTACK: %f\n", inc);
 				continue;
 			}
 		}
