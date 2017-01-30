@@ -215,7 +215,7 @@ def export_sample(file, header_file, sample, aBag, PCM):
 	length_32 = length_16/2
 	padlength = padding(length_32, 128)
 
-	array_length = length_32 + padlength
+	array_length = length_32 + padlength + 9 # Adding 9 because we are adding 9 array entries for metadata
 
 	if array_length > MAX_LENGTH:
 		length_32 = MAX_LENGTH - padlength
@@ -264,12 +264,12 @@ def export_sample(file, header_file, sample, aBag, PCM):
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
 	header_file.write("\tconst int LOOP_START = " + str(aBag.cooked_loop_start) + ";\n")
 	header_file.write("\tconst int LOOP_END = " + str(aBag.cooked_loop_end) + ";\n")
-	header_file.write("\tconst int DELAY_ENV = " + str(volume_envelope_delay(aBag)) + ";\n")
-	header_file.write("\tconst int ATTACK_ENV = " + str(aBag.volume_envelope_attack) + ";\n")
-	header_file.write("\tconst int HOLD_ENV = " + str(aBag.volume_envelope_hold) + ";\n")
-	header_file.write("\tconst int DECAY_ENV = " + str(aBag.volume_envelope_decay) + ";\n")
-	header_file.write("\tconst int SUSTAIN_ENV = " + str(aBag.volume_envelope_sustain) + ";\n")
-	header_file.write("\tconst int RELEASE_ENV = " + str(aBag.volume_envelope_release) + ";\n")
+	header_file.write("\tconst float DELAY_ENV = " + str(volume_envelope_delay(aBag)) + ";\n")
+	header_file.write("\tconst float ATTACK_ENV = " + str(0.0 if aBag.volume_envelope_attack == None else aBag.volume_envelope_attack) + ";\n")
+	header_file.write("\tconst float HOLD_ENV = " + str(0.0 if aBag.volume_envelope_hold == None else aBag.volume_envelope_hold) + ";\n")
+	header_file.write("\tconst float DECAY_ENV = " + str(0.0 if aBag.volume_envelope_decay == None else aBag.volume_envelope_decay) + ";\n")
+	header_file.write("\tconst float SUSTAIN_ENV = " + str(0.0 if aBag.volume_envelope_sustain == None else aBag.volume_envelope_sustain) + ";\n")
+	header_file.write("\tconst float RELEASE_ENV = " + str(0.0 if aBag.volume_envelope_release == None else aBag.volume_envelope_release) + ";\n")
 	header_file.write("};\n")
 
 #prints out the sample metadata into the first portion of the sample array
