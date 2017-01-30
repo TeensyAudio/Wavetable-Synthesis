@@ -52,10 +52,11 @@ public:
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
-
+		loop_length = loop_end - loop_start;
+		
 		length_bits = 1;
-		for (int len = loop_start; len >>= 1; ++length_bits);
-		loop_phase = (loop_start - 1) << (32 - length_bits);
+		for (int len = loop_length; len >>= 1; ++length_bits);
+		loop_phase = (loop_length - 1) << (32 - length_bits);
 	}
 	void play(void);
 	void playFrequency(float freq);
@@ -87,7 +88,7 @@ public:
 
 private:
 	uint32_t* waveform;
-	int length, length_bits, loop_start, loop_end;
+	int length, length_bits, loop_start, loop_end, loop_length;
 	float sample_freq;
 	uint8_t playing;
 	uint32_t tone_phase, loop_phase;
