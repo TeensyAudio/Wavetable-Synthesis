@@ -28,6 +28,12 @@
 #include <SerialFlash.h>
 
 void AudioSynthWavetable::setSample(const unsigned int *data) {
+
+	//extracting header data
+
+
+	//------------------------------------------------
+
 	tone_phase = 0;
 	playing = 0;
 
