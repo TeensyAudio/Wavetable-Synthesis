@@ -48,7 +48,7 @@ void AudioEffectEnvelopeTest::noteOn(void)
 		state = STATE_ATTACK;
 		count = attack_count;
         // 2^16 divided by the number of samples
-		inc = (0x10000 / (count*8)) + 0.5;
+		inc = (0x10000 / (count << 3));
 	}
 	__enable_irq();
 }
@@ -98,7 +98,7 @@ void AudioEffectEnvelopeTest::update(void)
 			} else if (state == STATE_HOLD) {
 				state = STATE_DECAY;
 				count = decay_count;
-				inc = ((sustain_mult - 0x10000) / (int32_t)count) >> 3;
+				inc = ((sustain_mult - 0x10000) / ((int32_t)count << 3));
 				continue;
 			} else if (state == STATE_DECAY) {
 				state = STATE_SUSTAIN;
@@ -119,7 +119,7 @@ void AudioEffectEnvelopeTest::update(void)
 			} else if (state == STATE_DELAY) {
 				state = STATE_ATTACK;
 				count = attack_count;
-				inc = (float)(0x10000 / (count*8)) + 0.5;
+				inc = (float)(0x10000 / (count << 3));
 				continue;
 			}
 		}
