@@ -31,6 +31,35 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	tone_phase = 0;
 	playing = 0;
 
+
+	/**********************sample header data: *********************************/
+	/*		Index 0 = Format & Sample size. Same as before.
+	Index 1 = Original Pitch
+	Index 2 = Sample Rate
+	Index 3 = Loop Start
+	Index 4 = Loop End
+	Index 5 = Top 16-bits Delay envelope | Bottom 16-bits Hold Envelope
+	Index 6 = Attack envelope
+	Index 7 = Decay envelope
+	Index 8 = Sustain envelope
+	Index 9 = Release envelope
+	NOTE: Original pitch only takes a max of 8 bits and if we are no longer doing 
+	ulaw and don't need to store the 8 bit format in the high order bits of index 0 
+	then original pitch can go there and all the indexes listed would be -1.
+	
+	All the values in Index 5-9 were float values that were multiplied by 1000 and cast to int.
+	This was done to save each value to the thousandths place.
+	So currently the values are stored in msec (with the exception of Sustain which is measured in dB originally) 
+	so to get back the original values divide each envelope value by 1000.
+	
+	Index 5 was able to hold two values because delay and hold can only have a max value of 20 sec. 
+	(20 * 1000 = 20000 max value) So these two values can be stored in 16-bits a piece.
+	Index 6-9 all hold values that have a max of 100 sec. (100 * 1000 = 100000) which 
+	would  require more than 16-bits so they each have their own int. (In the case of sustain the max is 144 * 1000 = 144000).
+	*/
+	/************************************************************************************************************************/
+
+
 	//note: assuming 16-bit PCM at 44100 Hz for now
 	length = (*data++ & 0x00FFFFFF);
 	waveform = (uint32_t*)data;
