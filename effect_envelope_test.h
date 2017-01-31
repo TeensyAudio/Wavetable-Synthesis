@@ -28,7 +28,7 @@
 #define effect_envelope_test_h_
 #include "Arduino.h"
 #include "AudioStream.h"
-#include "dspinst.h"
+//#include "dspinst.h"
 
 #define MAX_MS 11000.0
 #define UNITY_GAIN 65536.0
@@ -80,6 +80,16 @@ private:
         // Add 7 to round up
         return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
 	}
+    int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
+        return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
+    }
+    int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
+        return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
+    }
+    uint32_t pack_16b_16b(int32_t a, int32_t b) {
+        return (a << 16) | (b & 0x0000FFFF);
+    }
+    
 	audio_block_t *inputQueueArray[1];
 	// state
 	uint8_t  state;  // idle, delay, attack, hold, decay, sustain, release
