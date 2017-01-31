@@ -99,7 +99,7 @@ def main(argv):
     with open (path, 'rb') as sf2_file:
         sf2 = Sf2File(sf2_file)
 
-    options = ('Select by Instrument', 'Select by Sample', 'Quit')
+    options = ('Select by Instrument', 'Quit')
     options2 = ('Select Again', 'Repeat List', 'Back', 'Quit')
     while True:
         choice = menu(options)
@@ -117,7 +117,7 @@ def main(argv):
                 #for the selected instrument, go through all bags and
                 #retrieve sample(s)
                 instrument = instrument - 1
-		bagToSample = [] #lists a bag's index with its sample as a pair
+		bagToSample = [] #lists (bag index, sample) tuples
                 bagIndex = 0
 
                 # Create a list of tuples that hold bagIndex to sample pairs
@@ -147,30 +147,6 @@ def main(argv):
                 elif i_result == 4:
                     sys.exit('Program Terminated by User')
         elif choice == 2:
-                    # Returns a List of sf2Sample.name
-            samples = map(lambda x: x.name, sf2.samples)
-            print''
-            samples.remove('EOS')
-            print_menu(samples)
-
-            while True:
-                sample = safe_input('Select Sample [1-{}]: '.format(
-                    len(samples)), int, 1, len(samples))
-                DCOUNT=DCOUNT+1
-                decodeIt(path, sample-1, DCOUNT)
-                s_result = menu(options2)
-                if s_result == 1:
-                    continue
-                elif s_result == 2:
-                    print''
-                    print_menu(samples)
-                    continue
-                elif s_result == 3:
-                    break
-                elif s_result == 4:
-                    sys.exit('Program Terminated by User')
-
-        elif choice == 3:
             sys.exit('Program Terminated by User')
         else:   #shouldn't be reached
             raw_input("Wrong option selection. Enter any key to try again..")
@@ -215,7 +191,7 @@ def export_sample(file, header_file, sample, aBag, PCM):
 	length_32 = length_16/2
 	padlength = padding(length_32, 128)
 
-	array_length = length_32 + padlength + 9 # Adding 9 because we are adding 9 array entries for metadata
+	array_length = length_32 + padlength + 10 # Adding 10 because we are adding 10 array entries for metadata
 
 	if array_length > MAX_LENGTH:
 		length_32 = MAX_LENGTH - padlength
@@ -307,7 +283,7 @@ def volume_envelope_delay(aBag):
         aGen = aBag.gens[33]
         return aGen.cents
     except KeyError:
-        return None
+        return 0
 
 #Checks if the selected sample is valid. Input is a sample object, and output is
 #a tuple with (boolean, error_message - if any)
