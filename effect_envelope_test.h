@@ -28,11 +28,10 @@
 #define effect_envelope_test_h_
 #include "Arduino.h"
 #include "AudioStream.h"
-//#include "utility/dspinst.h"
 #include "dspinst.h"
 
-#define MAX_MS 1000.0
-
+#define MAX_MS 11000.0
+#define UNITY_GAIN 65536.0
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 
 class AudioEffectEnvelopeTest : public AudioStream
@@ -64,7 +63,7 @@ public:
 	void sustain(float level) {
 		if (level < 0.0) level = 0;
 		else if (level > 1.0) level = 1.0;
-		sustain_mult = level * 65536.0;
+		sustain_mult = level * UNITY_GAIN;
 	}
 	void release(float milliseconds) {
 		release_count = milliseconds2count(milliseconds);
@@ -76,21 +75,17 @@ public:
 private:
 	uint16_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
+        if (milliseconds > MAX_MS) milliseconds = MAX_MS;
         // # of 8-sample units to process
         // Add 7 to round up
-		uint32_t c = ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
-        uint32_t max = ((uint32_t)(MAX_MS*SAMPLES_PER_MSEC)+7)>>3;
-        if (c > max) return max;
-		return c;
+        return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
 	}
 	audio_block_t *inputQueueArray[1];
 	// state
 	uint8_t  state;  // idle, delay, attack, hold, decay, sustain, release
 	uint16_t count;  // how much time remains in this state, in 8 sample units
-	//int32_t  mult;   // attenuation, 0=off, 0x10000=unity gain
-	//int32_t  inc;    // amount to change mult on each sample
-    float    mult;
-    float    inc;
+    float    mult;   // attenuation, 0=off, 0x10000=unity gain
+    float    inc;    // amount to change mult on each sample
 	// settings
 	uint16_t delay_count;
 	uint16_t attack_count;
