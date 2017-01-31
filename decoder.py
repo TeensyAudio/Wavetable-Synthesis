@@ -220,10 +220,12 @@ def export_sample(file, header_file, sample, aBag, globalBag, mode, PCM):
 		end_loop = length_16
 
 	#Write array init to header file.
-	header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
+	#header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
+	header_file.write("extern const unsigned int sample[" + str(array_length) + "];\n")
 
 	#Write array contents to .cpp
-	file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
+	#file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
+	file.write("const unsigned int sample[" + str(array_length) + "] = {\n")
 
 	if PCM == True:
 		format = 0x81
@@ -266,43 +268,39 @@ def print_metadata_to_array(file, sample, aBag, globalBag, length_16, format):
     #delay_env & hold_env
     delayTemp = volume_envelope_delay(aBag)
     holdTemp = aBag.volume_envelope_hold
-    if(delayTemp == None):
+    if(delayTemp == None and globalBag != None):
         delayTemp = volume_envelope_delay(globalBag)
-    if(holdTemp == None):
+    if(holdTemp == None and globalBag != None):
         holdTemp = globalBag.volume_envelope_hold
     file.write("0x%0.8X," % 
             (checkGenValue(delayTemp) << 16 | #delay_env
             checkGenValue(holdTemp))) #hold_env
 
     #attack_env
-    if(aBag.volume_envelope_attack == None):
+    if(aBag.volume_envelope_attack == None and globalBag != None):
         file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_attack)))
     else:
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_attack)))
     
     #decay_env
-    if(aBag.volume_envelope_decay == None):
+    if(aBag.volume_envelope_decay == None and globalBag != None):
         file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_decay)))
     else:
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_decay)))
     file.write("\n") # 8 entries so far new line
 
     #sustain_env
-    if(aBag.volume_envelope_sustain == None):
+    if(aBag.volume_envelope_sustain == None and globalBag != None):
         file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_sustain))) 
     else:
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_sustain))) 
     
     #release_env
-    if(aBag.volume_envelope_release == None):
+    if(aBag.volume_envelope_release == None and globalBag != None):
         file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_release))) 
     else:
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_release))) 
 
-#    file.write("0x%0.8X," % 
-#            ((checkGenValue(volume_envelope_delay(aBag))) << 16 | #delay_env
-#            (checkGenValue(aBag.volume_envelope_hold)))) #hold_env
-   
 #pretty prints metadata for the .h file
 def pretty_print_metadata(header_file, sample, aBag, globalBag):
     header_file.write("struct sample_info {\n")
@@ -312,12 +310,12 @@ def pretty_print_metadata(header_file, sample, aBag, globalBag):
     header_file.write("\tconst int LOOP_END = " + str(aBag.cooked_loop_end) + ";\n")
     
     #delay_env
-    if(volume_envelope_delay(aBag) == None):
+    if(volume_envelope_delay(aBag) == None and globalBag != None):
         header_file.write("\tconst float DELAY_ENV = " + 
                 str(0.0 if volume_envelope_delay(globalBag) == None else volume_envelope_delay(globalBag)) + ";\n")
     else:
         header_file.write("\tconst float DELAY_ENV = " + 
-                str(volume_envelope_delay(aBag)) + ";\n")
+                str(0.0 if volume_envelope_delay(aBag) == None else volume_envelope_delay(aBag)) + ";\n")
 
     #attack_env
     if(aBag.volume_envelope_attack == None):
@@ -325,7 +323,7 @@ def pretty_print_metadata(header_file, sample, aBag, globalBag):
                 str(0.0 if globalBag.volume_envelope_attack == None else globalBag.volume_envelope_attack) + ";\n")
     else:
         header_file.write("\tconst float ATTACK_ENV = " + 
-                str(aBag.volume_envelope_attack) + ";\n")
+                str(0.0 if aBag.volume_envelope_attack == None else aBag.volume_envelope_attack) + ";\n")
     
     #hold_env
     if(aBag.volume_envelope_hold == None):
@@ -333,7 +331,7 @@ def pretty_print_metadata(header_file, sample, aBag, globalBag):
                 str(0.0 if globalBag.volume_envelope_hold == None else globalBag.volume_envelope_hold) + ";\n")
     else:
         header_file.write("\tconst float HOLD_ENV = " + 
-                str(aBag.volume_envelope_hold) + ";\n")
+                str(0.0 if aBag.volume_envelope_hold == None else aBag.volume_envelope_hold) + ";\n")
     
     #decay_env
     if(aBag.volume_envelope_decay == None):
@@ -341,7 +339,7 @@ def pretty_print_metadata(header_file, sample, aBag, globalBag):
                 str(0.0 if globalBag.volume_envelope_decay == None else globalBag.volume_envelope_decay) + ";\n")
     else:
         header_file.write("\tconst float DECAY_ENV = " + 
-                str(aBag.volume_envelope_decay) + ";\n")
+                str(0.0 if aBag.volume_envelope_decay == None else aBag.volume_envelope_decay) + ";\n")
 
     #sustain_env
     if(aBag.volume_envelope_sustain == None):
@@ -349,7 +347,7 @@ def pretty_print_metadata(header_file, sample, aBag, globalBag):
                 str(0.0 if globalBag.volume_envelope_sustain == None else globalBag.volume_envelope_sustain) + ";\n")
     else:
         header_file.write("\tconst float SUSTAIN_ENV = " + 
-                str(aBag.volume_envelope_sustain) + ";\n")
+                str(0.0 if aBag.volume_envelope_sustain == None else aBag.volume_envelope_sustain) + ";\n")
        
     #release_env
     if(aBag.volume_envelope_release == None):
@@ -357,7 +355,7 @@ def pretty_print_metadata(header_file, sample, aBag, globalBag):
                 str(0.0 if globalBag.volume_envelope_release == None else globalBag.volume_envelope_release) + ";\n")
     else:
         header_file.write("\tconst float RELEASE_ENV = " + 
-                str(aBag.volume_envelope_release) + ";\n")
+                str(0.0 if aBag.volume_envelope_release == None else aBag.volume_envelope_release) + ";\n")
 
     header_file.write("};\n")
 
