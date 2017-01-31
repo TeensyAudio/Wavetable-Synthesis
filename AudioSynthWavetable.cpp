@@ -27,10 +27,18 @@
 #include "AudioSynthWavetable.h"
 #include <SerialFlash.h>
 
+#define STATE_IDLE	0
+#define STATE_DELAY	1
+#define STATE_ATTACK	2
+#define STATE_HOLD	3
+#define STATE_DECAY	4
+#define STATE_SUSTAIN	5
+#define STATE_RELEASE	6
+
 void AudioSynthWavetable::setSample(const unsigned int *data) {
 
 /**********************extracting sample header data: *********************************/
-	/*		
+	/*	
 	Index 0 = Format & Sample size. Same as before.
 	Index 1 = Original Pitch
 	Index 2 = Sample Rate
@@ -44,56 +52,42 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	NOTE: Original pitch only takes a max of 8 bits and if we are no longer doing 
 	ulaw and don't need to store the 8 bit format in the high order bits of index 0 
 	then original pitch can go there and all the indexes listed would be -1.
-	
-	All the values in Index 5-9 were float values that were multiplied by 1000 and cast to int.
-	This was done to save each value to the thousandths place.
-	So currently the values are stored in msec (with the exception of Sustain which is measured in dB originally) 
-	so to get back the original values divide each envelope value by 1000.
-	
-	Index 5 was able to hold two values because delay and hold can only have a max value of 20 sec. 
-	(20 * 1000 = 20000 max value) So these two values can be stored in 16-bits a piece.
-	Index 6-9 all hold values that have a max of 100 sec. (100 * 1000 = 100000) which 
-	would  require more than 16-bits so they each have their own int. (In the case of sustain the max is 144 * 1000 = 144000).
 	*/
-	/************************************************************************************************************************/
-
-	
-	format_and_sample_size = data[0];
-
-	//setting note with original pitch from index 1
-	setSampleNote(data[1]*1000);	//Josh: does this need to be multiplied by 1000?
-	sample_rate = data[2]*1000;
-
-	//setting start and end loop
-	setLoop(data[3], data[4]);
-
-	delay_envelope = (data[5]>>16) * 1000;
-	hold_envelope; = (data[5]<<16) * 1000;
-	attack_envelope = data[6] * 1000;
-	decay_envelope = data[7] * 1000;
-	sustain_envelope = data[8] * 1000;
-	release_envelope = data[9] * 1000;
-
-
-	
-
-
-	/****************************************************************/
 
 	tone_phase = 0;
 	playing = 0;
 
 	//note: assuming 16-bit PCM at 44100 Hz for now
-	length = (*data++ & 0x00FFFFFF);
+	length = (data[0] & 0x00FFFFFF);
 	waveform = (uint32_t*)data;
+    setSampleNote(data[1]);
+	sample_rate = data[2];
+
+	//setting start and end loop
+	setLoop(data[3], data[4]);
+
+	env_delay((data[5]>>16));
+	env_hold((data[5]<<16));
+	env_attack(data[6]);
+	env_decay(data[7]);
+	env_sustain(data[8]/1000);
+	env_release(data[9]);
 	
-	length = loop_end;
-
+	//Set data to point to the actual sound data
+	data += 10;
 	length_bits = 1;
+    
 	for (int len = length; len >>= 1; ++length_bits);
-	max_phase = (length - 1) << (32 - length_bits);
+    max_phase = (length - 1) << (32 - length_bits);
+    
+    if (loop_start >= 0)
+        loop_start_phase = (loop_start - 1) << (32 - length_bits);
+    if (loop_end > 0)
+        loop_end_phase = (loop_end - 1) << (32 - length_bits);
+    else
+        loop_end_phase = max_phase;
 
-	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
+    Serial.printf("set sample: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
 }
 
 void AudioSynthWavetable::play(void) {
@@ -107,6 +101,21 @@ void AudioSynthWavetable::playFrequency(float freq) {
 	if (waveform == NULL)
 		return;
 	frequency(freq);
+	__disable_irq();
+	mult = 0;
+	count = delay_count;
+	if (count > 0) {
+		state = STATE_DELAY;
+        inc = 0;
+        Serial.printf("DELAY: %f\n", inc);
+	} else {
+		state = STATE_ATTACK;
+		count = attack_count;
+        // 2^16 divided by the number of samples
+		inc = (UNITY_GAIN / (count << 3));
+        Serial.printf("ATTACK: %f\n", inc);
+	}
+	__enable_irq();
 	tone_phase = 0;
 	playing = 1;
 }
@@ -118,7 +127,12 @@ void AudioSynthWavetable::playNote(int note) {
 }
 
 void AudioSynthWavetable::stop(void) {
-	playing = 0;
+	__disable_irq();
+	state = STATE_RELEASE;
+	count = release_count;
+	inc = (-(float)mult / ((int32_t)count << 3));
+    Serial.printf("RELEASE: %f\n", inc);
+	__enable_irq();
 }
 
 void AudioSynthWavetable::update(void) {
@@ -127,9 +141,15 @@ void AudioSynthWavetable::update(void) {
 	uint32_t index, scale;
 	int16_t s1, s2;
 	uint32_t v1, v2, v3;
+	uint32_t *p, *end;
+	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 
 	if (!playing)
 		return;
+	
+	if (state == STATE_IDLE) {
+		return;
+	}
 
 	block = allocate();
 	if (block == NULL)
@@ -139,10 +159,13 @@ void AudioSynthWavetable::update(void) {
 
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)this->waveform;
-	//Serial.printf("length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
+	//Serial.printf("update: length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
+    // Serial.printf("update: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
 	//Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-		tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
+		//tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
+
+        tone_phase = tone_phase < loop_end_phase ? tone_phase : tone_phase - loop_end_phase +loop_start_phase;
 		index = tone_phase >> (32 - length_bits);
 		scale = (tone_phase << length_bits) >> 16;
 		s1 = waveform[index];
@@ -153,6 +176,97 @@ void AudioSynthWavetable::update(void) {
 		*out++ = (int16_t)v3;
 		//*out++ = (int16_t)((v3 * tone_amp) >> 16);
 		tone_phase += tone_incr;
+	}
+	
+	//*********************************************************************
+	//Envelope code
+	//*********************************************************************
+	
+	p = (uint32_t *)block->data;
+    // p increments by 1 for every 2 samples processed.
+	end = p + AUDIO_BLOCK_SAMPLES/2;
+
+	while (p < end) {
+		// we only care about the state when completing a region
+		if (count == 0) {
+			if (state == STATE_ATTACK) {
+				count = hold_count;
+				if (count > 0) {
+					state = STATE_HOLD;
+					mult = UNITY_GAIN;
+					inc = 0;
+                    Serial.printf("HOLD: %f\n", inc);
+				} else {
+					count = decay_count;
+					state = STATE_DECAY;
+                    inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
+                    Serial.printf("DECAY: %f\n", inc);
+				}
+				continue;
+			} else if (state == STATE_HOLD) {
+				state = STATE_DECAY;
+				count = decay_count;
+				inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
+                Serial.printf("DECAY: %f\n", inc);
+				continue;
+			} else if (state == STATE_DECAY) {
+				state = STATE_SUSTAIN;
+				count = 0xFFFF;
+				mult = sustain_mult;
+				inc = 0;
+                Serial.printf("SUSTAIN: %f\n", inc);
+			} else if (state == STATE_SUSTAIN) {
+				count = 0xFFFF;
+			} else if (state == STATE_RELEASE) {
+				state = STATE_IDLE;
+				playing = 0;
+                Serial.println("IDLE");
+				while (p < end) {
+					*p++ = 0;
+					*p++ = 0;
+					*p++ = 0;
+					*p++ = 0;
+				}
+				break;
+			} else if (state == STATE_DELAY) {
+				state = STATE_ATTACK;
+				count = attack_count;
+				inc = (UNITY_GAIN / (count << 3));
+                Serial.printf("ATTACK: %f\n", inc);
+				continue;
+			}
+		}
+		// process 8 samples, using only mult and inc
+		sample12 = *p++;
+		sample34 = *p++;
+		sample56 = *p++;
+		sample78 = *p++;
+		p -= 4;
+		mult += inc;
+		tmp1 = signed_multiply_32x16b((int32_t)mult, sample12);
+		mult += inc;
+		tmp2 = signed_multiply_32x16t((int32_t)mult, sample12);
+		sample12 = pack_16b_16b(tmp2, tmp1);
+		mult += inc;
+		tmp1 = signed_multiply_32x16b((int32_t)mult, sample34);
+		mult += inc;
+		tmp2 = signed_multiply_32x16t((int32_t)mult, sample34);
+		sample34 = pack_16b_16b(tmp2, tmp1);
+		mult += inc;
+		tmp1 = signed_multiply_32x16b((int32_t)mult, sample56);
+		mult += inc;
+		tmp2 = signed_multiply_32x16t((int32_t)mult, sample56);
+		sample56 = pack_16b_16b(tmp2, tmp1);
+		mult += inc;
+		tmp1 = signed_multiply_32x16b((int32_t)mult, sample78);
+		mult += inc;
+		tmp2 = signed_multiply_32x16t((int32_t)mult, sample78);
+		sample78 = pack_16b_16b(tmp2, tmp1);
+		*p++ = sample12;
+		*p++ = sample34;
+		*p++ = sample56;
+		*p++ = sample78;
+		count--;
 	}
 
 	transmit(block);
