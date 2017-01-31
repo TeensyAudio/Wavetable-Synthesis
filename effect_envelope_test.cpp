@@ -50,7 +50,7 @@ void AudioEffectEnvelopeTest::noteOn(void)
 		state = STATE_ATTACK;
 		count = attack_count;
         // 2^16 divided by the number of samples
-		inc = (0x10000 / (count << 3));
+		inc = (65536.0 / (count << 3));
         Serial.printf("ATTACK: %f\n", inc);
 	}
 	__enable_irq();
@@ -97,14 +97,14 @@ void AudioEffectEnvelopeTest::update(void)
 					count = decay_count;
 					state = STATE_DECAY;
                     // increment linearly
-                    inc = ((sustain_mult - 0x10000) / ((int32_t)count << 3));
+                    inc = ((sustain_mult - 65536.0) / ((int32_t)count << 3));
                     Serial.printf("DECAY: %f\n", inc);
 				}
 				continue;
 			} else if (state == STATE_HOLD) {
 				state = STATE_DECAY;
 				count = decay_count;
-				inc = ((sustain_mult - 0x10000) / ((int32_t)count << 3));
+				inc = ((sustain_mult - 65536.0) / ((int32_t)count << 3));
                 Serial.printf("DECAY: %f\n", inc);
 				continue;
 			} else if (state == STATE_DECAY) {

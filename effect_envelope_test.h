@@ -31,6 +31,8 @@
 //#include "utility/dspinst.h"
 #include "dspinst.h"
 
+#define MAX_MS 1000.0
+
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 
 class AudioEffectEnvelopeTest : public AudioStream
@@ -77,7 +79,8 @@ private:
         // # of 8-sample units to process
         // Add 7 to round up
 		uint32_t c = ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
-        if (c > 1103) return 1103;
+        uint32_t max = ((uint32_t)(MAX_MS*SAMPLES_PER_MSEC)+7)>>3;
+        if (c > max) return max;
 		return c;
 	}
 	audio_block_t *inputQueueArray[1];
