@@ -29,6 +29,10 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 
+#define MAX_MS 11000.0      // Max section length (milliseconds)
+#define UNITY_GAIN 65536.0  // Max amplitude
+#define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
+
 class AudioSynthWavetable : public AudioStream
 {
 public:
@@ -81,10 +85,36 @@ public:
 	}
 	
 	float noteToFreq(int note) {
-		//return 440.0 * (((note - 69) / 12.0) * ((note - 69) / 12.0));
 		return 27.5 * pow(2, (float)(note - 21)/12);
 	}
-
+	
+	void env_delay(float milliseconds) {
+		delay_count = milliseconds2count(milliseconds);
+	}
+	void env_attack(float milliseconds) {
+		if (milliseconds <= 0) {
+			milliseconds = 1.5;
+		}
+		attack_count = milliseconds2count(milliseconds);
+	}
+	void env_hold(float milliseconds) {
+		if (milliseconds <= 0) {
+			milliseconds = 0.5;
+		}
+		hold_count = milliseconds2count(milliseconds);
+	}
+	void env_decay(float milliseconds) {
+		decay_count = milliseconds2count(milliseconds);
+	}
+	void env_sustain(float level) {
+		if (level < 0.0) level = 0;
+		else if (level > 1.0) level = 1.0;
+		sustain_mult = level * UNITY_GAIN;
+	}
+	void env_release(float milliseconds) {
+		release_count = milliseconds2count(milliseconds);
+	}
+	
 	virtual void update(void);
 
 private:
@@ -95,5 +125,35 @@ private:
 	uint32_t tone_phase, loop_phase, loop_start_phase, loop_end_phase;
 	uint32_t max_phase;
 	uint32_t tone_incr;
-	uint16_t tone_amp;
+	uint16_t tone_amp, sample_rate;
+	
+	uint16_t milliseconds2count(float milliseconds) {
+		if (milliseconds < 0.0) milliseconds = 0.0;
+        if (milliseconds > MAX_MS) milliseconds = MAX_MS;
+        // # of 8-sample units to process
+        // Add 7 to round up
+        return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
+	}
+    int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
+        return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
+    }
+    int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
+        return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
+    }
+    uint32_t pack_16b_16b(int32_t a, int32_t b) {
+        return (a << 16) | (b & 0x0000FFFF);
+    }
+    
+	// state
+	uint8_t  state;  // idle, delay, attack, hold, decay, sustain, release
+	uint16_t count;  // how much time remains in this state, in 8 sample units
+    float    mult;   // attenuation, 0=off, 0x10000=unity gain
+    float    inc;    // amount to change mult on each sample
+	// settings
+	uint16_t delay_count;
+	uint16_t attack_count;
+	uint16_t hold_count;
+	uint16_t decay_count;
+	int32_t  sustain_mult;
+	uint16_t release_count;
 };
