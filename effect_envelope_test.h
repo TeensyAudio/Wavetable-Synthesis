@@ -28,10 +28,9 @@
 #define effect_envelope_test_h_
 #include "Arduino.h"
 #include "AudioStream.h"
-//#include "dspinst.h"
 
-#define MAX_MS 11000.0
-#define UNITY_GAIN 65536.0
+#define MAX_MS 11000.0      // Max section length (milliseconds)
+#define UNITY_GAIN 65536.0  // Max amplitude
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 
 class AudioEffectEnvelopeTest : public AudioStream
@@ -46,6 +45,7 @@ public:
 		sustain(0.667);
 		release(30.0);
 	}
+    bool isIdle();
 	void noteOn();
 	void noteOff();
 	void delay(float milliseconds) {
@@ -70,7 +70,6 @@ public:
 	}
 	using AudioStream::release;
 	virtual void update(void);
-    bool isIdle();
     
 private:
 	uint16_t milliseconds2count(float milliseconds) {
