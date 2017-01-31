@@ -46,6 +46,8 @@ public:
 		, tone_amp(0)
 		, loop_start(0)
 		, loop_end(0)
+        , loop_start_phase(0)
+        , loop_end_phase(0)
 	{}
 
 	void setSample(const unsigned int* data);
@@ -90,7 +92,7 @@ private:
 	int length, length_bits, loop_start, loop_end;
 	float sample_freq;
 	uint8_t playing;
-	uint32_t tone_phase, loop_phase;
+	uint32_t tone_phase, loop_phase, loop_start_phase, loop_end_phase;
 	uint32_t max_phase;
 	uint32_t tone_incr;
 	uint16_t tone_amp;
