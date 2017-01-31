@@ -6,7 +6,7 @@
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
-#include <SD.h>
+#include </Users/ConnorReilly/Desktop/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/SD.h>
 #include <SerialFlash.h>
 
 AudioSynthWavetable wavetable[3];
@@ -28,9 +28,6 @@ AudioControlSGTL5000 sgtl5000_1;
 // Bounce objects to read pushbuttons 
 Bounce button[] = { {0, 15}, {1, 15}, {2, 15} };
 
-const int NUM_VOICES = 3;
-uint8_t voices[NUM_VOICES];
-
 void setup() {
   Serial.begin(9600);
 
@@ -45,11 +42,11 @@ void setup() {
     mixer.gain(i, 0.4);
     wavetable[i].setSample(AudioWaveform_Loop);
     env[i].delay(1000);
-    env[i].attack(1000);
-    env[i].hold(1000);
-    env[i].decay(1000);
-    env[i].sustain(.5);
-    env[i].release(1000);
+    env[i].attack(11000);
+    env[i].hold(11000);
+    env[i].decay(11000);
+    env[i].sustain(.667);
+    env[i].release(11000);
   }
 }
 
