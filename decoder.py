@@ -119,12 +119,14 @@ def main(argv):
                 instrument = instrument - 1
 		bagToSample = [] #lists (bag index, sample) tuples
                 bagIndex = 0
+                globalBagIndex = None
 
                 # Create a list of tuples that hold bagIndex to sample pairs
                 for bag in sf2.instruments[instrument].bags:
                     if bag.sample == None:
-                        print bag
-                    if bag.sample != None and bag.sample not in bagToSample:
+                        print bag #TODO: REMOVE THIS
+                        globalBagIndex = bagIndex
+                    elif bag.sample != None and bag.sample not in bagToSample:
                         bagToSample.append((bagIndex, bag.sample))
                     bagIndex += 1
 
@@ -136,7 +138,7 @@ def main(argv):
                 print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(samples[sample-1].name))
                 DCOUNT=DCOUNT+1
                 bagIndex = bagToSample[sample-1][0]
-                decodeIt(path, instrument, bagIndex, DCOUNT) 
+                decodeIt(path, instrument, bagIndex, globalBagIndex, DCOUNT) 
                 i_result = menu(options2)
                 if i_result == 1:
                     continue
@@ -153,7 +155,7 @@ def main(argv):
         else:   #shouldn't be reached
             raw_input("Wrong option selection. Enter any key to try again..")
 
-def decodeIt(path, instIndex, bagIndex, DCOUNT):
+def decodeIt(path, instIndex, bagIndex, globalBagIndex, DCOUNT):
     global BCOUNT, WCOUNT, BUF32
     with open(path, 'rb') as sf2_file:
         sf2 = Sf2File(sf2_file)
@@ -164,6 +166,12 @@ def decodeIt(path, instIndex, bagIndex, DCOUNT):
         if valid[0] == False:
             error(valid[1])
             #return
+
+        #check for global instrument bag
+        if(globalBagIndex != None):
+            globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
+        else:
+            globalBag = None
 
         #Ignore extra 8 bits in the 24 bit specification
         sample.sm24_offset = None
@@ -182,12 +190,12 @@ def decodeIt(path, instIndex, bagIndex, DCOUNT):
 
         with open("SF2_Decoded_Samples.cpp", mode) as output_file:
             with open("SF2_Decoded_Samples.h", mode) as header_file:
-                export_sample(output_file, header_file, sample, aBag, mode, True)
+                export_sample(output_file, header_file, sample, aBag, globalBag, mode, True)
 
 
 # Write a sample out to C++ style data files. PCM is a bool which when True 
 # encodes in PCM. Otherwise, encode in ulaw.
-def export_sample(file, header_file, sample, aBag, mode, PCM):	
+def export_sample(file, header_file, sample, aBag, globalBag, mode, PCM):	
         if(mode == 'w'):
             file.write("#include \"SF2_Decoded_Samples.h\"\n")
         else:
@@ -222,7 +230,7 @@ def export_sample(file, header_file, sample, aBag, mode, PCM):
 	else:
 		format = 0x01
 
-        print_metadata(file, sample, aBag, length_16, format)
+        print_metadata_to_array(file, sample, aBag, globalBag, length_16, format)
 
 	i = 0
 	while i < length_8:
@@ -245,34 +253,113 @@ def export_sample(file, header_file, sample, aBag, mode, PCM):
 	file.write("};\n")
 
 	#Write sample to header file
-	header_file.write("struct sample_info {\n")
-	header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
-	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
-	header_file.write("\tconst int LOOP_START = " + str(aBag.cooked_loop_start) + ";\n")
-	header_file.write("\tconst int LOOP_END = " + str(aBag.cooked_loop_end) + ";\n")
-	header_file.write("\tconst float DELAY_ENV = " + str(0.0 if volume_envelope_delay(aBag) == None else volume_envelope_delay(aBag)) + ";\n")
-	header_file.write("\tconst float ATTACK_ENV = " + str(0.0 if aBag.volume_envelope_attack == None else aBag.volume_envelope_attack) + ";\n")
-	header_file.write("\tconst float HOLD_ENV = " + str(0.0 if aBag.volume_envelope_hold == None else aBag.volume_envelope_hold) + ";\n")
-	header_file.write("\tconst float DECAY_ENV = " + str(0.0 if aBag.volume_envelope_decay == None else aBag.volume_envelope_decay) + ";\n")
-	header_file.write("\tconst float SUSTAIN_ENV = " + str(0.0 if aBag.volume_envelope_sustain == None else aBag.volume_envelope_sustain) + ";\n")
-	header_file.write("\tconst float RELEASE_ENV = " + str(0.0 if aBag.volume_envelope_release == None else aBag.volume_envelope_release) + ";\n")
-	header_file.write("};\n")
+        pretty_print_metadata(header_file, sample, aBag, globalBag)
 
 #prints out the sample metadata into the first portion of the sample array
-def print_metadata(file, sample, aBag, length_16, format):
+def print_metadata_to_array(file, sample, aBag, globalBag, length_16, format):
     file.write("0x%0.8X," % (length_16 | (format << 24))) #length
     file.write("0x%0.8X," % (sample.original_pitch)) #original pitch
     file.write("0x%0.8X," % (sample.sample_rate)) #sample rate
     file.write("0x%0.8X," % (aBag.cooked_loop_start)) #loop start
     file.write("0x%0.8X," % (aBag.cooked_loop_end)) #loop end
+    
+    #delay_env & hold_env
+    delayTemp = volume_envelope_delay(aBag)
+    holdTemp = aBag.volume_envelope_hold
+    if(delayTemp == None):
+        delayTemp = volume_envelope_delay(globalBag)
+    if(holdTemp == None):
+        holdTemp = globalBag.volume_envelope_hold
     file.write("0x%0.8X," % 
-            ((checkGenValue(volume_envelope_delay(aBag))) << 16 | #delay_env
-            (checkGenValue(aBag.volume_envelope_hold)))) #hold_env
-    file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_attack))) #attack_env
-    file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_decay))) #decay_env
+            (checkGenValue(delayTemp) << 16 | #delay_env
+            checkGenValue(holdTemp))) #hold_env
+
+    #attack_env
+    if(aBag.volume_envelope_attack == None):
+        file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_attack)))
+    else:
+        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_attack)))
+    
+    #decay_env
+    if(aBag.volume_envelope_decay == None):
+        file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_decay)))
+    else:
+        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_decay)))
     file.write("\n") # 8 entries so far new line
-    file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_sustain))) #sustain_env
-    file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_release))) #release_env
+
+    #sustain_env
+    if(aBag.volume_envelope_sustain == None):
+        file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_sustain))) 
+    else:
+        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_sustain))) 
+    
+    #release_env
+    if(aBag.volume_envelope_release == None):
+        file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_release))) 
+    else:
+        file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_release))) 
+
+#    file.write("0x%0.8X," % 
+#            ((checkGenValue(volume_envelope_delay(aBag))) << 16 | #delay_env
+#            (checkGenValue(aBag.volume_envelope_hold)))) #hold_env
+   
+#pretty prints metadata for the .h file
+def pretty_print_metadata(header_file, sample, aBag, globalBag):
+    header_file.write("struct sample_info {\n")
+    header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
+    header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
+    header_file.write("\tconst int LOOP_START = " + str(aBag.cooked_loop_start) + ";\n")
+    header_file.write("\tconst int LOOP_END = " + str(aBag.cooked_loop_end) + ";\n")
+    
+    #delay_env
+    if(volume_envelope_delay(aBag) == None):
+        header_file.write("\tconst float DELAY_ENV = " + 
+                str(0.0 if volume_envelope_delay(globalBag) == None else volume_envelope_delay(globalBag)) + ";\n")
+    else:
+        header_file.write("\tconst float DELAY_ENV = " + 
+                str(volume_envelope_delay(aBag)) + ";\n")
+
+    #attack_env
+    if(aBag.volume_envelope_attack == None):
+        header_file.write("\tconst float ATTACK_ENV = " + 
+                str(0.0 if globalBag.volume_envelope_attack == None else globalBag.volume_envelope_attack) + ";\n")
+    else:
+        header_file.write("\tconst float ATTACK_ENV = " + 
+                str(aBag.volume_envelope_attack) + ";\n")
+    
+    #hold_env
+    if(aBag.volume_envelope_hold == None):
+        header_file.write("\tconst float HOLD_ENV = " + 
+                str(0.0 if globalBag.volume_envelope_hold == None else globalBag.volume_envelope_hold) + ";\n")
+    else:
+        header_file.write("\tconst float HOLD_ENV = " + 
+                str(aBag.volume_envelope_hold) + ";\n")
+    
+    #decay_env
+    if(aBag.volume_envelope_decay == None):
+        header_file.write("\tconst float DECAY_ENV = " + 
+                str(0.0 if globalBag.volume_envelope_decay == None else globalBag.volume_envelope_decay) + ";\n")
+    else:
+        header_file.write("\tconst float DECAY_ENV = " + 
+                str(aBag.volume_envelope_decay) + ";\n")
+
+    #sustain_env
+    if(aBag.volume_envelope_sustain == None):
+        header_file.write("\tconst float SUSTAIN_ENV = " + 
+                str(0.0 if globalBag.volume_envelope_sustain == None else globalBag.volume_envelope_sustain) + ";\n")
+    else:
+        header_file.write("\tconst float SUSTAIN_ENV = " + 
+                str(aBag.volume_envelope_sustain) + ";\n")
+       
+    #release_env
+    if(aBag.volume_envelope_release == None):
+        header_file.write("\tconst float RELEASE_ENV = " + 
+                str(0.0 if globalBag.volume_envelope_release == None else globalBag.volume_envelope_release) + ";\n")
+    else:
+        header_file.write("\tconst float RELEASE_ENV = " + 
+                str(aBag.volume_envelope_release) + ";\n")
+
+    header_file.write("};\n")
 
 # A function that returns the value of a generator (a float value) multiplied 
 # by 1000. This is done to save the decimal of the float to the thousandths 
