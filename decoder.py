@@ -122,6 +122,8 @@ def main(argv):
 
                 # Create a list of tuples that hold bagIndex to sample pairs
                 for bag in sf2.instruments[instrument].bags:
+                    if bag.sample == None:
+                        print bag
                     if bag.sample != None and bag.sample not in bagToSample:
                         bagToSample.append((bagIndex, bag.sample))
                     bagIndex += 1
@@ -152,6 +154,7 @@ def main(argv):
             raw_input("Wrong option selection. Enter any key to try again..")
 
 def decodeIt(path, instIndex, bagIndex, DCOUNT):
+    global BCOUNT, WCOUNT, BUF32
     with open(path, 'rb') as sf2_file:
         sf2 = Sf2File(sf2_file)
         aBag = sf2.instruments[instIndex].bags[bagIndex]
@@ -167,23 +170,30 @@ def decodeIt(path, instIndex, bagIndex, DCOUNT):
         print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(sample.name))
 
         #If a sample has already been exported, set mode to
-        #append rather than overwrite
+        #append rather than overwrite and reset write buffer variables
         mode = 'w'
         if DCOUNT > 1:
           mode = 'a'
+          BCOUNT = 0
+          WCOUNT = 2
+          BUF32 = 0
 
         print sample.name
 
         with open("SF2_Decoded_Samples.cpp", mode) as output_file:
             with open("SF2_Decoded_Samples.h", mode) as header_file:
-                export_sample(output_file, header_file, sample, aBag, True)
+                export_sample(output_file, header_file, sample, aBag, mode, True)
 
 
 # Write a sample out to C++ style data files. PCM is a bool which when True 
 # encodes in PCM. Otherwise, encode in ulaw.
-def export_sample(file, header_file, sample, aBag, PCM):
-	file.write("#include \"SF2_Decoded_Samples.h\"\n")
-	raw_wav_data = sample.raw_sample_data
+def export_sample(file, header_file, sample, aBag, mode, PCM):	
+        if(mode == 'w'):
+            file.write("#include \"SF2_Decoded_Samples.h\"\n")
+        else:
+            file.write("\n")
+
+        raw_wav_data = sample.raw_sample_data
 
 	B_COUNT = 0;
 	length_16 = sample.duration
@@ -202,10 +212,10 @@ def export_sample(file, header_file, sample, aBag, PCM):
 		end_loop = length_16
 
 	#Write array init to header file.
-	header_file.write("extern const unsigned int sample[" + str(array_length) + "];\n")
+	header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
 
 	#Write array contents to .cpp
-	file.write("const unsigned int sample[" + str(array_length) + "] = {\n")
+	file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
 
 	if PCM == True:
 		format = 0x81
@@ -240,7 +250,7 @@ def export_sample(file, header_file, sample, aBag, PCM):
 	header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
 	header_file.write("\tconst int LOOP_START = " + str(aBag.cooked_loop_start) + ";\n")
 	header_file.write("\tconst int LOOP_END = " + str(aBag.cooked_loop_end) + ";\n")
-	header_file.write("\tconst float DELAY_ENV = " + str(volume_envelope_delay(aBag)) + ";\n")
+	header_file.write("\tconst float DELAY_ENV = " + str(0.0 if volume_envelope_delay(aBag) == None else volume_envelope_delay(aBag)) + ";\n")
 	header_file.write("\tconst float ATTACK_ENV = " + str(0.0 if aBag.volume_envelope_attack == None else aBag.volume_envelope_attack) + ";\n")
 	header_file.write("\tconst float HOLD_ENV = " + str(0.0 if aBag.volume_envelope_hold == None else aBag.volume_envelope_hold) + ";\n")
 	header_file.write("\tconst float DECAY_ENV = " + str(0.0 if aBag.volume_envelope_decay == None else aBag.volume_envelope_decay) + ";\n")
@@ -283,7 +293,7 @@ def volume_envelope_delay(aBag):
         aGen = aBag.gens[33]
         return aGen.cents
     except KeyError:
-        return 0
+        return None
 
 #Checks if the selected sample is valid. Input is a sample object, and output is
 #a tuple with (boolean, error_message - if any)
