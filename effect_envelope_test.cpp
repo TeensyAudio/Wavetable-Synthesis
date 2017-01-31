@@ -61,8 +61,7 @@ void AudioEffectEnvelopeTest::noteOff(void)
 	__disable_irq();
 	state = STATE_RELEASE;
 	count = release_count;
-	mult = sustain_mult;
-	inc = (-mult / ((int32_t)count << 3));
+	inc = (-(float)mult / ((int32_t)count << 3));
     Serial.printf("RELEASE: %f\n", inc);
 	__enable_irq();
 }
