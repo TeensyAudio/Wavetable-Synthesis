@@ -29,7 +29,8 @@
 
 void AudioSynthWavetable::setSample(const unsigned int *data) {
 
-	/**********extracting header data 
+/**********************extracting sample header data: *********************************/
+	/*		
 	Index 0 = Format & Sample size. Same as before.
 	Index 1 = Original Pitch
 	Index 2 = Sample Rate
@@ -38,24 +39,7 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	Index 5 = Top 16-bits Delay envelope | Bottom 16-bits Hold Envelope
 	Index 6 = Attack envelope
 	Index 7 = Decay envelope
-	Index 8 = Sustain envelope
-	Index 9 = Release envelope
-
-	*****************************************/
-	tone_phase = 0;
-	playing = 0;
-
-
-	/**********************sample header data: *********************************/
-	/*		Index 0 = Format & Sample size. Same as before.
-	Index 1 = Original Pitch
-	Index 2 = Sample Rate
-	Index 3 = Loop Start
-	Index 4 = Loop End
-	Index 5 = Top 16-bits Delay envelope | Bottom 16-bits Hold Envelope
-	Index 6 = Attack envelope
-	Index 7 = Decay envelope
-	Index 8 = Sustain envelope
+	Index 8 = Sustain envelope //not ms 
 	Index 9 = Release envelope
 	NOTE: Original pitch only takes a max of 8 bits and if we are no longer doing 
 	ulaw and don't need to store the 8 bit format in the high order bits of index 0 
@@ -73,6 +57,31 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	*/
 	/************************************************************************************************************************/
 
+	
+	format_and_sample_size = data[0];
+
+	//setting note with original pitch from index 1
+	setSampleNote(data[1]*1000);	//Josh: does this need to be multiplied by 1000?
+	sample_rate = data[2]*1000;
+
+	//setting start and end loop
+	setLoop(data[3], data[4]);
+
+	delay_envelope = (data[5]>>16) * 1000;
+	hold_envelope; = (data[5]<<16) * 1000;
+	attack_envelope = data[6] * 1000;
+	decay_envelope = data[7] * 1000;
+	sustain_envelope = data[8] * 1000;
+	release_envelope = data[9] * 1000;
+
+
+	
+
+
+	/****************************************************************/
+
+	tone_phase = 0;
+	playing = 0;
 
 	//note: assuming 16-bit PCM at 44100 Hz for now
 	length = (*data++ & 0x00FFFFFF);

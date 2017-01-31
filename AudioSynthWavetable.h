@@ -94,4 +94,16 @@ private:
 	uint32_t max_phase;
 	uint32_t tone_incr;
 	uint16_t tone_amp;
+
+	/****Please verify that these variables are what we need: */
+	uint32_t format_and_sample_size;
+	//uint8_t original pitch;
+	uint32_t sample_rate;
+	uint16_t delay_envelope;
+	uint16_t hold_envelope;
+	uint32_t attack_envelope;
+	uint32_t decay_envelope;
+	uint32_t sustain_envelope;
+	uint32_t release_envelope;
+
 };
