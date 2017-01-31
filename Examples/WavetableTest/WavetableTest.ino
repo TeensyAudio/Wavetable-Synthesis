@@ -66,17 +66,6 @@ void setup() {
   float x;
   int x1, x2;
 
-  wavetable3.setLoop(8,40943);
-  wavetable1.setLoop(8,40943);
-  wavetable2.setLoop(8,40943);
-  wavetable4.setLoop(8,40943);
-  wavetable5.setLoop(8,40943);
-  wavetable6.setLoop(8,40943);
-  wavetable7.setLoop(8,40943);
-  wavetable8.setLoop(8,40943);
-  wavetable9.setLoop(8,40943);
-  wavetable10.setLoop(8,40943);
-
   wavetable1.setSample(sample);
   wavetable2.setSample(sample);
   wavetable3.setSample(sample);
@@ -99,17 +88,6 @@ void setup() {
   wavetable9.amplitude(0.5);
   wavetable10.amplitude(0.5);
 
-  wavetable1.setSampleNote(60);
-  wavetable2.setSampleNote(60);
-  wavetable3.setSampleNote(60);
-  wavetable4.setSampleNote(60);
-  wavetable5.setSampleNote(60);
-  wavetable6.setSampleNote(60);
-  wavetable7.setSampleNote(60);
-  wavetable8.setSampleNote(60);
-  wavetable9.setSampleNote(60);
-  wavetable10.setSampleNote(60);
-  
   usbMIDI.setHandleNoteOn(OnNoteOn);
   usbMIDI.setHandleNoteOff(OnNoteOff);
 }
