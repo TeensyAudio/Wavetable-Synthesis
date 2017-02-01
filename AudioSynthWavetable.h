@@ -33,25 +33,13 @@
 #define UNITY_GAIN 65536.0  // Max amplitude
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 
+
 class AudioSynthWavetable : public AudioStream
 {
 public:
+
 	AudioSynthWavetable(void)
 		: AudioStream(0, NULL)
-		, waveform(NULL)
-		, length(0)
-		, length_bits(0)
-		, sample_freq(440.0)
-		, playing(0)
-		, tone_phase(0)
-		, loop_phase(0)
-		, max_phase(0)
-		, tone_incr(0)
-		, tone_amp(0)
-		, loop_start(0)
-		, loop_end(0)
-        , loop_start_phase(0)
-        , loop_end_phase(0)
 	{}
 
 	void setSample(const unsigned int* data);
@@ -59,7 +47,7 @@ public:
 		loop_start = start;
 		loop_end = end;
 		loop_length = loop_end - loop_start;
-		
+
 		length_bits = 1;
 		for (int len = loop_length; len >>= 1; ++length_bits);
 		loop_phase = (loop_length - 1) << (32 - length_bits);
@@ -75,7 +63,7 @@ public:
 		frequency(freq);
 		amplitude(amp);
 	}
-	
+
 	void setSampleNote(int note) {
 		sample_freq = noteToFreq(note);
 	}
@@ -84,41 +72,48 @@ public:
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
 		tone_amp = (uint16_t)(32767.0*v);
 	}
-	
+
 	static float noteToFreq(int note) {
-		return 27.5 * pow(2, (float)(note - 21)/12);
+		return 27.5 * pow(2, (float)(note - 21) / 12);
 	}
-	
+
 	void env_delay(float milliseconds) {
 		delay_count = milliseconds2count(milliseconds);
 	}
+
 	void env_attack(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 1.5;
-		}
+		milliseconds = (milliseconds <= 0) ? 1.5 : milliseconds;
 		attack_count = milliseconds2count(milliseconds);
 	}
 	void env_hold(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 0.5;
-		}
+		milliseconds = (milliseconds <= 0) ? 0.5 : milliseconds;
 		hold_count = milliseconds2count(milliseconds);
 	}
 	void env_decay(float milliseconds) {
 		decay_count = milliseconds2count(milliseconds);
 	}
 	void env_sustain(float level) {
-		if (level < 0.0) level = 0;
-		else if (level > 1.0) level = 1.0;
+		level = (level < 0.0) ? 0.0 : (level > 1.0) ? 1.0 : level;
 		sustain_mult = level * UNITY_GAIN;
 	}
 	void env_release(float milliseconds) {
 		release_count = milliseconds2count(milliseconds);
 	}
-	
+
 	virtual void update(void);
 
+
 private:
+	enum EnvelopeState {
+		STATE_IDLE,
+		STATE_DELAY,
+		STATE_ATTACK,
+		STATE_HOLD,
+		STATE_DECAY,
+		STATE_SUSTAIN,
+		STATE_RELEASE
+	};
+
 	uint32_t* waveform;
 	int length, length_bits, loop_start, loop_end, loop_length;
 	float sample_freq;
@@ -127,29 +122,34 @@ private:
 	uint32_t max_phase;
 	uint32_t tone_incr;
 	uint16_t tone_amp, sample_rate;
-	
+
 	uint16_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
-        if (milliseconds > MAX_MS) milliseconds = MAX_MS;
-        // # of 8-sample units to process
-        // Add 7 to round up
-        return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
+		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
+		// # of 8-sample units to process
+		// Add 7 to round up
+		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC) + 7) >> 3;
 	}
-    int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
-        return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
-    }
-    int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
-        return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
-    }
-    uint32_t pack_16b_16b(int32_t a, int32_t b) {
-        return (a << 16) | (b & 0x0000FFFF);
-    }
-    
+
+	inline int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
+		return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
+	}
+
+	inline int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
+		return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
+	}
+
+	inline uint32_t pack_16b_16b(int32_t a, int32_t b) {
+		return (a << 16) | (b & 0x0000FFFF);
+	}
+
+	void updateState(EnvelopeState state);
+
 	// state
-	uint8_t  state;  // idle, delay, attack, hold, decay, sustain, release
+	EnvelopeState state;  // idle, delay, attack, hold, decay, sustain, release
 	uint16_t count;  // how much time remains in this state, in 8 sample units
-    float    mult;   // attenuation, 0=off, 0x10000=unity gain
-    float    inc;    // amount to change mult on each sample
+	float    mult;   // attenuation, 0=off, 0x10000=unity gain
+	float    inc;    // amount to change mult on each sample
 	// settings
 	uint16_t delay_count;
 	uint16_t attack_count;
