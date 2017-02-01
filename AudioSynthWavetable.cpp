@@ -67,7 +67,7 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	setLoop(data[3], data[4]);
 
 	env_delay((data[5]>>16));
-	env_hold((data[5]<<16));
+	env_hold((data[5] & 0x0000FFFF));
 	env_attack(data[6]);
 	env_decay(data[7]);
 	env_sustain(data[8]/1000);
