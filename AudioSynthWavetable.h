@@ -50,11 +50,12 @@ public:
 		, tone_amp(0)
 		, loop_start(0)
 		, loop_end(0)
-        , loop_start_phase(0)
-        , loop_end_phase(0)
+		, loop_start_phase(0)
+		, loop_end_phase(0)
 	{}
 
 	void setSample(const unsigned int* data);
+	
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -64,6 +65,7 @@ public:
 		for (int len = loop_length; len >>= 1; ++length_bits);
 		loop_phase = (loop_length - 1) << (32 - length_bits);
 	}
+	
 	void play(void);
 	void playFrequency(float freq);
 	void playNote(int note);
@@ -92,26 +94,31 @@ public:
 	void env_delay(float milliseconds) {
 		delay_count = milliseconds2count(milliseconds);
 	}
+	
 	void env_attack(float milliseconds) {
 		if (milliseconds <= 0) {
 			milliseconds = 1.5;
 		}
 		attack_count = milliseconds2count(milliseconds);
 	}
+	
 	void env_hold(float milliseconds) {
 		if (milliseconds <= 0) {
 			milliseconds = 0.5;
 		}
 		hold_count = milliseconds2count(milliseconds);
 	}
+	
 	void env_decay(float milliseconds) {
 		decay_count = milliseconds2count(milliseconds);
 	}
+	
 	void env_sustain(float level) {
 		if (level < 0.0) level = 0;
 		else if (level > 1.0) level = 1.0;
 		sustain_mult = level * UNITY_GAIN;
 	}
+	
 	void env_release(float milliseconds) {
 		release_count = milliseconds2count(milliseconds);
 	}
@@ -130,26 +137,26 @@ private:
 	
 	uint16_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
-        if (milliseconds > MAX_MS) milliseconds = MAX_MS;
-        // # of 8-sample units to process
-        // Add 7 to round up
-        return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
+		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
+		// # of 8-sample units to process
+		// Add 7 to round up
+		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
 	}
-    int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
-        return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
-    }
-    int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
-        return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
-    }
-    uint32_t pack_16b_16b(int32_t a, int32_t b) {
-        return (a << 16) | (b & 0x0000FFFF);
-    }
+	int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
+		return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
+	}
+	int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
+		return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
+	}
+	uint32_t pack_16b_16b(int32_t a, int32_t b) {
+		return (a << 16) | (b & 0x0000FFFF);
+	}
     
 	// state
 	uint8_t  state;  // idle, delay, attack, hold, decay, sustain, release
 	uint16_t count;  // how much time remains in this state, in 8 sample units
-    float    mult;   // attenuation, 0=off, 0x10000=unity gain
-    float    inc;    // amount to change mult on each sample
+	float    mult;   // attenuation, 0=off, 0x10000=unity gain
+	float    inc;    // amount to change mult on each sample
 	// settings
 	uint16_t delay_count;
 	uint16_t attack_count;
