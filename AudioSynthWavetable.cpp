@@ -166,8 +166,8 @@ void AudioSynthWavetable::update(void) {
 		v2 = s2 * scale;
 		v1 = s1 * (0xFFFF - scale);
 		v3 = (v1 + v2) >> 16;
-		*out++ = (int16_t)v3;
-		//*out++ = (int16_t)((v3 * tone_amp) >> 16);
+		v3 = (v3 * tone_amp) >> 16;
+		*out++ = (int16_t)(v3 * tone_amp >> 15);
 		tone_phase += tone_incr;
 	}
 

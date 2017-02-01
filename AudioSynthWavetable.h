@@ -70,7 +70,11 @@ public:
 
 	void amplitude(float v) {
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
-		tone_amp = (uint16_t)(32767.0*v);
+		tone_amp = (uint16_t)(65535.0*v);
+	}
+
+	float noteToFrequency(byte note) {
+		return 440.0 * pow(2.0, (note - 69) / 12.0);
 	}
 
 	static float noteToFreq(int note) {
