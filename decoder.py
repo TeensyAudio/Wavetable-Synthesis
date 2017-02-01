@@ -171,7 +171,8 @@ def decodeIt(path, instIndex, bagIndex, globalBagIndex, DCOUNT):
         if(globalBagIndex != None):
             globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
         else:
-            globalBag = None
+            #set globalBag to aBag to avoid needing to check for None when printing
+            globalBag = aBag
 
         #Ignore extra 8 bits in the 24 bit specification
         sample.sm24_offset = None
@@ -188,74 +189,71 @@ def decodeIt(path, instIndex, bagIndex, globalBagIndex, DCOUNT):
 
         print sample.name
 
-        with open("SF2_Decoded_Samples.cpp", mode) as output_file:
-            with open("SF2_Decoded_Samples.h", mode) as header_file:
-                export_sample(output_file, header_file, sample, aBag, globalBag, mode, True)
+        export_sample(sample, aBag, globalBag, mode, True)
 
 
 # Write a sample out to C++ style data files. PCM is a bool which when True 
 # encodes in PCM. Otherwise, encode in ulaw.
-def export_sample(file, header_file, sample, aBag, globalBag, mode, PCM):	
-        if(mode == 'w'):
-            file.write("#include \"SF2_Decoded_Samples.h\"\n")
-        else:
-            file.write("\n")
+def export_sample(sample, aBag, globalBag, mode, PCM):	
+    with open("SF2_Decoded_Samples.cpp", mode) as cpp_file:
+        with open("SF2_Decoded_Samples.h", mode) as header_file:
+            if(mode == 'w'):
+                cpp_file.write("#include \"SF2_Decoded_Samples.h\"\n")
+            else:
+                cpp_file.write("\n")
 
-        raw_wav_data = sample.raw_sample_data
+            raw_wav_data = sample.raw_sample_data
 
-	B_COUNT = 0;
-	length_16 = sample.duration
-	length_8 = length_16 * 2
-	length_32 = length_16/2
-	padlength = padding(length_32, 128)
+            B_COUNT = 0;
+            length_16 = sample.duration
+            length_8 = length_16 * 2
+            length_32 = length_16/2
+            padlength = padding(length_32, 128)
 
-	array_length = length_32 + padlength + 10 # Adding 10 because we are adding 10 array entries for metadata
+            array_length = length_32 + padlength + 10 # Adding 10 because we are adding 10 array entries for metadata
 
-	if array_length > MAX_LENGTH:
-		length_32 = MAX_LENGTH - padlength
-		array_length = length_32
-		length_16 = array_length * 2
-		length_8 = length_16 * 2
-		sample.end = length_16
-		end_loop = length_16
+            if array_length > MAX_LENGTH:
+                length_32 = MAX_LENGTH - padlength
+                array_length = length_32
+                length_16 = array_length * 2
+                length_8 = length_16 * 2
+                sample.end = length_16
+                end_loop = length_16
 
-	#Write array init to header file.
-	#header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
-	header_file.write("extern const unsigned int sample[" + str(array_length) + "];\n")
+            #Write array init to header file.
+            #header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
+            header_file.write("extern const unsigned int sample[" + str(array_length) + "];\n")
+            print_metadata_to_header(header_file, sample, aBag, globalBag)
 
-	#Write array contents to .cpp
-	#file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
-	file.write("const unsigned int sample[" + str(array_length) + "] = {\n")
+            #Write array contents to .cpp
+            #file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
+            cpp_file.write("const unsigned int sample[" + str(array_length) + "] = {\n")
 
-	if PCM == True:
-		format = 0x81
-	else:
-		format = 0x01
+            if PCM == True:
+                format = 0x81
+            else:
+                format = 0x01
 
-        print_metadata_to_array(file, sample, aBag, globalBag, length_16, format)
+            print_metadata_to_array(cpp_file, sample, aBag, globalBag, length_16, format)
+            i = 0
+            while i < length_8:
+                audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
+                if PCM == True:
+                    # Use PCM Encoding
+                    print_bytes(cpp_file, audio)
+                    print_bytes(cpp_file, audio >> 8)
+                    #consuming 2 chars at a time, so add another increment
+                    i = i + 2
+                else:
+                    pass
+                    # Using ulaw encoding
+                    #TODO
 
-	i = 0
-	while i < length_8:
-		audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-		if PCM == True:
-			# Use PCM Encoding
-			print_bytes(file, audio)
-			print_bytes(file, audio >> 8)
-			#consuming 2 chars at a time, so add another increment
-			i = i + 2
-		else:
-			pass
-			# Using ulaw encoding
-			#TODO
+            while padlength > 0:
+                    print_bytes(cpp_file, 0)
+                    padlength = padlength - 1
 
-	while padlength > 0:
-		print_bytes(file, 0)
-		padlength = padlength - 1
-
-	file.write("};\n")
-
-	#Write sample to header file
-        pretty_print_metadata(header_file, sample, aBag, globalBag)
+            cpp_file.write("};\n")
 
 #prints out the sample metadata into the first portion of the sample array
 def print_metadata_to_array(file, sample, aBag, globalBag, length_16, format):
@@ -264,98 +262,104 @@ def print_metadata_to_array(file, sample, aBag, globalBag, length_16, format):
     file.write("0x%0.8X," % (sample.sample_rate)) #sample rate
     file.write("0x%0.8X," % (aBag.cooked_loop_start)) #loop start
     file.write("0x%0.8X," % (aBag.cooked_loop_end)) #loop end
-    
+  
     #delay_env & hold_env
     delayTemp = volume_envelope_delay(aBag)
     holdTemp = aBag.volume_envelope_hold
-    if(delayTemp == None and globalBag != None):
+    if(delayTemp == None):
         delayTemp = volume_envelope_delay(globalBag)
-    if(holdTemp == None and globalBag != None):
+    if(holdTemp == None):
         holdTemp = globalBag.volume_envelope_hold
     file.write("0x%0.8X," % 
             (checkGenValue(delayTemp) << 16 | #delay_env
             checkGenValue(holdTemp))) #hold_env
 
     #attack_env
-    if(aBag.volume_envelope_attack == None and globalBag != None):
+    if(aBag.volume_envelope_attack == None):
         file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_attack)))
     else:
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_attack)))
     
     #decay_env
-    if(aBag.volume_envelope_decay == None and globalBag != None):
+    if(aBag.volume_envelope_decay == None):
         file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_decay)))
     else:
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_decay)))
     file.write("\n") # 8 entries so far new line
 
     #sustain_env
-    if(aBag.volume_envelope_sustain == None and globalBag != None):
+    if(aBag.volume_envelope_sustain == None):
         file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_sustain))) 
     else:
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_sustain))) 
     
     #release_env
-    if(aBag.volume_envelope_release == None and globalBag != None):
+    if(aBag.volume_envelope_release == None):
         file.write("0x%0.8X," % (checkGenValue(globalBag.volume_envelope_release))) 
     else:
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_release))) 
 
-#pretty prints metadata for the .h file
-def pretty_print_metadata(header_file, sample, aBag, globalBag):
+# pretty prints metadata for the .h file
+def print_metadata_to_header(header_file, sample, aBag, globalBag):
     header_file.write("struct sample_info {\n")
     header_file.write("\tconst int ORIGINAL_PITCH = " + str(sample.original_pitch) + ";\n")
     header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
     header_file.write("\tconst int LOOP_START = " + str(aBag.cooked_loop_start) + ";\n")
     header_file.write("\tconst int LOOP_END = " + str(aBag.cooked_loop_end) + ";\n")
-    
+
     #delay_env
-    if(volume_envelope_delay(aBag) == None and globalBag != None):
-        header_file.write("\tconst float DELAY_ENV = " + 
-                str(0.0 if volume_envelope_delay(globalBag) == None else volume_envelope_delay(globalBag)) + ";\n")
+    header_file.write("\tconst float DELAY_ENV = ") 
+    if(volume_envelope_delay(aBag) == None):
+        header_file.write(str(
+            0.0 if volume_envelope_delay(globalBag) == None 
+            else volume_envelope_delay(globalBag)) + ";\n")
     else:
-        header_file.write("\tconst float DELAY_ENV = " + 
-                str(0.0 if volume_envelope_delay(aBag) == None else volume_envelope_delay(aBag)) + ";\n")
+        header_file.write(str(volume_envelope_delay(aBag)) + ";\n")
 
     #attack_env
+    header_file.write("\tconst float ATTACK_ENV = ") 
     if(aBag.volume_envelope_attack == None):
-        header_file.write("\tconst float ATTACK_ENV = " + 
-                str(0.0 if globalBag.volume_envelope_attack == None else globalBag.volume_envelope_attack) + ";\n")
+        header_file.write(str(
+            0.0 if globalBag.volume_envelope_attack == None 
+            else globalBag.volume_envelope_attack) + ";\n")
     else:
-        header_file.write("\tconst float ATTACK_ENV = " + 
-                str(0.0 if aBag.volume_envelope_attack == None else aBag.volume_envelope_attack) + ";\n")
+        header_file.write(str(aBag.volume_envelope_attack) + ";\n")
     
     #hold_env
+    header_file.write("\tconst float HOLD_ENV = ")
     if(aBag.volume_envelope_hold == None):
-        header_file.write("\tconst float HOLD_ENV = " + 
-                str(0.0 if globalBag.volume_envelope_hold == None else globalBag.volume_envelope_hold) + ";\n")
+        header_file.write(str(
+            0.0 if globalBag.volume_envelope_hold == None 
+            else globalBag.volume_envelope_hold) + ";\n")
     else:
-        header_file.write("\tconst float HOLD_ENV = " + 
-                str(0.0 if aBag.volume_envelope_hold == None else aBag.volume_envelope_hold) + ";\n")
+        header_file.write(str(aBag.volume_envelope_hold) + ";\n")
     
     #decay_env
+    header_file.write("\tconst float DECAY_ENV = ")
     if(aBag.volume_envelope_decay == None):
-        header_file.write("\tconst float DECAY_ENV = " + 
-                str(0.0 if globalBag.volume_envelope_decay == None else globalBag.volume_envelope_decay) + ";\n")
+        header_file.write(str(
+            0.0 if globalBag.volume_envelope_decay == None 
+            else globalBag.volume_envelope_decay) + ";\n")
     else:
-        header_file.write("\tconst float DECAY_ENV = " + 
-                str(0.0 if aBag.volume_envelope_decay == None else aBag.volume_envelope_decay) + ";\n")
+        header_file.write(str(aBag.volume_envelope_decay) + ";\n")
 
     #sustain_env
+    header_file.write("\tconst float SUSTAIN_ENV = ")
     if(aBag.volume_envelope_sustain == None):
-        header_file.write("\tconst float SUSTAIN_ENV = " + 
-                str(0.0 if globalBag.volume_envelope_sustain == None else globalBag.volume_envelope_sustain) + ";\n")
+        header_file.write(str(
+            0.0 if globalBag.volume_envelope_sustain == None 
+            else globalBag.volume_envelope_sustain) + ";\n")
     else:
-        header_file.write("\tconst float SUSTAIN_ENV = " + 
-                str(0.0 if aBag.volume_envelope_sustain == None else aBag.volume_envelope_sustain) + ";\n")
+        header_file.write(str(aBag.volume_envelope_sustain) + ";\n")
        
     #release_env
+    header_file.write("\tconst float RELEASE_ENV = ")
     if(aBag.volume_envelope_release == None):
-        header_file.write("\tconst float RELEASE_ENV = " + 
-                str(0.0 if globalBag.volume_envelope_release == None else globalBag.volume_envelope_release) + ";\n")
+        header_file.write(str(
+            0.0 if globalBag.volume_envelope_release == None 
+            else globalBag.volume_envelope_release) + ";\n")
     else:
-        header_file.write("\tconst float RELEASE_ENV = " + 
-                str(0.0 if aBag.volume_envelope_release == None else aBag.volume_envelope_release) + ";\n")
+        header_file.write(str(aBag.volume_envelope_release) + ";\n")
 
     header_file.write("};\n")
 
