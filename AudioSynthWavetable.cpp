@@ -59,7 +59,7 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 
 	//note: assuming 16-bit PCM at 44100 Hz for now
 	length = (data[0] & 0x00FFFFFF);
-	waveform = (uint32_t*)data;
+	waveform = (uint32_t*)data+10; //Set data to point to the actual sound data
     setSampleNote(data[1]);
 	sample_rate = data[2];
 
@@ -73,8 +73,6 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	env_sustain(data[8]/1000);
 	env_release(data[9]);
 	
-	//Set data to point to the actual sound data
-	data += 10;
 	length_bits = 1;
     
 	for (int len = length; len >>= 1; ++length_bits);
