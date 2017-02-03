@@ -118,8 +118,11 @@ void AudioSynthWavetable::playFrequency(float freq) {
 	playing = 1;
 }
 
-void AudioSynthWavetable::playNote(int note) {
+void AudioSynthWavetable::playNote(int note, int amp) {
 	float freq = noteToFreq(note);
+    Serial.printf("Amplitude: %i\n", amp);
+    
+    amplitude((float)amp/(float)127);
 	Serial.println(freq);
 	playFrequency(freq);
 }

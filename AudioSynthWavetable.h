@@ -66,7 +66,7 @@ public:
 	}
 	void play(void);
 	void playFrequency(float freq);
-	void playNote(int note);
+	void playNote(int note, int amp=63);
 	void stop(void);
 	bool isPlaying(void) { return playing; }
 	void frequency(float freq);
