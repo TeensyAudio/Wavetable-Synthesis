@@ -39,6 +39,7 @@ public:
 	AudioSynthWavetable(void)
 		: AudioStream(0, NULL)
 		, waveform(NULL)
+		, num_samples(0)
 		, length(0)
 		, length_bits(0)
 		, sample_freq(440.0)
@@ -54,7 +55,7 @@ public:
         , loop_end_phase(0)
 	{}
 
-	void setSample(const unsigned int* data);
+	void setSamples(const unsigned int ** samples);
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -68,9 +69,11 @@ public:
 	void playFrequency(float freq);
 	void playNote(int note, int amp=63);
 	void stop(void);
-	bool isPlaying(void) { return playing; }
+	bool isPlaying(void);
 	void frequency(float freq);
-
+	void parseSample(int sample_num);
+	
+	uint32_t getNoteRange(int sample_num);
 	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
 		amplitude(amp);
@@ -120,9 +123,10 @@ public:
 
 private:
 	uint32_t* waveform;
+	const unsigned int ** samples;
 	int length, length_bits, loop_start, loop_end, loop_length;
 	float sample_freq;
-	uint8_t playing;
+	uint8_t playing, num_samples;
 	uint32_t tone_phase, loop_phase, loop_start_phase, loop_end_phase;
 	uint32_t max_phase;
 	uint32_t tone_incr;
