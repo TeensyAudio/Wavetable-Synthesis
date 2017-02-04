@@ -60,6 +60,11 @@ uint32_t AudioSynthWavetable::getNoteRange(int sample_num) {
 	return samples[sample_num][5];
 }
 
+bool AudioSynthWavetable::isPlaying() {
+	if (state == STATE_IDLE) return false;
+	return true;
+}
+
 void AudioSynthWavetable::parseSample(int sample_num) {
 	int note1, note2, velocity1, velocity2;
 	const unsigned int *data = samples[sample_num];
@@ -112,6 +117,17 @@ void AudioSynthWavetable::play(void) {
 }
 
 void AudioSynthWavetable::playFrequency(float freq) {
+	uint32_t val;
+	uint16_t note1, note2;
+	for(int i = 0; i < num_samples; i++) {
+		val = getNoteRange(i);
+		note1 = val >> 16;
+		note2 = (val & 0x0000FFFF);
+		if (freq >= noteToFreq(note1) && freq <= noteToFreq(note2)) {
+			parseSample(i);
+			break;
+		}
+	}
 	if (waveform == NULL)
 		return;
 	frequency(freq);
@@ -133,17 +149,6 @@ void AudioSynthWavetable::playFrequency(float freq) {
 }
 
 void AudioSynthWavetable::playNote(int note) {
-	uint32_t val;
-	uint16_t note1, note2;
-	for(int i = 0; i < num_samples; i++) {
-		val = getNoteRange(i);
-		note1 = val >> 16;
-		note2 = (val & 0x0000FFFF);
-		if (note >= note1 && note <= note2) {
-			parseSample(i);
-			break;
-		}
-	}
 	float freq = noteToFreq(note);
 	playFrequency(freq);
 }

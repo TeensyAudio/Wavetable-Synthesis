@@ -62,7 +62,7 @@ void AudioAllocWavetable::playFreq(float freq)
     }
 }
 
-void AudioAllocWavetable::playNote(byte note)
+void AudioAllocWavetable::playNote(int note)
 {
     playFreq(noteToFreq(note));
 }
@@ -84,7 +84,7 @@ void AudioAllocWavetable::stopFreq(float freq)
     }
 }
 
-void AudioAllocWavetable::stopNote(byte note)
+void AudioAllocWavetable::stopNote(int note)
 {
     stopFreq(noteToFreq(note));
 }
@@ -100,7 +100,7 @@ uint8_t AudioAllocWavetable::voicesPlaying(void)
     return ret;
 }
 
-float AudioAllocWavetable::noteToFreq(byte note)
+float AudioAllocWavetable::noteToFreq(int note)
 {
     return AudioSynthWavetable::noteToFreq(note);
 }

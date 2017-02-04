@@ -69,7 +69,7 @@ public:
 	void playFrequency(float freq);
 	void playNote(int note);
 	void stop(void);
-	bool isPlaying(void) { return playing; }
+	bool isPlaying(void);
 	void frequency(float freq);
 	void parseSample(int sample_num);
 	
