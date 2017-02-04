@@ -96,73 +96,66 @@ def main(argv):
         sf2 = Sf2File(sf2_file)
 
     options = ('Select by Instrument', 'Quit')
-    options2 = ('Select Again', 'Repeat List', 'Back', 'Quit')
+    options2 = ('Select Again', 'Save and Quit')
     while True:
         choice = menu(options)
 
         if choice == 1:
-                        # Returns a List of sf2Instrument.name
+            # Returns a List of sf2Instrument.name
             instruments = map(lambda x: x.name, sf2.instruments)
             print''
             instruments.remove('EOI')
             print_menu(instruments)
+            instrument = safe_input('Select Instrument [1-{}]: '.format(len(instruments)), int, 1, len(instruments))
+            print''
+			#for the selected instrument, go through all bags and
+			#retrieve sample(s)
+            instrument = instrument - 1
+            bagToSample = [] #lists (bag index, sample) tuples
+            bagIndex = 0
+            globalBagIndex = None
 
-            while True:
-                instrument = safe_input('Select Instrument [1-{}]: '.format(len(instruments)), int, 1, len(instruments))
-                print''
-                #for the selected instrument, go through all bags and
-                #retrieve sample(s)
-                instrument = instrument - 1
-                bagToSample = [] #lists (bag index, sample) tuples
-                bagIndex = 0
-                globalBagIndex = None
-
-                # Create a list of tuples that hold bagIndex to sample pairs
-                for bag in sf2.instruments[instrument].bags:
-                    if bag.sample == None:
-                        print bag #TODO: REMOVE THIS
-                        globalBagIndex = bagIndex
-                    elif bag.sample != None and bag.sample not in bagToSample:
-                        bagToSample.append((bagIndex, bag.sample))
-                    bagIndex += 1
-
-                samples = [x[1] for x in bagToSample]
-                sampleNames = map(lambda x: x.name, samples)
-                print '{} contains {} samples.'.format(sf2.instruments[instrument].name, len(sampleNames))
-                print_menu(sampleNames)
-                sample = safe_input('Select Sample [1-{}]: '.format(len(sampleNames)), int, 1, len(sampleNames))
-                print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(samples[sample-1].name))
-                bagIndex = bagToSample[sample-1][0]
-                decodeIt(path, instrument, bagIndex, globalBagIndex) 
-                i_result = menu(options2)
-                if i_result == 1:
-                    continue
-                elif i_result == 2:
-                    print''
-                    print_menu(instruments)
-                    continue
-                elif i_result == 3:
-                    break
-                elif i_result == 4:
-                    sys.exit('Program Terminated by User')
+			# Create a list of tuples that hold bagIndex to sample pairs
+            for bag in sf2.instruments[instrument].bags:
+                if bag.sample == None:
+                    globalBagIndex = bagIndex
+                elif bag.sample != None and bag.sample not in bagToSample:
+                    bagToSample.append((bagIndex, bag.sample))
+                bagIndex += 1
+				
+            samples = [x[1] for x in bagToSample]
+            sampleNames = map(lambda x: x.name, samples)
+            print '{} contains {} samples.'.format(sf2.instruments[instrument].name, len(sampleNames))
+            method = menu(('Export All Samples', 'Select Samples to Export'))
+            if method == 1:
+                decodeAll(path, instrument, globalBagIndex)
+                sys.exit('All samples for instrument decoded successfully. Exiting Program.')
+            else:
+                selectedBags = []
+                while True:
+                    print_menu(sampleNames)
+                    sample = safe_input('Select Sample [1-{}]: '.format(len(sampleNames)), int, 1, len(sampleNames))
+                    print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(samples[sample-1].name))
+                    selectedBags.append(bagToSample[sample-1][0])
+                    i_result = menu(options2)
+                    if i_result == 1:
+                        continue
+                    elif i_result == 2:
+                        decodeSelected(path, instrument, selectedBags, globalBagIndex) 
+                        sys.exit('Program Terminated by User')
         elif choice == 2:
             sys.exit('Program Terminated by User')
         else:   #shouldn't be reached
             raw_input("Wrong option selection. Enter any key to try again..")
 
-def decodeIt(path, instIndex, bagIndex, globalBagIndex):
+def decodeSelected(path, instIndex, selectedBags, globalBagIndex):
 	global DCOUNT, BCOUNT, WCOUNT, BUF32
 	with open(path, 'rb') as sf2_file:
 		sf2 = Sf2File(sf2_file)
-		#check for global instrument bag
-		if(globalBagIndex != None):
-			bags = sf2.instruments[instIndex].bags[1:]
-		else:
-			bags = sf2.instruments[instIndex].bags
-		for aBag in bags:
+		for bag in selectedBags:
+			aBag = sf2.instruments[instIndex].bags[bag]
 			DCOUNT = DCOUNT + 1
-			sample = aBag.sample
-			valid = is_sample_valid(sample)
+			valid = is_sample_valid(aBag.sample)
 
 			if valid[0] == False:
 				error(valid[1])
@@ -175,8 +168,8 @@ def decodeIt(path, instIndex, bagIndex, globalBagIndex):
 				globalBag = aBag
 
 			#Ignore extra 8 bits in the 24 bit specification
-			sample.sm24_offset = None
-			print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(sample.name))
+			aBag.sample.sm24_offset = None
+			print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(aBag.sample.name))
 
 			#If a sample has already been exported, set mode to
 			#append rather than overwrite and reset write buffer variables
@@ -187,12 +180,48 @@ def decodeIt(path, instIndex, bagIndex, globalBagIndex):
 			  WCOUNT = 2
 			  BUF32 = 0
 
-			export_sample(sample, aBag, globalBag, mode, len(bags), True)
+			export_sample(aBag, globalBag, mode, len(selectedBags))
+
+def decodeAll(path, instIndex, globalBagIndex):
+	global DCOUNT, BCOUNT, WCOUNT, BUF32
+	with open(path, 'rb') as sf2_file:
+		sf2 = Sf2File(sf2_file)
+		#check for global instrument bag
+		if(globalBagIndex != None):
+			bags = sf2.instruments[instIndex].bags[1:]
+		else:
+			bags = sf2.instruments[instIndex].bags
+		for aBag in bags:
+			DCOUNT = DCOUNT + 1
+			valid = is_sample_valid(aBag.sample)
+
+			if valid[0] == False:
+				error(valid[1])
+				#return
+			
+			if(globalBagIndex != None):
+				globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
+			else:
+				#set globalBag to aBag to avoid needing to check for None when printing
+				globalBag = aBag
+
+			#Ignore extra 8 bits in the 24 bit specification
+			aBag.sample.sm24_offset = None
+
+			#If a sample has already been exported, set mode to
+			#append rather than overwrite and reset write buffer variables
+			mode = 'w'
+			if DCOUNT > 1:
+			  mode = 'a'
+			  BCOUNT = 0
+			  WCOUNT = 2
+			  BUF32 = 0
+
+			export_sample(aBag, globalBag, mode, len(bags))
 
 
-# Write a sample out to C++ style data files. PCM is a bool which when True 
-# encodes in PCM. Otherwise, encode in ulaw.
-def export_sample(sample, aBag, globalBag, mode, num_samples, PCM):	
+# Write a sample out to C++ style data files.
+def export_sample(aBag, globalBag, mode, num_samples):	
     global DCOUNT
     with open("SF2_Decoded_Samples.cpp", mode) as cpp_file:
         with open("SF2_Decoded_Samples.h", mode) as header_file:
@@ -208,10 +237,10 @@ def export_sample(sample, aBag, globalBag, mode, num_samples, PCM):
             else:
                 cpp_file.write("\n")
 
-            raw_wav_data = sample.raw_sample_data
+            raw_wav_data = aBag.sample.raw_sample_data
 
             B_COUNT = 0;
-            length_16 = sample.duration
+            length_16 = aBag.sample.duration
             length_8 = length_16 * 2
             length_32 = length_16/2
             padlength = padding(length_32, 128)
@@ -221,31 +250,23 @@ def export_sample(sample, aBag, globalBag, mode, num_samples, PCM):
             #Write array init to header file.
             #header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
             header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
-            print_metadata_to_header(header_file, sample, aBag, globalBag)
+            print_metadata_to_header(header_file, aBag, globalBag)
 
             #Write array contents to .cpp
             #file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
             cpp_file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
 
-            if PCM == True:
-                format = 0x81
-            else:
-                format = 0x01
+            format = 0x81
 
-            print_metadata_to_array(cpp_file, sample, aBag, globalBag, length_16, format)
+            print_metadata_to_array(cpp_file, aBag, globalBag, length_16, format)
             i = 0
             while i < length_8:
                 audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-                if PCM == True:
-                    # Use PCM Encoding
-                    print_bytes(cpp_file, audio)
-                    print_bytes(cpp_file, audio >> 8)
-                    #consuming 2 chars at a time, so add another increment
-                    i = i + 2
-                else:
-                    pass
-                    # Using ulaw encoding
-                    #TODO
+				# Use PCM Encoding
+                print_bytes(cpp_file, audio)
+                print_bytes(cpp_file, audio >> 8)
+				#consuming 2 chars at a time, so add another increment
+                i = i + 2
 
             while padlength > 0:
                     print_bytes(cpp_file, 0)
@@ -254,10 +275,10 @@ def export_sample(sample, aBag, globalBag, mode, num_samples, PCM):
             cpp_file.write("};\n")
 
 #prints out the sample metadata into the first portion of the sample array
-def print_metadata_to_array(file, sample, aBag, globalBag, length_16, format):
+def print_metadata_to_array(file, aBag, globalBag, length_16, format):
     file.write("0x%0.8X," % (length_16 | (format << 24))) #length
-    file.write("0x%0.8X," % (aBag.base_note if aBag.base_note else sample.original_pitch)) #original pitch
-    file.write("0x%0.8X," % (sample.sample_rate)) #sample rate
+    file.write("0x%0.8X," % (aBag.base_note if aBag.base_note else aBag.sample.original_pitch)) #original pitch
+    file.write("0x%0.8X," % (aBag.sample.sample_rate)) #sample rate
     file.write("0x%0.8X," % (aBag.cooked_loop_start)) #loop start
     file.write("0x%0.8X," % (aBag.cooked_loop_end)) #loop end
 	
@@ -309,10 +330,10 @@ def print_metadata_to_array(file, sample, aBag, globalBag, length_16, format):
         file.write("0x%0.8X," % (checkGenValue(aBag.volume_envelope_release))) 
 
 # pretty prints metadata for the .h file
-def print_metadata_to_header(header_file, sample, aBag, globalBag):
+def print_metadata_to_header(header_file, aBag, globalBag):
     header_file.write("struct sample_info_" + str(DCOUNT) + " {\n")
-    header_file.write("\tconst int ORIGINAL_PITCH = " + str(aBag.base_note if aBag.base_note else sample.original_pitch) + ";\n")
-    header_file.write("\tconst int SAMPLE_RATE = " + str(sample.sample_rate) + ";\n")
+    header_file.write("\tconst int ORIGINAL_PITCH = " + str(aBag.base_note if aBag.base_note else aBag.sample.original_pitch) + ";\n")
+    header_file.write("\tconst int SAMPLE_RATE = " + str(aBag.sample.sample_rate) + ";\n")
     header_file.write("\tconst int LOOP_START = " + str(aBag.cooked_loop_start) + ";\n")
     header_file.write("\tconst int LOOP_END = " + str(aBag.cooked_loop_end) + ";\n")
 
