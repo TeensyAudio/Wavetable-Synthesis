@@ -17,8 +17,6 @@ struct freqTrack_t
     unsigned int count;
 };
 
-const float AMP_DEF = 0.0;
-
 class AudioAllocWavetable
 {
 public:
