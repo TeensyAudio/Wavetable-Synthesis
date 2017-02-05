@@ -78,7 +78,8 @@ void AudioSynthWavetable::setSample(const unsigned int *data) {
 	length_bits = 1;
     
 	for (int len = length; len >>= 1; ++length_bits);
-		max_phase = (length - 1) << (32 - length_bits);
+	
+	max_phase = (length - 1) << (32 - length_bits);
 	
 	if (loop_start >= 0)
 		loop_start_phase = (loop_start - 1) << (32 - length_bits);
@@ -150,9 +151,8 @@ void AudioSynthWavetable::update(void) {
 	if (!playing)
 		return;
 	
-	if (state == STATE_IDLE) {
+	if (state == STATE_IDLE)
 		return;
-	}
 
 	block = allocate();
 	if (block == NULL)
@@ -163,7 +163,7 @@ void AudioSynthWavetable::update(void) {
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)this->waveform;
 	//Serial.printf("update: length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
-    // Serial.printf("update: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
+	// Serial.printf("update: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
 	//Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		//tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
@@ -173,8 +173,8 @@ void AudioSynthWavetable::update(void) {
 		scale = (tone_phase << length_bits) >> 16;
 		s1 = waveform[index];
 		s2 = waveform[index + 1];
-		v2 = s2 * scale;
 		v1 = s1 * (0xFFFF - scale);
+		v2 = s2 * scale;
 		v3 = (v1 + v2) >> 16;
 		*out++ = (int16_t)v3;
 		//*out++ = (int16_t)((v3 * tone_amp) >> 16);
@@ -186,7 +186,7 @@ void AudioSynthWavetable::update(void) {
 	//*********************************************************************
 	
 	p = (uint32_t *)block->data;
-    // p increments by 1 for every 2 samples processed.
+	// p increments by 1 for every 2 samples processed.
 	end = p + AUDIO_BLOCK_SAMPLES/2;
 
 	while (p < end) {
@@ -200,24 +200,32 @@ void AudioSynthWavetable::update(void) {
 					inc = 0;
 					Serial.printf("HOLD: %f\n", inc);
 				} else {
-					count = decay_count;
 					state = STATE_DECAY;
-                    inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
+					count = decay_count;
+					if (count > 0)
+						inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
+					else
+						inc = 0;
 					Serial.printf("DECAY: %f\n", inc);
 				}
 				continue;
 			} else if (state == STATE_HOLD) {
 				state = STATE_DECAY;
 				count = decay_count;
-				inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
+				if (count > 0)
+					inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
+				else
+					inc = 0;
 				Serial.printf("DECAY: %f\n", inc);
 				continue;
 			} else if (state == STATE_DECAY) {
-				state = STATE_SUSTAIN;
-				count = 0xFFFF;
-				mult = sustain_mult;
-				inc = 0;
-				Serial.printf("SUSTAIN: %f\n", inc);
+				if (decay_count > 0) {
+					state = STATE_SUSTAIN;
+					count = 0xFFFF;
+					mult = sustain_mult;
+					inc = 0;
+					Serial.printf("SUSTAIN: %f\n", inc);
+				}
 			} else if (state == STATE_SUSTAIN) {
 				count = 0xFFFF;
 			} else if (state == STATE_RELEASE) {
@@ -283,7 +291,7 @@ void AudioSynthWavetable::frequency(float freq) {
 		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
 
 	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
-	//steps trhough the wavetable sample one element at a time; from there we
+	//steps through the wavetable sample one element at a time; from there we
 	//only need to scale based a ratio of freq/sample_freq for the desired increment
 	tone_incr = (freq / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
 }
