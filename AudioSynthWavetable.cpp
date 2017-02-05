@@ -35,52 +35,69 @@
 #define STATE_SUSTAIN	5
 #define STATE_RELEASE	6
 
-void AudioSynthWavetable::setSample(const unsigned int *data) {
+void AudioSynthWavetable::setSamples(const unsigned int ** samples) {
+	this->samples = samples;
+	num_samples = 11;
+}
 
-/**********************extracting sample header data: *********************************/
-	/*	
-	Index 0 = Format & Sample size. Same as before.
-	Index 1 = Original Pitch
-	Index 2 = Sample Rate
-	Index 3 = Loop Start
-	Index 4 = Loop End
-	Index 5 = Top 16-bits Delay envelope | Bottom 16-bits Hold Envelope
-	Index 6 = Attack envelope
-	Index 7 = Decay envelope
-	Index 8 = Sustain envelope //not ms 
-	Index 9 = Release envelope
-	NOTE: Original pitch only takes a max of 8 bits and if we are no longer doing 
-	ulaw and don't need to store the 8 bit format in the high order bits of index 0 
-	then original pitch can go there and all the indexes listed would be -1.
-	*/
+uint32_t AudioSynthWavetable::getNoteRange(int sample_num) {
+	if (sample_num > num_samples) return NULL;
+	return samples[sample_num][5];
+}
 
+bool AudioSynthWavetable::isPlaying() {
+	if (state == STATE_IDLE) return false;
+	return true;
+}
+
+void AudioSynthWavetable::parseSample(int sample_num) {
+	int note1, note2, velocity1, velocity2;
+	const unsigned int *data = samples[sample_num];
+	
 	tone_phase = 0;
 	playing = 0;
-
+	/**********************extracting sample header data: *********************************/
+	/*
+	 Index 0 = Format & Sample size. Same as before.
+	 Index 1 = Original Pitch
+	 Index 2 = Sample Rate
+	 Index 3 = Loop Start
+	 Index 4 = Loop End
+	 Index 5 = Lower Bound Note Range | Upper Bound Note Range
+	 Index 6 = Lower Bound Velocity Range | Upper Bound Velocity Range
+	 Index 7 = Top 16-bits Delay envelope | Bottom 16-bits Hold Envelope
+	 Index 8 = Attack envelope
+	 Index 9 = Decay envelope
+	 Index 10 = Sustain envelope //not ms
+	 Index 11 = Release envelope
+	 */
 	//note: assuming 16-bit PCM at 44100 Hz for now
 	length = (data[0] & 0x00FFFFFF);
-	waveform = (uint32_t*)data;
+	waveform = (uint32_t*)data+12;
 	setSampleNote(data[1]);
 	sample_rate = data[2];
 
 	//setting start and end loop
 	setLoop(data[3], data[4]);
 
-	env_delay((data[5]>>16));
-	env_hold((data[5]<<16));
-	env_attack(data[6]);
-	env_decay(data[7]);
-	env_sustain(data[8]/1000);
-	env_release(data[9]);
+	note1 = data[5] >> 16;
+	note2 = data[5] & 0x0000FFFF;
 	
-	//Set data to point to the actual sound data
-	data += 10;
+	velocity1 = data[6] >> 16;
+	velocity2 = data[6] & 0x0000FFFF;
+	
+	env_delay((data[7]>>16));
+	env_hold((data[7] & 0x0000FFFF));
+	env_attack(data[8]);
+	env_decay(data[9]);
+	env_sustain(data[10]/1000);
+	env_release(data[11]);
+	
 	length_bits = 1;
     
 	for (int len = length; len >>= 1; ++length_bits);
 	
 	max_phase = (length - 1) << (32 - length_bits);
-	
 	if (loop_start >= 0)
 		loop_start_phase = (loop_start - 1) << (32 - length_bits);
 	if (loop_end > 0)
@@ -102,10 +119,20 @@ void AudioSynthWavetable::play(void) {
 }
 
 void AudioSynthWavetable::playFrequency(float freq) {
+	uint32_t val;
+	uint16_t note1, note2;
+	for(int i = 0; i < num_samples; i++) {
+		val = getNoteRange(i);
+		note1 = val >> 16;
+		note2 = (val & 0x0000FFFF);
+		if (freq >= noteToFreq(note1) && freq <= noteToFreq(note2)) {
+			parseSample(i);
+			break;
+		}
+	}
 	if (waveform == NULL)
 		return;
 	frequency(freq);
-	__disable_irq();
 	mult = 0;
 	count = delay_count;
 	if (count > 0) {
@@ -119,32 +146,32 @@ void AudioSynthWavetable::playFrequency(float freq) {
 		inc = (UNITY_GAIN / (count << 3));
 		Serial.printf("ATTACK: %f\n", inc);
 	}
-	__enable_irq();
 	tone_phase = 0;
 	playing = 1;
 }
 
-void AudioSynthWavetable::playNote(int note) {
+void AudioSynthWavetable::playNote(int note, int amp) {
 	float freq = noteToFreq(note);
-	Serial.println(freq);
+	this->playing = 0;
+  	//Serial.printf("Amplitude: %i\n", amp);  
+  	//amplitude((float)amp/(float)127);
+  	amplitude(midi_volume_transform(amp));
+	//Serial.println(freq);
 	playFrequency(freq);
 }
 
 void AudioSynthWavetable::stop(void) {
-	__disable_irq();
 	state = STATE_RELEASE;
 	count = release_count;
 	inc = (-(float)mult / ((int32_t)count << 3));
 	Serial.printf("RELEASE: %f\n", inc);
-	__enable_irq();
 }
 
 void AudioSynthWavetable::update(void) {
 	audio_block_t* block;
 	int16_t* out;
 	uint32_t index, scale;
-	int16_t s1, s2;
-	uint32_t v1, v2, v3;
+	int32_t s1, s2, v1, v2, v3; 
 	uint32_t *p, *end;
 	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 
@@ -168,7 +195,9 @@ void AudioSynthWavetable::update(void) {
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		//tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
 
-		tone_phase = tone_phase < loop_end_phase ? tone_phase : tone_phase - loop_end_phase + loop_start_phase;
+		if (tone_phase >= loop_end_phase)
+			tone_phase = tone_phase - loop_end_phase + loop_start_phase;
+		//tone_phase = tone_phase < loop_end_phase ? tone_phase : tone_phase - loop_end_phase + loop_start_phase;
 		index = tone_phase >> (32 - length_bits);
 		scale = (tone_phase << length_bits) >> 16;
 		s1 = waveform[index];
@@ -176,10 +205,10 @@ void AudioSynthWavetable::update(void) {
 		v1 = s1 * (0xFFFF - scale);
 		v2 = s2 * scale;
 		v3 = (v1 + v2) >> 16;
-		*out++ = (int16_t)v3;
-		//*out++ = (int16_t)((v3 * tone_amp) >> 16);
+		*out++ = (int16_t)((v3 * tone_amp) >> 16);
 		tone_phase += tone_incr;
 	}
+    
 	
 	//*********************************************************************
 	//Envelope code

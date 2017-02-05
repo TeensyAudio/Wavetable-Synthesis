@@ -28,6 +28,7 @@
 
 #include "Arduino.h"
 #include "AudioStream.h"
+#include <math.h>
 
 #define MAX_MS 11000.0      // Max section length (milliseconds)
 #define UNITY_GAIN 65536.0  // Max amplitude
@@ -39,6 +40,7 @@ public:
 	AudioSynthWavetable(void)
 		: AudioStream(0, NULL)
 		, waveform(NULL)
+		, num_samples(0)
 		, length(0)
 		, length_bits(0)
 		, sample_freq(440.0)
@@ -54,8 +56,7 @@ public:
 		, loop_end_phase(0)
 	{}
 
-	void setSample(const unsigned int* data);
-	
+	void setSamples(const unsigned int ** samples);
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -68,11 +69,13 @@ public:
 	
 	void play(void);
 	void playFrequency(float freq);
-	void playNote(int note);
+	void playNote(int note, int amp=63);
 	void stop(void);
-	bool isPlaying(void) { return playing; }
+	bool isPlaying(void);
 	void frequency(float freq);
-
+	void parseSample(int sample_num);
+	
+	uint32_t getNoteRange(int sample_num);
 	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
 		amplitude(amp);
@@ -86,6 +89,19 @@ public:
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
 		tone_amp = (uint16_t)(32767.0*v);
 	}
+
+	float midi_volume_transform(int midi_amp) {
+		// 4 approximates a logarithmic taper for the volume
+		// however, we might need to play with this value
+		// if people think the volume is too quite at low
+		// input amplitudes
+		int logarithmicness = 4;
+
+		// scale midi_amp which is 0 t0 127 to be between
+		// 0 and 1 using a logarithmic transformation
+		return (float)pow(midi_amp, logarithmicness) /
+			(float)pow(127, logarithmicness);
+	}
 	
 	static float noteToFreq(int note) {
 		return 27.5 * pow(2, (float)(note - 21)/12);
@@ -94,31 +110,26 @@ public:
 	void env_delay(float milliseconds) {
 		delay_count = milliseconds2count(milliseconds);
 	}
-	
 	void env_attack(float milliseconds) {
 		if (milliseconds <= 0) {
 			milliseconds = 1.5;
 		}
 		attack_count = milliseconds2count(milliseconds);
 	}
-	
 	void env_hold(float milliseconds) {
 		if (milliseconds <= 0) {
 			milliseconds = 0.5;
 		}
 		hold_count = milliseconds2count(milliseconds);
 	}
-	
 	void env_decay(float milliseconds) {
 		decay_count = milliseconds2count(milliseconds);
 	}
-	
 	void env_sustain(float level) {
 		if (level < 0.0) level = 0;
 		else if (level > 1.0) level = 1.0;
 		sustain_mult = level * UNITY_GAIN;
 	}
-	
 	void env_release(float milliseconds) {
 		release_count = milliseconds2count(milliseconds);
 	}
@@ -127,9 +138,10 @@ public:
 
 private:
 	uint32_t* waveform;
+	const unsigned int ** samples;
 	int length, length_bits, loop_start, loop_end, loop_length;
 	float sample_freq;
-	uint8_t playing;
+	uint8_t playing, num_samples;
 	uint32_t tone_phase, loop_phase, loop_start_phase, loop_end_phase;
 	uint32_t max_phase;
 	uint32_t tone_incr;

@@ -66,27 +66,27 @@ void setup() {
   float x;
   int x1, x2;
 
-  wavetable1.setSample(sample);
-  wavetable2.setSample(sample);
-  wavetable3.setSample(sample);
-  wavetable4.setSample(sample);
-  wavetable5.setSample(sample);
-  wavetable6.setSample(sample);
-  wavetable7.setSample(sample);
-  wavetable8.setSample(sample);
-  wavetable9.setSample(sample);
-  wavetable10.setSample(sample);
-
-  wavetable1.amplitude(0.5);
-  wavetable2.amplitude(0.5);
-  wavetable3.amplitude(0.5);
-  wavetable4.amplitude(0.5);
-  wavetable5.amplitude(0.5);
-  wavetable6.amplitude(0.5);
-  wavetable7.amplitude(0.5);
-  wavetable8.amplitude(0.5);
-  wavetable9.amplitude(0.5);
-  wavetable10.amplitude(0.5);
+  wavetable1.setSamples(samples);  
+  wavetable2.setSamples(samples);
+  wavetable3.setSamples(samples);
+  wavetable4.setSamples(samples);
+  wavetable5.setSamples(samples);
+  wavetable6.setSamples(samples);
+  wavetable7.setSamples(samples);
+  wavetable8.setSamples(samples);
+  wavetable9.setSamples(samples);
+  wavetable10.setSamples(samples);
+  
+  wavetable1.amplitude(1);
+  wavetable2.amplitude(1);
+  wavetable3.amplitude(1);
+  wavetable4.amplitude(1);
+  wavetable5.amplitude(1);
+  wavetable6.amplitude(1);
+  wavetable7.amplitude(1);
+  wavetable8.amplitude(1);
+  wavetable9.amplitude(1);
+  wavetable10.amplitude(1);
 
   usbMIDI.setHandleNoteOn(OnNoteOn);
   usbMIDI.setHandleNoteOff(OnNoteOff);
@@ -130,17 +130,40 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
 }
 
 void OnNoteOff(byte channel, byte note, byte velocity) {
-  wavetable1.stop();
-  wavetable2.stop();
-  wavetable3.stop();
-  wavetable4.stop();
-  wavetable5.stop();
-  wavetable6.stop();
-  wavetable7.stop();
-  wavetable8.stop();
-  wavetable9.stop();
-  wavetable10.stop();
-  numVoices = 0;
+  if (numVoices <= 0) return;
+  switch (numVoices) {
+    case 1:
+      wavetable1.stop();
+      break;
+    case 2:
+      wavetable2.stop();
+      break;
+    case 3:
+      wavetable3.stop();
+      break;
+    case 4:
+      wavetable4.stop();
+      break;
+    case 5:
+      wavetable5.stop();
+      break;
+    case 6:
+      wavetable6.stop();
+      break;
+    case 7:
+      wavetable7.stop();
+      break;
+    case 8:
+      wavetable8.stop();
+      break;
+    case 9:
+      wavetable9.stop();
+      break;
+     case 10:
+      wavetable10.stop();
+      break;
+  }
+  numVoices--;
 }
 
 void loop() {
