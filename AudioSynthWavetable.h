@@ -28,6 +28,7 @@
 
 #include "Arduino.h"
 #include "AudioStream.h"
+#include <math.h>
 
 #define MAX_MS 11000.0      // Max section length (milliseconds)
 #define UNITY_GAIN 65536.0  // Max amplitude
@@ -87,6 +88,19 @@ public:
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
 		tone_amp = (uint16_t)(32767.0*v);
 	}
+
+  float midi_volume_transform(int midi_amp) {
+    // 4 approximates a logarithmic taper for the volume
+    // however, we might need to play with this value
+    // if people think the volume is too quite at low
+    // input amplitudes
+    int logarithmicness = 4;
+
+    // scale midi_amp which is 0 t0 127 to be between
+    // 0 and 1 using a logarithmic transformation
+    return (float)pow(midi_amp, logarithmicness) /
+      (float)pow(127, logarithmicness);
+  }
 	
 	static float noteToFreq(int note) {
 		return 27.5 * pow(2, (float)(note - 21)/12);

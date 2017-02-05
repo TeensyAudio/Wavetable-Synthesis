@@ -153,9 +153,9 @@ void AudioSynthWavetable::playFrequency(float freq) {
 void AudioSynthWavetable::playNote(int note, int amp) {
 	float freq = noteToFreq(note);
 	this->playing = 0;
-    //Serial.printf("Amplitude: %i\n", amp);
-    
-    amplitude((float)amp/(float)127);
+  //Serial.printf("Amplitude: %i\n", amp);  
+  //amplitude((float)amp/(float)127);
+  amplitude(midi_volume_transform(amp));
 	//Serial.println(freq);
 	playFrequency(freq);
 }
