@@ -171,8 +171,7 @@ void AudioSynthWavetable::update(void) {
 	audio_block_t* block;
 	int16_t* out;
 	uint32_t index, scale;
-	int16_t s1, s2;
-	uint32_t v1, v2, v3;
+  int32_t s1, s2, v1, v2, v3; 
 	uint32_t *p, *end;
 	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 
@@ -205,10 +204,10 @@ void AudioSynthWavetable::update(void) {
 		v2 = s2 * scale;
 		v1 = s1 * (0xFFFF - scale);
 		v3 = (v1 + v2) >> 16;
-		*out++ = (int16_t)v3;
-		//*out++ = (int16_t)((v3 * tone_amp) >> 16);
+		*out++ = (int16_t)((v3 * tone_amp) >> 16);
 		tone_phase += tone_incr;
 	}
+    
 	
 	//*********************************************************************
 	//Envelope code
