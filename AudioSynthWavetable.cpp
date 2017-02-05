@@ -75,7 +75,7 @@ void AudioSynthWavetable::parseSample(int sample_num) {
 	//note: assuming 16-bit PCM at 44100 Hz for now
 	length = (data[0] & 0x00FFFFFF);
 	waveform = (uint32_t*)data+12; //Set data to point to the actual sound data
-    setSampleNote(data[1]);
+	setSampleNote(data[1]);
 	sample_rate = data[2];
 
 	//setting start and end loop
@@ -97,16 +97,16 @@ void AudioSynthWavetable::parseSample(int sample_num) {
 	length_bits = 1;
     
 	for (int len = length; len >>= 1; ++length_bits);
-    max_phase = (length - 1) << (32 - length_bits);
+    	max_phase = (length - 1) << (32 - length_bits);
     
-    if (loop_start >= 0)
-        loop_start_phase = (loop_start - 1) << (32 - length_bits);
-    if (loop_end > 0)
-        loop_end_phase = (loop_end - 1) << (32 - length_bits);
-    else
-        loop_end_phase = max_phase;
+	if (loop_start >= 0)
+		loop_start_phase = (loop_start - 1) << (32 - length_bits);
+	if (loop_end > 0)
+		loop_end_phase = (loop_end - 1) << (32 - length_bits);
+	else
+		loop_end_phase = max_phase;
 
-    Serial.printf("set sample: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
+	Serial.printf("set sample: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
 }
 
 void AudioSynthWavetable::play(void) {
@@ -153,9 +153,9 @@ void AudioSynthWavetable::playFrequency(float freq) {
 void AudioSynthWavetable::playNote(int note, int amp) {
 	float freq = noteToFreq(note);
 	this->playing = 0;
-  //Serial.printf("Amplitude: %i\n", amp);  
-  //amplitude((float)amp/(float)127);
-  amplitude(midi_volume_transform(amp));
+  	//Serial.printf("Amplitude: %i\n", amp);  
+  	//amplitude((float)amp/(float)127);
+  	amplitude(midi_volume_transform(amp));
 	//Serial.println(freq);
 	playFrequency(freq);
 }
@@ -164,14 +164,14 @@ void AudioSynthWavetable::stop(void) {
 	state = STATE_RELEASE;
 	count = release_count;
 	inc = (-(float)mult / ((int32_t)count << 3));
-    //Serial.printf("RELEASE: %f\n", inc);
+    	//Serial.printf("RELEASE: %f\n", inc);
 }
 
 void AudioSynthWavetable::update(void) {
 	audio_block_t* block;
 	int16_t* out;
 	uint32_t index, scale;
-  int32_t s1, s2, v1, v2, v3; 
+	int32_t s1, s2, v1, v2, v3; 
 	uint32_t *p, *end;
 	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 
@@ -191,12 +191,12 @@ void AudioSynthWavetable::update(void) {
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)this->waveform;
 	//Serial.printf("update: length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
-    // Serial.printf("update: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
+	// Serial.printf("update: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
 	//Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		//tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
 
-        tone_phase = tone_phase < loop_end_phase ? tone_phase : tone_phase - loop_end_phase +loop_start_phase;
+		tone_phase = tone_phase < loop_end_phase ? tone_phase : tone_phase - loop_end_phase +loop_start_phase;
 		index = tone_phase >> (32 - length_bits);
 		scale = (tone_phase << length_bits) >> 16;
 		s1 = waveform[index];
@@ -214,7 +214,7 @@ void AudioSynthWavetable::update(void) {
 	//*********************************************************************
 	
 	p = (uint32_t *)block->data;
-    // p increments by 1 for every 2 samples processed.
+	// p increments by 1 for every 2 samples processed.
 	end = p + AUDIO_BLOCK_SAMPLES/2;
 
 	while (p < end) {
