@@ -249,12 +249,12 @@ def export_sample(aBag, globalBag, mode, num_samples):
 
             #Write array init to header file.
             #header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
-            header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "];\n")
+            header_file.write("extern const unsigned int sample_" + str(DCOUNT) + "[" + str(int(array_length)) + "];\n")
             print_metadata_to_header(header_file, aBag, globalBag)
 
             #Write array contents to .cpp
             #file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
-            cpp_file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(array_length) + "] = {\n")
+            cpp_file.write("const unsigned int sample_" + str(DCOUNT) + "[" + str(int(array_length)) + "] = {\n")
 
             format = 0x81
 
