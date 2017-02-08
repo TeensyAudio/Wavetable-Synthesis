@@ -33,6 +33,7 @@
 #define MAX_MS 11000.0      // Max section length (milliseconds)
 #define UNITY_GAIN 65536.0  // Max amplitude
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
+#define AMP_DEF 63
 
 class AudioSynthWavetable : public AudioStream
 {
@@ -68,12 +69,12 @@ public:
 	}
 	
 	void play(void);
-	void playFrequency(float freq);
-	void playNote(int note, int amp=63);
+	void playFrequency(float freq, bool custom_env=0);
+	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
 	void stop(void);
 	bool isPlaying(void);
 	void frequency(float freq);
-	void parseSample(int sample_num);
+	void parseSample(int sample_num, bool custom_env);
 	
 	uint32_t getNoteRange(int sample_num);
 	void setFreqAmp(float freq, float amp) {
@@ -93,7 +94,7 @@ public:
 	float midi_volume_transform(int midi_amp) {
 		// 4 approximates a logarithmic taper for the volume
 		// however, we might need to play with this value
-		// if people think the volume is too quite at low
+		// if people think the volume is too quiet at low
 		// input amplitudes
 		int logarithmicness = 4;
 

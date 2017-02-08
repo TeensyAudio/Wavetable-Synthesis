@@ -50,12 +50,13 @@ bool AudioSynthWavetable::isPlaying() {
 	return true;
 }
 
-void AudioSynthWavetable::parseSample(int sample_num) {
+void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	int note1, note2, velocity1, velocity2;
 	const unsigned int *data = samples[sample_num];
 	
 	tone_phase = 0;
 	playing = 0;
+	
 	/**********************extracting sample header data: *********************************/
 	/*
 	 Index 0 = Format & Sample size. Same as before.
@@ -86,12 +87,14 @@ void AudioSynthWavetable::parseSample(int sample_num) {
 	velocity1 = data[6] >> 16;
 	velocity2 = data[6] & 0x0000FFFF;
 	
-	env_delay((data[7]>>16));
-	env_hold((data[7] & 0x0000FFFF));
-	env_attack(data[8]);
-	env_decay(data[9]);
-	env_sustain(data[10]/1000);
-	env_release(data[11]);
+	if (!custom_env) {
+		env_delay((data[7] >> 16));
+		env_hold((data[7] & 0x0000FFFF));
+		env_attack(data[8]);
+		env_decay(data[9]);
+		env_sustain(data[10]/1000);
+		env_release(data[11]);
+	}
 	
 	length_bits = 1;
     
@@ -118,7 +121,7 @@ void AudioSynthWavetable::play(void) {
 	playing = 1;
 }
 
-void AudioSynthWavetable::playFrequency(float freq) {
+void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	uint32_t val;
 	uint16_t note1, note2;
 	for(int i = 0; i < num_samples; i++) {
@@ -126,7 +129,7 @@ void AudioSynthWavetable::playFrequency(float freq) {
 		note1 = val >> 16;
 		note2 = (val & 0x0000FFFF);
 		if (freq >= noteToFreq(note1) && freq <= noteToFreq(note2)) {
-			parseSample(i);
+			parseSample(i, custom_env);
 			break;
 		}
 	}
@@ -150,14 +153,14 @@ void AudioSynthWavetable::playFrequency(float freq) {
 	playing = 1;
 }
 
-void AudioSynthWavetable::playNote(int note, int amp) {
+void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	float freq = noteToFreq(note);
 	this->playing = 0;
   	//Serial.printf("Amplitude: %i\n", amp);  
   	//amplitude((float)amp/(float)127);
   	amplitude(midi_volume_transform(amp));
 	//Serial.println(freq);
-	playFrequency(freq);
+	playFrequency(freq, custom_env);
 }
 
 void AudioSynthWavetable::stop(void) {
