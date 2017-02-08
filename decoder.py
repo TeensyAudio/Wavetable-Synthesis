@@ -124,7 +124,6 @@ def main(argv):
                 # Create a list of tuples that hold bagIndex to sample pairs
                 for bag in sf2.instruments[instrument].bags:
                     if bag.sample == None:
-                        print bag #TODO: REMOVE THIS
                         globalBagIndex = bagIndex
                     elif bag.sample != None and bag.sample not in bagToSample:
                         bagToSample.append((bagIndex, bag.sample))
