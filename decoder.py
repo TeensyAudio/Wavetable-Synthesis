@@ -143,7 +143,6 @@ def main(argv):
                     elif i_result == 2:
                         decodeSelected(path, instrument, selectedBags, globalBagIndex) 
                         sys.exit('Program Terminated by User')
->>>>>>> 00032b54b636fc9e805fe31cc07a4055bc7c2d32
         elif choice == 2:
             sys.exit('Program Terminated by User')
         else:   #shouldn't be reached
