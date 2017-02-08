@@ -28,6 +28,7 @@
 
 #include "Arduino.h"
 #include "AudioStream.h"
+#include <math.h>
 
 #define MAX_MS 11000.0      // Max section length (milliseconds)
 #define UNITY_GAIN 65536.0  // Max amplitude
@@ -39,6 +40,7 @@ public:
 	AudioSynthWavetable(void)
 		: AudioStream(0, NULL)
 		, waveform(NULL)
+		, num_samples(0)
 		, length(0)
 		, length_bits(0)
 		, sample_freq(440.0)
@@ -50,11 +52,11 @@ public:
 		, tone_amp(0)
 		, loop_start(0)
 		, loop_end(0)
-        , loop_start_phase(0)
-        , loop_end_phase(0)
+		, loop_start_phase(0)
+		, loop_end_phase(0)
 	{}
 
-	void setSample(const unsigned int* data);
+	void setSamples(const unsigned int ** samples);
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -64,13 +66,16 @@ public:
 		for (int len = loop_length; len >>= 1; ++length_bits);
 		loop_phase = (loop_length - 1) << (32 - length_bits);
 	}
+	
 	void play(void);
 	void playFrequency(float freq);
-	void playNote(int note);
+	void playNote(int note, int amp=63);
 	void stop(void);
-	bool isPlaying(void) { return playing; }
+	bool isPlaying(void);
 	void frequency(float freq);
-
+	void parseSample(int sample_num);
+	
+	uint32_t getNoteRange(int sample_num);
 	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
 		amplitude(amp);
@@ -83,6 +88,19 @@ public:
 	void amplitude(float v) {
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
 		tone_amp = (uint16_t)(32767.0*v);
+	}
+
+	float midi_volume_transform(int midi_amp) {
+		// 4 approximates a logarithmic taper for the volume
+		// however, we might need to play with this value
+		// if people think the volume is too quite at low
+		// input amplitudes
+		int logarithmicness = 4;
+
+		// scale midi_amp which is 0 t0 127 to be between
+		// 0 and 1 using a logarithmic transformation
+		return (float)pow(midi_amp, logarithmicness) /
+			(float)pow(127, logarithmicness);
 	}
 	
 	static float noteToFreq(int note) {
@@ -120,9 +138,10 @@ public:
 
 private:
 	uint32_t* waveform;
+	const unsigned int ** samples;
 	int length, length_bits, loop_start, loop_end, loop_length;
 	float sample_freq;
-	uint8_t playing;
+	uint8_t playing, num_samples;
 	uint32_t tone_phase, loop_phase, loop_start_phase, loop_end_phase;
 	uint32_t max_phase;
 	uint32_t tone_incr;
@@ -130,26 +149,26 @@ private:
 	
 	uint16_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
-        if (milliseconds > MAX_MS) milliseconds = MAX_MS;
-        // # of 8-sample units to process
-        // Add 7 to round up
-        return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
+		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
+		// # of 8-sample units to process
+		// Add 7 to round up
+		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
 	}
-    int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
-        return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
-    }
-    int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
-        return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
-    }
-    uint32_t pack_16b_16b(int32_t a, int32_t b) {
-        return (a << 16) | (b & 0x0000FFFF);
-    }
+	int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
+		return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
+	}
+	int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
+		return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
+	}
+	uint32_t pack_16b_16b(int32_t a, int32_t b) {
+		return (a << 16) | (b & 0x0000FFFF);
+	}
     
 	// state
 	uint8_t  state;  // idle, delay, attack, hold, decay, sustain, release
 	uint16_t count;  // how much time remains in this state, in 8 sample units
-    float    mult;   // attenuation, 0=off, 0x10000=unity gain
-    float    inc;    // amount to change mult on each sample
+	float    mult;   // attenuation, 0=off, 0x10000=unity gain
+	float    inc;    // amount to change mult on each sample
 	// settings
 	uint16_t delay_count;
 	uint16_t attack_count;

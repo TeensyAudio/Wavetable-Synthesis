@@ -22,30 +22,21 @@ const float AMP_DEF = 0.0;
 class AudioAllocWavetable
 {
 public:
-    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t numVoices)
-    {
-        init(voices, numVoices, NULL, AMP_DEF);
-    }
+    AudioAllocWavetable(void) 
+		: voices(NULL)
+		, numVoices(0)
+		, amplitude(1.0)
+	{}
     
-    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data)
-    {
-        init(voices, numVoices, data, AMP_DEF);
-    }
-    
-    AudioAllocWavetable(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data, float amp)
-    {
-        init(voices, numVoices, data, amp);
-    }
-    
-    void init(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data, float amp);
-    void setSample(const unsigned int* data);
+    void init(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int ** wavetable, float amp);
+    void setSamples(const unsigned int ** wavetable);
     void setAmplitude(float amp);
     void playFreq(float freq);
-    void playNote(byte note);
+    void playNote(int note);
     void stopFreq(float freq);
-    void stopNote(byte note);
+    void stopNote(int note);
     uint8_t voicesPlaying(void);
-    float noteToFreq(byte note);
+    float noteToFreq(int note);
     float getAmplitude() { return amplitude; }
     float getFrequency(uint8_t index) { return freqTrack[index].freq; }
     

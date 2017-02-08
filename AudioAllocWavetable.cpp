@@ -9,11 +9,11 @@
 #include "AudioAllocWavetable.h"
 #include <SerialFlash.h>
 
-void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int* data, float amp)
+void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, const unsigned int ** wavetable, float amp)
 {
     this->voices = voices;
     this->numVoices = numVoices;
-    setSample(data);
+    setSamples(wavetable);
     setAmplitude(amp);
     for (int i=0; i<numVoices; i++) {
         voices[i].stop();
@@ -22,10 +22,10 @@ void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, c
     }
 }
 
-void AudioAllocWavetable::setSample(const unsigned int* data)
+void AudioAllocWavetable::setSamples(const unsigned int ** wavetable)
 {
     for (int i=0; i<numVoices; i++) {
-        voices[i].setSample(data);
+        voices[i].setSamples(wavetable);
     }
 }
 
@@ -62,7 +62,7 @@ void AudioAllocWavetable::playFreq(float freq)
     }
 }
 
-void AudioAllocWavetable::playNote(byte note)
+void AudioAllocWavetable::playNote(int note)
 {
     playFreq(noteToFreq(note));
 }
@@ -84,7 +84,7 @@ void AudioAllocWavetable::stopFreq(float freq)
     }
 }
 
-void AudioAllocWavetable::stopNote(byte note)
+void AudioAllocWavetable::stopNote(int note)
 {
     stopFreq(noteToFreq(note));
 }
@@ -100,7 +100,7 @@ uint8_t AudioAllocWavetable::voicesPlaying(void)
     return ret;
 }
 
-float AudioAllocWavetable::noteToFreq(byte note)
+float AudioAllocWavetable::noteToFreq(int note)
 {
     return AudioSynthWavetable::noteToFreq(note);
 }
