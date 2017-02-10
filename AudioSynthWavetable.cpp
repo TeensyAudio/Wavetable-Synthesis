@@ -51,7 +51,7 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	
 	tone_phase = 0;
 	playing = 0;
-	
+
 	/**********************extracting sample header data: *********************************/
 	/*
 	 Index 0 = Format & Sample size. Same as before.
@@ -67,6 +67,7 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	 Index 10 = Sustain envelope //not ms
 	 Index 11 = Release envelope
 	 */
+	 
 	//note: assuming 16-bit PCM at 44100 Hz for now
 	length = data.SAMPLE_LENGTH;
 	waveform = (uint32_t*)data.sample;
@@ -90,11 +91,11 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 		env_sustain(data.SUSTAIN_ENV/1000);
 		env_release(data.RELEASE_ENV);
 	}
-	
+
 	length_bits = 1;
-    
+
 	for (int len = length; len >>= 1; ++length_bits);
-	
+
 	max_phase = (length - 1) << (32 - length_bits);
 	if (loop_start >= 0)
 		loop_start_phase = (loop_start - 1) << (32 - length_bits);
@@ -102,11 +103,11 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 		loop_end_phase = (loop_end - 1) << (32 - length_bits);
 	else
 		loop_end_phase = max_phase;
-	
-	Serial.printf("set sample: loop_start_phase=%u, ", loop_start_phase);
-	Serial.printf("loop_end_phase=%u, ", loop_end_phase);
-	Serial.printf("tone_phase=%u, ", tone_phase);
-	Serial.printf("max_phase=%u\n", max_phase);
+
+	//Serial.printf("set sample: loop_start_phase=%u, ", loop_start_phase);
+	//Serial.printf("loop_end_phase=%u, ", loop_end_phase);
+	//Serial.printf("tone_phase=%u, ", tone_phase);
+	//Serial.printf("max_phase=%u\n", max_phase);
 }
 
 void AudioSynthWavetable::play(void) {
@@ -135,13 +136,14 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	if (count > 0) {
 		state = STATE_DELAY;
 		inc = 0;
-		Serial.printf("DELAY: %f\n", inc);
-	} else {
+		//Serial.printf("DELAY: %f\n", inc);
+	}
+	else {
 		state = STATE_ATTACK;
 		count = attack_count;
-        // 2^16 divided by the number of samples
+		// 2^16 divided by the number of samples
 		inc = (UNITY_GAIN / (count << 3));
-		Serial.printf("ATTACK: %f\n", inc);
+		//Serial.printf("ATTACK: %f\n", inc);
 	}
 	tone_phase = 0;
 	playing = 1;
@@ -150,9 +152,9 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	float freq = noteToFreq(note);
 	this->playing = 0;
-  	//Serial.printf("Amplitude: %i\n", amp);  
-  	//amplitude((float)amp/(float)127);
-  	amplitude(midi_volume_transform(amp));
+	//Serial.printf("Amplitude: %i\n", amp);  
+	//amplitude((float)amp/(float)127);
+	amplitude(midi_volume_transform(amp));
 	//Serial.println(freq);
 	playFrequency(freq, custom_env);
 }
@@ -161,20 +163,20 @@ void AudioSynthWavetable::stop(void) {
 	state = STATE_RELEASE;
 	count = release_count;
 	inc = (-(float)mult / ((int32_t)count << 3));
-	Serial.printf("RELEASE: %f\n", inc);
+	//Serial.printf("RELEASE: %f\n", inc);
 }
 
 void AudioSynthWavetable::update(void) {
 	audio_block_t* block;
 	int16_t* out;
 	uint32_t index, scale;
-	int32_t s1, s2, v1, v2, v3; 
+	int32_t s1, s2, v1, v2, v3;
 	uint32_t *p, *end;
 	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 
 	if (!playing)
 		return;
-	
+
 	if (state == STATE_IDLE)
 		return;
 
@@ -205,15 +207,15 @@ void AudioSynthWavetable::update(void) {
 		*out++ = (int16_t)((v3 * tone_amp) >> 16);
 		tone_phase += tone_incr;
 	}
-    
-	
+
+
 	//*********************************************************************
 	//Envelope code
 	//*********************************************************************
-	
+
 	p = (uint32_t *)block->data;
 	// p increments by 1 for every 2 samples processed.
-	end = p + AUDIO_BLOCK_SAMPLES/2;
+	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 	while (p < end) {
 		// we only care about the state when completing a region
@@ -224,40 +226,45 @@ void AudioSynthWavetable::update(void) {
 					state = STATE_HOLD;
 					mult = UNITY_GAIN;
 					inc = 0;
-					Serial.printf("HOLD: %f\n", inc);
-				} else {
+					//Serial.printf("HOLD: %f\n", inc);
+				}
+				else {
 					state = STATE_DECAY;
 					count = decay_count;
 					if (count > 0)
 						inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
 					else
 						inc = 0;
-					Serial.printf("DECAY: %f\n", inc);
+					//Serial.printf("DECAY: %f\n", inc);
 				}
 				continue;
-			} else if (state == STATE_HOLD) {
+			}
+			else if (state == STATE_HOLD) {
 				state = STATE_DECAY;
 				count = decay_count;
 				if (count > 0)
 					inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
 				else
 					inc = 0;
-				Serial.printf("DECAY: %f\n", inc);
+				//Serial.printf("DECAY: %f\n", inc);
 				continue;
-			} else if (state == STATE_DECAY) {
+			}
+			else if (state == STATE_DECAY) {
 				if (decay_count > 0) {
 					state = STATE_SUSTAIN;
 					count = 0xFFFF;
 					mult = sustain_mult;
 					inc = 0;
-					Serial.printf("SUSTAIN: %f\n", inc);
+					//Serial.printf("SUSTAIN: %f\n", inc);
 				}
-			} else if (state == STATE_SUSTAIN) {
+			}
+			else if (state == STATE_SUSTAIN) {
 				count = 0xFFFF;
-			} else if (state == STATE_RELEASE) {
+			}
+			else if (state == STATE_RELEASE) {
 				state = STATE_IDLE;
 				playing = 0;
-				Serial.println("IDLE");
+				//Serial.println("IDLE");
 				while (p < end) {
 					*p++ = 0;
 					*p++ = 0;
@@ -265,11 +272,12 @@ void AudioSynthWavetable::update(void) {
 					*p++ = 0;
 				}
 				break;
-			} else if (state == STATE_DELAY) {
+			}
+			else if (state == STATE_DELAY) {
 				state = STATE_ATTACK;
 				count = attack_count;
 				inc = (UNITY_GAIN / (count << 3));
-				Serial.printf("ATTACK: %f\n", inc);
+				//Serial.printf("ATTACK: %f\n", inc);
 				continue;
 			}
 		}
