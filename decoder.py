@@ -169,10 +169,6 @@ def decodeSelected(path, instIndex, selectedBags, globalBagIndex):
     
         print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(aBag.sample.name))
 
-        BCOUNT = 0
-        WCOUNT = 2
-        BUF32 = 0
-
         export_samples(bags_to_decode, globalBag, len(selectedBags))
 
 def decodeAll(path, instIndex, globalBagIndex):
@@ -195,27 +191,40 @@ def decodeAll(path, instIndex, globalBagIndex):
             
 		if(globalBagIndex != None):
 			globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
-		
-		BCOUNT = 0
-		WCOUNT = 2
-		BUF32 = 0
 
 		export_samples(bags, globalBag, len(bags))
 
 
 # Write a sample out to C++ style data files.
 def export_samples(bags, globalBag, num_samples):  
-	global DCOUNT
+	global DCOUNT, BUF32, BCOUNT
 	globalBagExists = True if globalBag is not None else False
 	with open("SF2_Decoded_Samples.cpp", "w") as cpp_file:
 		with open("SF2_Decoded_Samples.h", "w") as header_file:
 			cpp_file.write("#include \"SF2_Decoded_Samples.h\"\n")
+			header_file.write("#include \"AudioSynthWavetable.h\"\n")
 
+			#Decode data to sample_data array in header file
+			header_file.write("extern sample_data samples[" + str(num_samples) + "];\n")
+			cpp_file.write("sample_data samples[" + str(num_samples) + "] = {\n")
+			sample_num = 0
+			for aBag in bags:
+				if globalBagExists is False:
+					globalBag = aBag
+
+				print_metadata_to_header(cpp_file, aBag, globalBag, sample_num)
+				sample_num = sample_num + 1
+				
+			cpp_file.write("};\n")
+			
 			sample_num = 0
 			for aBag in bags:
 				raw_wav_data = aBag.sample.raw_sample_data
 
-				B_COUNT = 0;
+				BCOUNT = 0
+				WCOUNT = 0
+				BUF32 = 0
+				
 				length_16 = aBag.sample.duration
 				length_8 = length_16 * 2
 				length_32 = length_16/2
@@ -244,18 +253,6 @@ def export_samples(bags, globalBag, num_samples):
 
 				cpp_file.write("};\n")
 				sample_num = sample_num + 1
-			
-			#Now decode data to sample_data array in header file
-			header_file.write("sample_data samples[] = {\n")
-			sample_num = 0
-			for aBag in bags:
-				if globalBagExists is False:
-					globalBag = aBag
-
-				print_metadata_to_header(header_file, aBag, globalBag, sample_num)
-				sample_num = sample_num + 1
-				
-			header_file.write("}\n")
 
 #prints out the sample metadata into the first portion of the sample array
 def print_metadata_to_header(file, aBag, globalBag, sample_num):
