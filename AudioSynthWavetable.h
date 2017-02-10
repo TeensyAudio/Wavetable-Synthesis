@@ -58,6 +58,7 @@ public:
 	{}
 
 	void setSamples(const unsigned int ** samples);
+
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -100,8 +101,7 @@ public:
 
 		// scale midi_amp which is 0 t0 127 to be between
 		// 0 and 1 using a logarithmic transformation
-		return (float)pow(midi_amp, logarithmicness) /
-			(float)pow(127, logarithmicness);
+		return (float)pow(midi_amp, logarithmicness) / (float)pow(127, logarithmicness);
 	}
 	
 	static float noteToFreq(int note) {
