@@ -15,7 +15,7 @@ class Application(Frame):
         self.parent = parent
         parent.title("Teensy Soundfont Decoder")
         s = Style()
-        s.theme_use('xpnative')
+        s.theme_use('default')
         # s.configure("TFrame", background="#333")
 
         self.BOX_HEIGHT = 15
