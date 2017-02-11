@@ -271,7 +271,7 @@ def print_metadata_to_header(file, aBag, globalBag, sample_num):
 		#write out key_range lower and upper bounds
         file.write(str(aBag.key_range[0]) + ",\n") #key range lower
         file.write(str(aBag.key_range[1]) + ",\n") #key range upper
-    else: 
+    else:
         file.write("0,\n")
         file.write("0,\n")
     
