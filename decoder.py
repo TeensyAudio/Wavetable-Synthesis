@@ -162,8 +162,11 @@ def decodeSelected(path, instIndex, selectedBags, globalBagIndex):
 
             if valid[0] == False:
                 error(valid[1])
-                #return
+                sys.exit()
+			
+            print(aBag.mods)
             
+        globalBag = None
         if(globalBagIndex != None):
             globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
     
@@ -188,7 +191,8 @@ def decodeAll(path, instIndex, globalBagIndex):
 			if valid[0] == False:
 				error(valid[1])
 				#return
-            
+           
+		globalBag = None
 		if(globalBagIndex != None):
 			globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
 
