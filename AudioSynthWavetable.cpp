@@ -35,14 +35,9 @@
 #define STATE_SUSTAIN	5
 #define STATE_RELEASE	6
 
-void AudioSynthWavetable::setSamples(const unsigned int ** samples) {
+void AudioSynthWavetable::setSamples(sample_data * samples) {
 	this->samples = samples;
 	num_samples = 11;
-}
-
-uint32_t AudioSynthWavetable::getNoteRange(int sample_num) {
-	if (sample_num > num_samples) return NULL;
-	return samples[sample_num][5];
 }
 
 bool AudioSynthWavetable::isPlaying() {
@@ -52,8 +47,8 @@ bool AudioSynthWavetable::isPlaying() {
 
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	int note1, note2, velocity1, velocity2;
-	const unsigned int *data = samples[sample_num];
-
+	sample_data data = samples[sample_num];
+	
 	tone_phase = 0;
 	playing = 0;
 
@@ -72,28 +67,29 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	 Index 10 = Sustain envelope //not ms
 	 Index 11 = Release envelope
 	 */
-	 //note: assuming 16-bit PCM at 44100 Hz for now
-	length = (data[0] & 0x00FFFFFF);
-	waveform = (uint32_t*)data + 12;
-	setSampleNote(data[1]);
-	sample_rate = data[2];
+	 
+	//note: assuming 16-bit PCM at 44100 Hz for now
+	length = data.SAMPLE_LENGTH;
+	waveform = (uint32_t*)data.sample;
+	setSampleNote(data.ORIGINAL_PITCH);
+	sample_rate = data.SAMPLE_RATE;
 
 	//setting start and end loop
-	setLoop(data[3], data[4]);
+	setLoop(data.LOOP_START, data.LOOP_END);
 
-	note1 = data[5] >> 16;
-	note2 = data[5] & 0x0000FFFF;
-
-	velocity1 = data[6] >> 16;
-	velocity2 = data[6] & 0x0000FFFF;
-
+	note1 = data.NOTE_RANGE_1;
+	note2 = data.NOTE_RANGE_2;
+	
+	velocity1 = data.VELOCITY_RANGE_1;
+	velocity2 = data.VELOCITY_RANGE_2;
+	
 	if (!custom_env) {
-		env_delay((data[7] >> 16));
-		env_hold((data[7] & 0x0000FFFF));
-		env_attack(data[8]);
-		env_decay(data[9]);
-		env_sustain(data[10] / 1000);
-		env_release(data[11]);
+		env_delay(data.DELAY_ENV);
+		env_hold(data.HOLD_ENV);
+		env_attack(data.ATTACK_ENV);
+		env_decay(data.DECAY_ENV);
+		env_sustain(data.SUSTAIN_ENV/1000);
+		env_release(data.RELEASE_ENV);
 	}
 
 	length_bits = 1;
@@ -124,10 +120,9 @@ void AudioSynthWavetable::play(void) {
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	uint32_t val;
 	uint16_t note1, note2;
-	for (int i = 0; i < num_samples; i++) {
-		val = getNoteRange(i);
-		note1 = val >> 16;
-		note2 = (val & 0x0000FFFF);
+	for(int i = 0; i < num_samples; i++) {
+		note1 = samples[val].NOTE_RANGE_1;
+		note2 = samples[val].NOTE_RANGE_2;
 		if (freq >= noteToFreq(note1) && freq <= noteToFreq(note2)) {
 			parseSample(i, custom_env);
 			break;
