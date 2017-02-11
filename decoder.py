@@ -156,14 +156,17 @@ def decodeSelected(path, instIndex, selectedBags, globalBagIndex):
         for bag in selectedBags:
             aBag = sf2.instruments[instIndex].bags[bag]
             aBag.sample.sm24_offset = None
-            bags_to_decode.append(bag)
+            bags_to_decode.append(aBag)
             DCOUNT = DCOUNT + 1
             valid = is_sample_valid(aBag.sample)
 
             if valid[0] == False:
                 error(valid[1])
-                #return
+                sys.exit()
+			
+            print(aBag.mods)
             
+        globalBag = None
         if(globalBagIndex != None):
             globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
     
@@ -188,7 +191,8 @@ def decodeAll(path, instIndex, globalBagIndex):
 			if valid[0] == False:
 				error(valid[1])
 				#return
-            
+           
+		globalBag = None
 		if(globalBagIndex != None):
 			globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
 
