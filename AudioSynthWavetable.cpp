@@ -35,9 +35,9 @@
 #define STATE_SUSTAIN	5
 #define STATE_RELEASE	6
 
-void AudioSynthWavetable::setSamples(sample_data * samples) {
+void AudioSynthWavetable::setSamples(sample_data * samples, int num_samples) {
 	this->samples = samples;
-	num_samples = 11;
+	this->num_samples = num_samples;
 }
 
 bool AudioSynthWavetable::isPlaying() {
@@ -118,11 +118,10 @@ void AudioSynthWavetable::play(void) {
 }
 
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
-	uint32_t val;
 	uint16_t note1, note2;
 	for(int i = 0; i < num_samples; i++) {
-		note1 = samples[val].NOTE_RANGE_1;
-		note2 = samples[val].NOTE_RANGE_2;
+		note1 = samples[i].NOTE_RANGE_1;
+		note2 = samples[i].NOTE_RANGE_2;
 		if (freq >= noteToFreq(note1) && freq <= noteToFreq(note2)) {
 			parseSample(i, custom_env);
 			break;
