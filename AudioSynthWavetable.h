@@ -35,6 +35,25 @@
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define AMP_DEF 63
 
+struct sample_data{
+	const int ORIGINAL_PITCH;
+	const int SAMPLE_LENGTH;
+	const int SAMPLE_RATE;
+	const int LOOP_START;
+	const int LOOP_END;
+	const int NOTE_RANGE_1;
+	const int NOTE_RANGE_2;
+	const int VELOCITY_RANGE_1;
+	const int VELOCITY_RANGE_2;
+	const int DELAY_ENV;
+	const int ATTACK_ENV;
+	const int HOLD_ENV;
+	const int DECAY_ENV;
+	const int SUSTAIN_ENV;
+	const int RELEASE_ENV;
+	const unsigned int * sample;
+};
+
 class AudioSynthWavetable : public AudioStream
 {
 public:
@@ -57,8 +76,7 @@ public:
 		, loop_end_phase(0)
 	{}
 
-	void setSamples(const unsigned int ** samples);
-
+	void setSamples(sample_data * samples, int num_samples);
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -77,7 +95,6 @@ public:
 	void frequency(float freq);
 	void parseSample(int sample_num, bool custom_env);
 	
-	uint32_t getNoteRange(int sample_num);
 	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
 		amplitude(amp);
@@ -139,7 +156,7 @@ public:
 
 private:
 	uint32_t* waveform;
-	const unsigned int ** samples;
+	sample_data * samples;
 	int length, length_bits, loop_start, loop_end, loop_length;
 	float sample_freq;
 	uint8_t playing, num_samples;
