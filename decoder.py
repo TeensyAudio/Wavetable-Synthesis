@@ -136,7 +136,8 @@ def main(argv):
                     print_menu(sampleNames)
                     sample = safe_input('Select Sample [1-{}]: '.format(len(sampleNames)), int, 1, len(sampleNames))
                     print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(samples[sample-1].name))
-                    selectedBags.append(bagToSample[sample-1][0])
+                    if(bagToSample[sample-1][0] not in selectedBags):
+                        selectedBags.append(bagToSample[sample-1][0])
                     i_result = menu(options2)
                     if i_result == 1:
                         continue
@@ -202,6 +203,10 @@ def decodeAll(path, instIndex, globalBagIndex):
 # Retrieves all key ranges for the samples and expands them to fill empty
 # space in the 0-127 range if needed.
 def getKeyRanges(bags, keyRanges):
+    if(len(bags) == 1):
+        keyRanges.append((0, 127))
+        return
+
     bags.sort(key=lambda x:x.key_range[0]) 
     for aBag in bags:
         keyRanges.append([aBag.key_range[0], aBag.key_range[1]])
@@ -226,10 +231,7 @@ def export_samples(bags, globalBag, num_samples):
             
             #Sort bags by key range and expand ranges to fill all key values
             keyRanges = []
-            if(len(bags) == 1):
-                keyRanges.append((0, 127))
-            else:
-                getKeyRanges(bags, keyRanges)
+            getKeyRanges(bags, keyRanges)
 
             #Decode data to sample_data array in header file
             header_file.write("extern sample_data samples[" + str(num_samples) + "];\n")
@@ -239,7 +241,7 @@ def export_samples(bags, globalBag, num_samples):
                 if globalBagExists is False:
                     globalBag = aBag
 
-                print_metadata_to_header(cpp_file, aBag, globalBag, sample_num)
+                print_metadata_to_file(cpp_file, aBag, globalBag, sample_num, keyRanges[sample_num])
                 sample_num = sample_num + 1
                     
             cpp_file.write("};\n")
@@ -282,7 +284,7 @@ def export_samples(bags, globalBag, num_samples):
                 sample_num = sample_num + 1
 
 #prints out the sample metadata into the first portion of the sample array
-def print_metadata_to_header(file, aBag, globalBag, sample_num):
+def print_metadata_to_file(file, aBag, globalBag, sample_num, keyPair):
     file.write("{\n")
     file.write(str(aBag.base_note if aBag.base_note else aBag.sample.original_pitch) + ",\n") #original pitch
     file.write(str(aBag.sample.duration) + ",\n") #length
@@ -290,13 +292,13 @@ def print_metadata_to_header(file, aBag, globalBag, sample_num):
     file.write(str(aBag.cooked_loop_start) + ",\n") #loop start
     file.write(str(aBag.cooked_loop_end) + ",\n") #loop end
     
-    if aBag.key_range:
-		#write out key_range lower and upper bounds
-        file.write(str(aBag.key_range[0]) + ",\n") #key range lower
-        file.write(str(aBag.key_range[1]) + ",\n") #key range upper
-    else: 
-        file.write("0,\n")
-        file.write("0,\n")
+    #if aBag.key_range:
+    #write out key_range lower and upper bounds
+    file.write(str(keyPair[0]) + ",\n") #key range lower
+    file.write(str(keyPair[1]) + ",\n") #key range upper
+    #else: 
+    #    file.write("0,\n")
+    #    file.write("0,\n")
     
     if aBag.velocity_range:
         #write out velocity_range lower and upper bounds
