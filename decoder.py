@@ -190,7 +190,7 @@ def decodeAll(path, instIndex, globalBagIndex):
 			aBag.sample.sm24_offset = None
 
 			if valid[0] == False:
-		            error(valid[1])
+                            error(valid[1])
                             sys.exit()
 		    	    #return
            
@@ -279,14 +279,16 @@ def getKeyRanges(bags, keyRanges):
         for aBag in bags:
             keyRanges.append([aBag.key_range[0], aBag.key_range[1]])
 
-        currentKey = 0
-        for keyPair in keyRanges:
-            if keyPair[0] > currentKey:
-                keyPair[0] = currentKey
-            currentKey=keyPair[1]+1
+        for i in range(len(keyRanges)):
+            if i == 0:
+                keyRanges[i][0] = 0
 
-        if currentKey < 127:
-            keyRanges[-1][1] = 127
+            if i == len(keyRanges)-1:
+                keyRanges[i][1] = 127
+            else:
+                keyDiff = keyRanges[i+1][0]-keyRanges[i][1]
+                keyRanges[i][1] += int(keyDiff/2) + keyDiff%2
+                keyRanges[i+1][0] -= int(keyDiff/2) - 1
 
     # append bags without key ranges to the end of the bags list
     for aBag in tempList:
