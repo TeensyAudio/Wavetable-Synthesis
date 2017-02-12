@@ -9,7 +9,7 @@ import getopt
 import inspect
 
 BCOUNT = 0
-WCOUNT = 2
+WCOUNT = 0
 BUF32 = 0
 DCOUNT = 0
 DEBUG_FLAG = False
@@ -142,7 +142,7 @@ def main(argv):
                         continue
                     elif i_result == 2:
                         decodeSelected(path, instrument, selectedBags, globalBagIndex) 
-                        sys.exit('Program Terminated by User')
+                        sys.exit('Selected samples for instrument decoded successfully. Exiting Program.')
         elif choice == 2:
             sys.exit('Program Terminated by User')
         else:   #shouldn't be reached
