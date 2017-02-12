@@ -199,64 +199,87 @@ def decodeAll(path, instIndex, globalBagIndex):
 		export_samples(bags, globalBag, len(bags))
 
 
+# Retrieves all key ranges for the samples and expands them to fill empty
+# space in the 0-127 range if needed.
+def getKeyRanges(bags, keyRanges):
+    bags.sort(key=lambda x:x.key_range[0]) 
+    for aBag in bags:
+        keyRanges.append([aBag.key_range[0], aBag.key_range[1]])
+
+    currentKey = 0
+    for keyPair in keyRanges:
+        if keyPair[0] > currentKey:
+            keyPair[0] = currentKey
+        currentKey=keyPair[1]+1
+
+    if currentKey < 127:
+        keyRanges[-1][1] = 127
+
 # Write a sample out to C++ style data files.
 def export_samples(bags, globalBag, num_samples):  
-	global DCOUNT, BUF32, BCOUNT
-	globalBagExists = True if globalBag is not None else False
-	with open("SF2_Decoded_Samples.cpp", "w") as cpp_file:
-		with open("SF2_Decoded_Samples.h", "w") as header_file:
-			cpp_file.write("#include \"SF2_Decoded_Samples.h\"\n")
-			header_file.write("#include \"AudioSynthWavetable.h\"\n")
+    global DCOUNT, BUF32, BCOUNT
+    globalBagExists = True if globalBag is not None else False
+    with open("SF2_Decoded_Samples.cpp", "w") as cpp_file:
+        with open("SF2_Decoded_Samples.h", "w") as header_file:
+            cpp_file.write("#include \"SF2_Decoded_Samples.h\"\n")
+            header_file.write("#include \"AudioSynthWavetable.h\"\n")
+            
+            #Sort bags by key range and expand ranges to fill all key values
+            keyRanges = []
+            if(len(bags) == 1):
+                keyRanges.append((0, 127))
+            else:
+                getKeyRanges(bags, keyRanges)
 
-			#Decode data to sample_data array in header file
-			header_file.write("extern sample_data samples[" + str(num_samples) + "];\n")
-			cpp_file.write("sample_data samples[" + str(num_samples) + "] = {\n")
-			sample_num = 0
-			for aBag in bags:
-				if globalBagExists is False:
-					globalBag = aBag
+            #Decode data to sample_data array in header file
+            header_file.write("extern sample_data samples[" + str(num_samples) + "];\n")
+            cpp_file.write("sample_data samples[" + str(num_samples) + "] = {\n")
+            sample_num = 0
+            for aBag in bags:
+                if globalBagExists is False:
+                    globalBag = aBag
 
-				print_metadata_to_header(cpp_file, aBag, globalBag, sample_num)
-				sample_num = sample_num + 1
-				
-			cpp_file.write("};\n")
-			
-			sample_num = 0
-			for aBag in bags:
-				raw_wav_data = aBag.sample.raw_sample_data
+                print_metadata_to_header(cpp_file, aBag, globalBag, sample_num)
+                sample_num = sample_num + 1
+                    
+            cpp_file.write("};\n")
+            
+            sample_num = 0
+            for aBag in bags:
+                raw_wav_data = aBag.sample.raw_sample_data
 
-				BCOUNT = 0
-				WCOUNT = 0
-				BUF32 = 0
-				
-				length_16 = aBag.sample.duration
-				length_8 = length_16 * 2
-				length_32 = length_16/2
-				padlength = padding(length_32, 128)
+                BCOUNT = 0
+                WCOUNT = 0
+                BUF32 = 0
+                
+                length_16 = aBag.sample.duration
+                length_8 = length_16 * 2
+                length_32 = length_16/2
+                padlength = padding(length_32, 128)
 
-				array_length = length_32 + padlength
-				
-				#Write array init to header file.
-				header_file.write("extern const unsigned int sample_" + str(sample_num) + "[" + str(int(array_length)) + "];\n")
+                array_length = length_32 + padlength
+                
+                #Write array init to header file.
+                header_file.write("extern const unsigned int sample_" + str(sample_num) + "[" + str(int(array_length)) + "];\n")
 
-				#Write array contents to .cpp
-				cpp_file.write("const unsigned int sample_" + str(sample_num) + "[" + str(int(array_length)) + "] = {\n")
-				
-				i = 0
-				while i < length_8:
-					audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-					# Use PCM Encoding
-					print_bytes(cpp_file, audio)
-					print_bytes(cpp_file, audio >> 8)
-					#consuming 2 chars at a time, so add another increment
-					i = i + 2
+                #Write array contents to .cpp
+                cpp_file.write("const unsigned int sample_" + str(sample_num) + "[" + str(int(array_length)) + "] = {\n")
+                
+                i = 0
+                while i < length_8:
+                    audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
+                    # Use PCM Encoding
+                    print_bytes(cpp_file, audio)
+                    print_bytes(cpp_file, audio >> 8)
+                    #consuming 2 chars at a time, so add another increment
+                    i = i + 2
 
-				while padlength > 0:
-					print_bytes(cpp_file, 0)
-					padlength = padlength - 1
+                while padlength > 0:
+                    print_bytes(cpp_file, 0)
+                    padlength = padlength - 1
 
-				cpp_file.write("};\n")
-				sample_num = sample_num + 1
+                cpp_file.write("};\n")
+                sample_num = sample_num + 1
 
 #prints out the sample metadata into the first portion of the sample array
 def print_metadata_to_header(file, aBag, globalBag, sample_num):
