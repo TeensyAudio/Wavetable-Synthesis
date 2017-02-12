@@ -190,35 +190,15 @@ def decodeAll(path, instIndex, globalBagIndex):
 			aBag.sample.sm24_offset = None
 
 			if valid[0] == False:
-				error(valid[1])
-				#return
+		            error(valid[1])
+                            sys.exit()
+		    	    #return
            
 		globalBag = None
 		if(globalBagIndex != None):
 			globalBag = sf2.instruments[instIndex].bags[globalBagIndex]
 
 		export_samples(bags, globalBag, len(bags))
-
-
-# Retrieves all key ranges for the samples and expands them to fill empty
-# space in the 0-127 range if needed.
-def getKeyRanges(bags, keyRanges):
-    if(len(bags) == 1):
-        keyRanges.append((0, 127))
-        return
-
-    bags.sort(key=lambda x:x.key_range[0]) 
-    for aBag in bags:
-        keyRanges.append([aBag.key_range[0], aBag.key_range[1]])
-
-    currentKey = 0
-    for keyPair in keyRanges:
-        if keyPair[0] > currentKey:
-            keyPair[0] = currentKey
-        currentKey=keyPair[1]+1
-
-    if currentKey < 127:
-        keyRanges[-1][1] = 127
 
 # Write a sample out to C++ style data files.
 def export_samples(bags, globalBag, num_samples):  
@@ -282,6 +262,36 @@ def export_samples(bags, globalBag, num_samples):
 
                 cpp_file.write("};\n")
                 sample_num = sample_num + 1
+
+# Retrieves all key ranges for the samples and expands them to fill empty
+# space in the 0-127 range if needed.
+def getKeyRanges(bags, keyRanges):
+    # remove any bags without key ranges before sorting bags by key range
+    tempList = []
+    for aBag in bags:
+        if aBag.key_range == None:
+            tempList.append(aBag)
+            bags.remove(aBag)
+   
+    # sort bags with key ranges and fill any gaps in range
+    if(len(bags) != 0):
+        bags.sort(key=lambda x:x.key_range[0]) 
+        for aBag in bags:
+            keyRanges.append([aBag.key_range[0], aBag.key_range[1]])
+
+        currentKey = 0
+        for keyPair in keyRanges:
+            if keyPair[0] > currentKey:
+                keyPair[0] = currentKey
+            currentKey=keyPair[1]+1
+
+        if currentKey < 127:
+            keyRanges[-1][1] = 127
+
+    # append bags without key ranges to the end of the bags list
+    for aBag in tempList:
+        bags.append(aBag)
+        keyRanges.append([0, 127])
 
 #prints out the sample metadata into the first portion of the sample array
 def print_metadata_to_file(file, aBag, globalBag, sample_num, keyPair):
@@ -372,6 +382,8 @@ def volume_envelope_delay(aBag):
 def is_sample_valid(sample):
     if sample.loop_duration >= sample.duration: return (False, 'Loop length >= sample length')
     if sample.end_loop > sample.duration: return (False, 'End loop index is larger than sample end index')
+    if sample.sample_rate != 11025 and sample.sample_rate != 22050 and sample.sample_rate != 44100:
+        return (False, 'Sample {} has invalid sample rate {}'.format(sample.name, sample.sample_rate))
     return (True, None)
 
 def error(message):
