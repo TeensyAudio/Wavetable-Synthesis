@@ -118,18 +118,31 @@ void AudioSynthWavetable::play(void) {
 }
 
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
-	uint16_t note1, note2;
+	float freq1, freq2;
 	for(int i = 0; i < num_samples; i++) {
-		note1 = samples[i].NOTE_RANGE_1;
-		note2 = samples[i].NOTE_RANGE_2;
-		if (freq >= noteToFreq(note1) && freq <= noteToFreq(note2)) {
+		freq1 = noteToFreq(samples[i].NOTE_RANGE_1);
+		freq2 = noteToFreq(samples[i].NOTE_RANGE_2);
+		if (freq >= freq1 && freq <= freq2) {
 			parseSample(i, custom_env);
+			Serial.println("Branch 1");
 			break;
-		} else if (i == 0 && freq < noteToFreq(note1)) {
+		} else if (i == 0 && freq < freq1) {
 			parseSample(0, custom_env);
+			Serial.println("Branch 2");
 			break;
-		} else if (i == num_samples-1 && freq > noteToFreq(note2)) {
+		} else if (i == num_samples-1 && freq > freq2) {
 			parseSample(num_samples-1, custom_env);
+			Serial.println("Branch 3");
+			break;
+		} else if (freq > freq2 && freq < noteToFreq(samples[i+1].NOTE_RANGE_1)) {
+			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2)) {
+				parseSample(i, custom_env);
+				Serial.println("Branch 4");
+			}
+			else {
+				parseSample(i+1, custom_env);
+				Serial.println("Branch 5");
+			}
 			break;
 		}
 	}

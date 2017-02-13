@@ -66,6 +66,9 @@ void setup() {
 void loop() {
   if (!flag_stop) {
     if (timer >= TICK) {
+      wavetable.stop();
+      timer = 0;
+      while (timer < TICK);
       // Take average of samples and compute error
       if (delay_count >= DELAY) {
         analysis_count_total++;
