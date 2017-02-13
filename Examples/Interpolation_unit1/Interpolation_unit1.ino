@@ -33,7 +33,7 @@ AudioConnection patchCord3(mixer, 0, i2s1, 1);
 AudioControlSGTL5000      sgtl5000_1;
 
 elapsedMillis timer = 0;
-int count = 100; // Initialized to first note
+int count = 107; // Initialized to first note; freq analyzer has trouble with frequencies > 4k Hz
 int analysis_count = 0;
 int analysis_count_total = 0;
 int delay_count = 0;
@@ -48,7 +48,7 @@ bool flag_stop = false;
 const int TICK = 500;        // Timer period (ms)
 const int DELAY = 2;         // Spin count for analyzer
 const int LOWER_BOUND = 21;  // Lowest tested note
-const double TOLERANCE = 0.002; // Allowed error
+const double TOLERANCE = 0.005; // Allowed error
 
 void setup() {
   AudioMemory(30);
@@ -68,7 +68,7 @@ void loop() {
     if (timer >= TICK) {
       wavetable.stop();
       timer = 0;
-      while (timer < TICK);
+      //while (timer < TICK);
       // Take average of samples and compute error
       if (delay_count >= DELAY) {
         analysis_count_total++;
