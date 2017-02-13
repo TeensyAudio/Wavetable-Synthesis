@@ -7,9 +7,8 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
-
-const int TOTAL_VOICES = 8;
-const int TOTAL_MIXERS = 3;
+const int TOTAL_VOICES = 10;
+const int TOTAL_MIXERS = 4;
 struct voice_t {
 	byte channel;
 	byte note;
@@ -22,6 +21,7 @@ int freeVoice(voice_t voice);
 AudioControlSGTL5000 sgtl5000_1;
 AudioSynthWavetable wavetable[TOTAL_VOICES];
 AudioMixer4 mixer[TOTAL_MIXERS];
+AudioAnalyzeNoteFrequency notefreq;
 AudioOutputI2S i2s1;
 AudioConnection patchCord[] = {
 	{wavetable[0], 0, mixer[0], 0},
@@ -31,37 +31,42 @@ AudioConnection patchCord[] = {
 	{wavetable[4], 0, mixer[1], 0},
 	{wavetable[5], 0, mixer[1], 1},
 	{wavetable[6], 0, mixer[1], 2},
-	{wavetable[7], 0, mixer[1], 3},
-	//{wavetable[7], 0, mixer[2], 0},
-	//{wavetable[8], 0, mixer[2], 1},
-	//{wavetable[9], 0, mixer[2], 2},
-	////{wavetable[11], 0, mixer[2], 3},
-	{mixer[0], 0, mixer[2], 0},
-	{mixer[1], 0, mixer[2], 1},
-	//{mixer[2], 0, mixer[3], 2},
-	{mixer[2], 0, i2s1, 0},
-	{mixer[2], 0, i2s1, 1},
+	//{wavetable[7], 0, mixer[1], 3},
+	{wavetable[7], 0, mixer[2], 0},
+	{wavetable[8], 0, mixer[2], 1},
+	{wavetable[9], 0, mixer[2], 2},
+	//{wavetable[11], 0, mixer[2], 3},
+	{mixer[0], 0, mixer[3], 0},
+	{mixer[1], 0, mixer[3], 1},
+	{mixer[2], 0, mixer[3], 2},
+  {mixer[3], 0, notefreq, 0},
+	{mixer[3], 0, i2s1, 0},
+	{mixer[3], 0, i2s1, 1},
 };
 
 int evict_voice = 0;
 
 void setup() {
-	Serial.begin(38400);
+  Serial.begin(38400);
 
 	AudioMemory(40);
 
 	sgtl5000_1.enable();
-	sgtl5000_1.volume(0.8);
+	sgtl5000_1.volume(1);
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
-		mixer[i / 4].gain(i % 4, 1.0);
-		wavetable[i].setSamples(samples);
-		wavetable[i].amplitude(1.0);
+		mixer[i / 4].gain(i % 4, 1);
+		wavetable[i].setSamples(samples, sizeof(samples)/sizeof(sample_data));
+		wavetable[i].amplitude(1);
 		voices[i].channel = voices[i].note = 0xFF;
 	}
-
+  notefreq.begin(.15);
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
+  //Serial.printf("%d", sizeof(samples)/sizeof(sample_data));
+  for (int i = 0; i < sizeof(samples)/sizeof(sample_data); i++) {
+    Serial.printf("Sample %d: OP=%d, LL=%d, UL=%d\n", i, samples[i].ORIGINAL_PITCH, samples[i].NOTE_RANGE_1, samples[i].NOTE_RANGE_2);
+  }
 }
 
 void printVoices() {
@@ -92,6 +97,7 @@ void OnNoteOff(byte channel, byte note, byte velocity) {
 	int voice_id = freeVoice(voice_t{ channel, note });
 	if (voice_id == TOTAL_VOICES) return;
 
+	voices[voice_id].channel = 0xFF;
 	voices[voice_id].note = 0xFF;
 	wavetable[voice_id].stop();
 	printVoices();
@@ -99,6 +105,11 @@ void OnNoteOff(byte channel, byte note, byte velocity) {
 
 void loop() {
 	usbMIDI.read();
+  if (notefreq.available()) {
+        float note = notefreq.read();
+        float prob = notefreq.probability();
+        Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
+  }
 }
 
 int allocateVoice(voice_t voice) {
@@ -141,3 +152,4 @@ int freeVoice(voice_t voice) {
 
 	return i;
 }
+
