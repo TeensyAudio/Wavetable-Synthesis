@@ -5,3 +5,4 @@
 **/Release/
 **/__vm/
 **/.vs/
+*.pyc
