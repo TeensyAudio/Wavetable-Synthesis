@@ -5,10 +5,6 @@ import sys
 import getopt
 import inspect
 
-BCOUNT = 0
-WCOUNT = 2
-BUF32 = 0
-DCOUNT = 0
 DEBUG_FLAG = False
 
 
@@ -72,7 +68,6 @@ def menu(choices):
 
 
 def main(argv):
-    global BCOUNT, DCOUNT, DEBUG_FLAG
     # Disable warning logging to prevent sf2utils from logging any un-needed messages
     logging.disable(logging.WARNING)
 
@@ -153,206 +148,137 @@ def main(argv):
 
 
 def decode_selected(path, inst_index, selected_bags, global_bag_index):
-    global DCOUNT, BCOUNT, WCOUNT, BUF32
-    with open(path, 'rb') as sf2_file:
-        sf2 = Sf2File(sf2_file)
-        bags_to_decode = []
-        a_bag = None
+    with open(path, 'rb') as file:
+        sf2 = Sf2File(file)
 
-        for bag in selected_bags:
-            a_bag = sf2.instruments[inst_index].bags[bag]
-            a_bag.sample.sm24_offset = None
-            bags_to_decode.append(bag)
-            DCOUNT += 1
-            valid = is_sample_valid(a_bag.sample)
+        bags_to_decode = \
+            [sf2.instruments[inst_index].bags[n] for n in selected_bags] if selected_bags \
+            else sf2.instruments[inst_index].bags[1:] if global_bag_index \
+            else sf2.instruments[inst_index].bags
 
-            if not valid[0]:
-                error(valid[1])
-                # return
+        for bag in bags_to_decode:
+            bag.sample.sm24_offset = None
+            is_valid, error_msg = check_is_valid_sample(bag.sample)
+            if not is_valid:
+                error(error_msg)
+            if selected_bags:
+                print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(bag.sample.name))
 
-        global_bag = None
-        if global_bag_index is not None:
-            global_bag = sf2.instruments[inst_index].bags[global_bag_index]
+        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index else None
 
-        print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(a_bag.sample.name))
-
-        export_samples(bags_to_decode, global_bag, len(selected_bags))
+        export_samples(bags_to_decode, global_bag, len(bags_to_decode))
 
 
 def decode_all(path, inst_index, global_bag_index):
-    global DCOUNT, BCOUNT, WCOUNT, BUF32
-    with open(path, 'rb') as sf2_file:
-        sf2 = Sf2File(sf2_file)
-        # check for global instrument bag
-        if global_bag_index is not None:
-            bags = sf2.instruments[inst_index].bags[1:]
-        else:
-            bags = sf2.instruments[inst_index].bags
-        for aBag in bags:
-            DCOUNT += 1
-            valid = is_sample_valid(aBag.sample)
-            aBag.sample.sm24_offset = None
-
-            if not valid[0]:
-                error(valid[1])
-            # return
-
-        global_bag = None
-        if global_bag_index is not None:
-            global_bag = sf2.instruments[inst_index].bags[global_bag_index]
-
-        export_samples(bags, global_bag, len(bags))
+    decode_selected(path, inst_index, selected_bags=None, global_bag_index=global_bag_index)
 
 
 # Write a sample out to C++ style data files.
 def export_samples(bags, global_bag, num_samples):
-    global DCOUNT, BUF32, BCOUNT, WCOUNT
-    global_bag_exists = True if global_bag is not None else False
-    with open("SF2_Decoded_Samples.cpp", "w") as cpp_file:
-        with open("SF2_Decoded_Samples.h", "w") as header_file:
-            cpp_file.write("#include \"SF2_Decoded_Samples.h\"\n")
-            header_file.write("#include \"AudioSynthWavetable.h\"\n")
+    instrument_name = "samples"
+    h_file_name = "{}.h".format(instrument_name)
+    cpp_file_name = "{}.cpp".format(instrument_name)
+    with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
+        h_file.write("#include \"AudioSynthWavetable.h\"\n")
+        # Decode data to sample_data array in header file
+        h_file.write("extern sample_data {0}[{1}];\n".format(instrument_name, num_samples))
 
-            # Decode data to sample_data array in header file
-            header_file.write("extern sample_data samples[" + str(num_samples) + "];\n")
-            cpp_file.write("sample_data samples[" + str(num_samples) + "] = {\n")
-            sample_num = 0
-            for aBag in bags:
-                if global_bag_exists is False:
-                    global_bag = aBag
+        cpp_file.write("#include \"{}\"\n".format(h_file_name))
+        cpp_file.write("sample_data {0}[{1}] = {{\n".format(instrument_name, num_samples))
+        for i in range(len(bags)):
+            out_str = gen_sample_meta_data_string(bags[i], global_bag if global_bag else bags[i], i, instrument_name)
+            cpp_file.write(out_str)
+        cpp_file.write("};\n")
 
-                print_metadata_to_header(cpp_file, aBag, global_bag, sample_num)
-                sample_num += 1
+        for i in range(len(bags)):
+            raw_wav_data = bags[i].sample.raw_sample_data
+            length_16 = bags[i].sample.duration
+            length_8 = length_16 * 2
+            length_32 = length_16 // 2
+            pad_length = 0 if length_32 % 128 == 0 else 128 - length_32 % 128
 
-            cpp_file.write("};\n")
+            ary_length = int(length_32 + pad_length)
 
-            sample_num = 0
-            for aBag in bags:
-                raw_wav_data = aBag.sample.raw_sample_data
+            # Write array init to header file.
+            h_file.write("\nextern const uint32_t {0}_sample_{1}[{2}];\n".format(instrument_name, i, ary_length))
 
-                BCOUNT = 0
-                WCOUNT = 0
-                BUF32 = 0
+            # Write array contents to .cpp
+            cpp_file.write("\nconst uint32_t {0}_sample_{1}[{2}] = {{\n".format(instrument_name, i, ary_length))
 
-                length_16 = aBag.sample.duration
-                length_8 = length_16 * 2
-                length_32 = length_16/2
-                padlength = padding(length_32, 128)
-
-                array_length = length_32 + padlength
-
-                # Write array init to header file.
-                header_file.write("extern const unsigned int sample_" + str(sample_num) + "[" + str(int(array_length)) + "];\n")
-
-                # Write array contents to .cpp
-                cpp_file.write("const unsigned int sample_" + str(sample_num) + "[" + str(int(array_length)) + "] = {\n")
-
-                i = 0
-                while i < length_8:
-                    audio = cc_to_int16(raw_wav_data[i], raw_wav_data[i+1])
-                    # Use PCM Encoding
-                    print_bytes(cpp_file, audio)
-                    print_bytes(cpp_file, audio >> 8)
-                    # consuming 2 chars at a time, so add another increment
-                    i += 2
-
-                while padlength > 0:
-                    print_bytes(cpp_file, 0)
-                    padlength -= 1
-
-                cpp_file.write("};\n")
-                sample_num += 1
+            # Output 32-bit hex literals
+            line_width = 0
+            for j in range(0, length_8, 4):
+                out_bytes = raw_wav_data[j:j+4]
+                if len(out_bytes) != 4:
+                    out_bytes += bytes(4 - len(out_bytes))
+                hex_str = ''.join(['{:02x}'.format(out_bytes[k]) for k in range(3, -1, -1)])
+                cpp_file.write('0x{},'.format(hex_str))
+                line_width += 1
+                if line_width == 8:
+                    line_width = 0
+                    cpp_file.write('\n')
+            while pad_length > 0:
+                cpp_file.write('0x00000000,')
+                line_width += 1
+                if line_width == 8:
+                    line_width = 0
+                    cpp_file.write('\n')
+                pad_length -= 4
+            cpp_file.write("};\n" if line_width == 8 else "\n};\n")
 
 
 # prints out the sample metadata into the first portion of the sample array
-def print_metadata_to_header(file, a_bag, global_bag, sample_num):
-    file.write("{\n")
-    file.write(str(a_bag.base_note if a_bag.base_note else a_bag.sample.original_pitch) + ",\n")  # original pitch
-    file.write(str(a_bag.sample.duration) + ",\n")  # length
-    file.write(str(a_bag.sample.sample_rate) + ",\n")  # sample rate
-    file.write(str(a_bag.cooked_loop_start) + ",\n")  # loop start
-    file.write(str(a_bag.cooked_loop_end) + ",\n")  # loop end
+def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
+    out_fmt_str = \
+        "\t{{\n" \
+        "\t\t{ORIGINAL_PITCH},\n" \
+        "\t\t{LENGTH},\n" \
+        "\t\t{SAMPLE_RATE},\n" \
+        "\t\t{LOOP_START},\n" \
+        "\t\t{LOOP_END},\n" \
+        "\t\t{KEY_RANGE_LOWER},\n" \
+        "\t\t{KEY_RANGE_UPPER},\n" \
+        "\t\t{VELOCITY_RANGE_LOWER},\n" \
+        "\t\t{VELOCITY_RANGE_UPPER},\n" \
+        "\t\t{DELAY_ENV},\n" \
+        "\t\t{HOLD_ENV},\n" \
+        "\t\t{ATTACK_ENV},\n" \
+        "\t\t{DECAY_ENV},\n" \
+        "\t\t{SUSTAIN_ENV},\n" \
+        "\t\t{RELEASE_ENV},\n" \
+        "\t\t{SAMPLE_ARRAY_NAME},\n" \
+        "\t}},\n"
 
-    if a_bag.key_range:
-        # write out key_range lower and upper bounds
-        file.write(str(a_bag.key_range[0]) + ",\n")  # key range lower
-        file.write(str(a_bag.key_range[1]) + ",\n")  # key range upper
-    else:
-        file.write("0,\n")
-        file.write("0,\n")
+    out_vals = {
+        "ORIGINAL_PITCH": bag.base_note if bag.base_note else bag.sample.original_pitch,
+        "LENGTH": bag.sample.duration,
+        "SAMPLE_RATE": bag.sample.sample_rate,
+        "LOOP_START": bag.cooked_loop_start,
+        "LOOP_END": bag.cooked_loop_end,
+        "KEY_RANGE_LOWER": bag.key_range[0] if bag.key_range else 0,
+        "KEY_RANGE_UPPER": bag.key_range[1] if bag.key_range else 0,
+        "VELOCITY_RANGE_LOWER": bag.velocity_range[0] if bag.velocity_range else 0,
+        "VELOCITY_RANGE_UPPER": bag.velocity_range[1] if bag.velocity_range else 0,
+        "SAMPLE_ARRAY_NAME": "{0}_sample_{1}".format(instrument_name, sample_num),
+    }
 
-    if a_bag.velocity_range:
-        # write out velocity_range lower and upper bounds
-        file.write(str(a_bag.velocity_range[0]) + ",\n")  # velocity_range lower
-        file.write(str(a_bag.velocity_range[1]) + ",\n")  # velocity_range upper
-    else:
-        file.write("0,\n")
-        file.write("0,\n")
+    env_vals = {
+        # No property provided by SF2Utils; 33 is from form the SF2 spec
+        "DELAY_ENV": bag.gens[33].cents if 33 in bag.gens else global_bag.gens[33].cents if 33 in global_bag.gens else None,
+        "HOLD_ENV": bag.volume_envelope_hold if bag.volume_envelope_hold else global_bag.volume_envelope_hold,
+        "ATTACK_ENV": bag.volume_envelope_attack if bag.volume_envelope_attack else global_bag.volume_envelope_attack,
+        "DECAY_ENV": bag.volume_envelope_decay if bag.volume_envelope_decay else global_bag.volume_envelope_decay,
+        "SUSTAIN_ENV": bag.volume_envelope_sustain if bag.volume_envelope_sustain else global_bag.volume_envelope_sustain,
+        "RELEASE_ENV": bag.volume_envelope_release if bag.volume_envelope_release else global_bag.volume_envelope_release,
+    }
+    env_vals = {k: int(env_vals[k] * 1000) if env_vals[k] else 0 for k in env_vals}
 
-    # delay_env & hold_env
-    delay_temp = volume_envelope_delay(a_bag)
-    hold_temp = a_bag.volume_envelope_hold
-    if delay_temp is None:
-        delay_temp = volume_envelope_delay(global_bag)
-    if hold_temp is None:
-        hold_temp = global_bag.volume_envelope_hold
-
-    file.write(str(check_gen_value(delay_temp)) + ",\n")  # delay_env
-    file.write(str(check_gen_value(hold_temp)) + ",\n")  # hold_env
-
-    # attack_env
-    if a_bag.volume_envelope_attack is None:
-        file.write(str(check_gen_value(global_bag.volume_envelope_attack)) + ",\n")
-    else:
-        file.write(str(check_gen_value(a_bag.volume_envelope_attack)) + ",\n")
-
-    # decay_env
-    if a_bag.volume_envelope_decay is None:
-        file.write(str(check_gen_value(global_bag.volume_envelope_decay)) + ",\n")
-    else:
-        file.write(str(check_gen_value(a_bag.volume_envelope_decay)) + ",\n")
-
-    # sustain_env
-    if a_bag.volume_envelope_sustain is None:
-        file.write(str(check_gen_value(global_bag.volume_envelope_sustain)) + ",\n")
-    else:
-        file.write(str(check_gen_value(a_bag.volume_envelope_sustain)) + ",\n")
-
-    # release_env
-    if a_bag.volume_envelope_release is None:
-        file.write(str(check_gen_value(global_bag.volume_envelope_release)) + ",\n")
-    else:
-        file.write(str(check_gen_value(a_bag.volume_envelope_release)) + ",\n")
-
-    file.write("sample_" + str(sample_num) + "\n},")
-
-
-# A function that returns the value of a generator (a float value) multiplied 
-# by 1000. This is done to save the decimal of the float to the thousandths 
-# place before being coverted to an int.
-# If the generator was set to None 0 is returned instead.
-def check_gen_value(gen_value):
-    if gen_value is None:
-        return 0
-    return int(gen_value * 1000)
-
-
-# This function retrives the volume_envelope_delay generator value.
-# There is no bag property in Sf2Utils to get the volume_envelope_delay value
-# so it's necessary to grab that generator from the bag manually. 
-# Each bag has a dictionary that maps a specified # from the SF2 manual to 
-# each of its generators. The # for the delay envelope generator is 33.
-def volume_envelope_delay(a_bag):
-    try:
-        a_gen = a_bag.gens[33]
-        return a_gen.cents
-    except KeyError:
-        return None
+    return out_fmt_str.format(**out_vals, **env_vals)
 
 
 # Checks if the selected sample is valid. Input is a sample object, and output is
 # a tuple with (boolean, error_message - if any)
-def is_sample_valid(sample):
+def check_is_valid_sample(sample):
     if sample.loop_duration >= sample.duration:
         return False, 'Loop length >= sample length'
     if sample.end_loop > sample.duration:
@@ -362,41 +288,6 @@ def is_sample_valid(sample):
 
 def error(message):
     print("ERROR: " + message)
-
-
-# Copying functionality from wav2sketch.c
-def print_bytes(file, b):
-    global BCOUNT, WCOUNT, BUF32
-
-    BUF32 |= b << (8 * BCOUNT)
-    BCOUNT += 1
-    if BCOUNT >= 4:
-        file.write("0x%0.8X" % BUF32)
-        file.write(",")
-        BUF32 = 0
-        BCOUNT = 0
-        WCOUNT += 1
-        if WCOUNT >= 8:
-            file.write("\n")
-            WCOUNT = 0
-
-
-def padding(length, block):
-    extra = length % block
-    if extra == 0:
-        return 0
-    return block - extra
-
-
-# Copying functionality from wav2sketch.c
-def cc_to_int16(c1, c2):
-    # i1 = int(ord(c1))
-    # i2 = int(ord(c2))
-    i1 = c1
-    i2 = c2
-    i1 &= 255
-    i2 &= 255
-    return (i2 << 8) | i1
 
 
 # Copying functionality from wav2sketch.c
