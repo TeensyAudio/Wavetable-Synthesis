@@ -147,7 +147,7 @@ def main(argv):
             input("Wrong option selection. Enter any key to try again..")
 
 
-def decode_selected(path, inst_index, selected_bags, global_bag_index):
+def decode_selected(path, inst_index, selected_bags, global_bag_index, user_title=None):
     with open(path, 'rb') as file:
         sf2 = Sf2File(file)
 
@@ -166,7 +166,10 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index):
 
         global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index else None
 
-        export_samples(bags_to_decode, global_bag, len(bags_to_decode))
+        if user_title is None:
+            export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=sf2.instruments[inst_index].name)
+        else:
+            export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=user_title)
 
 
 def decode_all(path, inst_index, global_bag_index):
@@ -174,8 +177,8 @@ def decode_all(path, inst_index, global_bag_index):
 
 
 # Write a sample out to C++ style data files.
-def export_samples(bags, global_bag, num_samples):
-    instrument_name = "samples"
+def export_samples(bags, global_bag, num_samples, file_title="samples"):
+    instrument_name = file_title
     h_file_name = "{}.h".format(instrument_name)
     cpp_file_name = "{}.cpp".format(instrument_name)
     with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
