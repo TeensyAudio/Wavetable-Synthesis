@@ -33,17 +33,22 @@ AudioConnection patchCord3(mixer, 0, i2s1, 1);
 AudioControlSGTL5000      sgtl5000_1;
 
 elapsedMillis timer = 0;
-int count = 100;
-int note = 0;
-double error = 0;
-float freq = 0;
-double freqSum = 0;
-float prob = 0;
+int count = 100; // Initialized to first note
 int analysis_count = 0;
+int analysis_count_total = 0;
 int delay_count = 0;
 int passed = 0;
-int analysis_count_total = 0;
+int note = 0;
+float freq = 0;
+float prob = 0;
+double error = 0;
+double freqSum = 0;
 bool flag_stop = false;
+
+const int TICK = 500;        // Timer period (ms)
+const int DELAY = 2;         // Spin count for analyzer
+const int LOWER_BOUND = 21;  // Lowest tested note
+const double TOLERANCE = 0.002; // Allowed error
 
 void setup() {
   AudioMemory(30);
@@ -60,15 +65,16 @@ void setup() {
 
 void loop() {
   if (!flag_stop) {
-    if (timer >= 500) {
-      if (delay_count >= 2) {
+    if (timer >= TICK) {
+      // Take average of samples and compute error
+      if (delay_count >= DELAY) {
         analysis_count_total++;
         freq = freqSum/analysis_count;
         error = freq/noteToFreq(note);
         if (error < 1) error = 1 - error;
         else error -= 1;
         Serial.printf("error=%3.5f\n", error);
-        if (error < 0.002) {
+        if (error < TOLERANCE) {
           Serial.println("Passed!\n");
           passed++;
         }
@@ -78,8 +84,8 @@ void loop() {
         delay_count = 0;
       }
       
-      if (count == 21) {
-        Serial.printf("%d/%d tests passed.\n\n", passed, analysis_count_total);
+      if (count == LOWER_BOUND) {
+        Serial.printf("%d/%d tests passed.", passed, analysis_count_total);
         wavetable.stop();
         flag_stop = true;
         return;
@@ -88,14 +94,15 @@ void loop() {
       note = count--;
       wavetable.playNote(note); // A3 = 57
       Serial.printf("note=%d\n", note);
-      for (int i=0; i<100; i++)
+      for (int i=0; i<70; i++)
         Serial.print("-");
       Serial.println();
       timer = 0;
     }
     
     if (notefreq.available()) {
-      if (delay_count++ >= 2) {
+      // Toss the first couple samples as they are often erroneous
+      if (delay_count++ >= DELAY) {
         analysis_count++;
         freq = notefreq.read();
         prob = notefreq.probability();

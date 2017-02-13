@@ -128,7 +128,7 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 		} else if (i == 0 && freq < noteToFreq(note1)) {
 			parseSample(0, custom_env);
 			break;
-		} else if (i == num_samples-1 && freq > noteToFreq(note1)) {
+		} else if (i == num_samples-1 && freq > noteToFreq(note2)) {
 			parseSample(num_samples-1, custom_env);
 			break;
 		}
