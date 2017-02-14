@@ -120,5 +120,3 @@ float noteToFreq(int note) {
   return 27.5 * pow(2, (float)(note - 21)/12);
 }
 
-
-
