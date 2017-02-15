@@ -21,7 +21,7 @@ int freeVoice(voice_t voice);
 AudioControlSGTL5000 sgtl5000_1;
 AudioSynthWavetable wavetable[TOTAL_VOICES];
 AudioMixer4 mixer[TOTAL_MIXERS];
-AudioAnalyzeNoteFrequency notefreq;
+//AudioAnalyzeNoteFrequency notefreq;
 AudioOutputI2S i2s1;
 AudioConnection patchCord[] = {
 	{wavetable[0], 0, mixer[0], 0},
@@ -39,16 +39,25 @@ AudioConnection patchCord[] = {
 	{mixer[0], 0, mixer[3], 0},
 	{mixer[1], 0, mixer[3], 1},
 	{mixer[2], 0, mixer[3], 2},
-  {mixer[3], 0, notefreq, 0},
+ // {mixer[3], 0, notefreq, 0},
 	{mixer[3], 0, i2s1, 0},
 	{mixer[3], 0, i2s1, 1},
 };
 
 int evict_voice = 0;
 
-void setup() {
-  Serial.begin(38400);
+// Bounce objects to read pushbuttons 
+Bounce button0 = Bounce(0, 15);
+Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
+Bounce button2 = Bounce(2, 15);
 
+void setup() {
+//  Serial.begin(38400);
+  
+  pinMode(0, INPUT_PULLUP);
+  pinMode(1, INPUT_PULLUP);
+  pinMode(2, INPUT_PULLUP);
+	
 	AudioMemory(40);
 
 	sgtl5000_1.enable();
@@ -60,12 +69,12 @@ void setup() {
 		wavetable[i].amplitude(1);
 		voices[i].channel = voices[i].note = 0xFF;
 	}
-  notefreq.begin(.15);
+ // notefreq.begin(.15);
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
   //Serial.printf("%d", sizeof(samples)/sizeof(sample_data));
   for (int i = 0; i < sizeof(samples)/sizeof(sample_data); i++) {
-    Serial.printf("Sample %d: OP=%d, LL=%d, UL=%d\n", i, samples[i].ORIGINAL_PITCH, samples[i].NOTE_RANGE_1, samples[i].NOTE_RANGE_2);
+//    Serial.printf("Sample %d: OP=%d, LL=%d, UL=%d\n", i, samples[i].ORIGINAL_PITCH, samples[i].NOTE_RANGE_1, samples[i].NOTE_RANGE_2);
   }
 }
 
@@ -84,8 +93,9 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
 	int voice_id = allocateVoice(voice_t{ channel, note });
 	voices[voice_id].channel = channel;
 	voices[voice_id].note = note;
+// Serial.printf("NOOTE: %x", note);
 	wavetable[voice_id].playNote(note);
-	printVoices();
+	//printVoices();
 }
 
 void OnNoteOff(byte channel, byte note, byte velocity) {
@@ -100,16 +110,21 @@ void OnNoteOff(byte channel, byte note, byte velocity) {
 	voices[voice_id].channel = 0xFF;
 	voices[voice_id].note = 0xFF;
 	wavetable[voice_id].stop();
-	printVoices();
+	//printVoices();
 }
 
 void loop() {
+    button0.update();
+  button1.update();
+  button2.update();
+
+                                              if (button0.fallingEdge()) {
+                                                Serial.printf("humm");
+                                                  wavetable[0].playNote(0x4A);
+                                                }
+  
 	usbMIDI.read();
-  if (notefreq.available()) {
-        float note = notefreq.read();
-        float prob = notefreq.probability();
-        Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
-  }
+ 
 }
 
 int allocateVoice(voice_t voice) {

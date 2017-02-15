@@ -122,6 +122,7 @@ void AudioSynthWavetable::play(void) {
 
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	float freq1, freq2;
+	//elapsedMillis timer = 0;
 	for(int i = 0; i < num_samples; i++) {
 		freq1 = noteToFreq(samples[i].NOTE_RANGE_1);
 		freq2 = noteToFreq(samples[i].NOTE_RANGE_2);
@@ -168,6 +169,7 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	}
 	tone_phase = 0;
 	playing = 1;
+	//Serial.printf("Latency: %dms\n", (int)timer);
 }
 
 void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
@@ -194,6 +196,7 @@ void AudioSynthWavetable::update(void) {
 	int32_t s1, s2, v1, v2, v3;
 	uint32_t *p, *end;
 	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
+	//elapsedMillis timer = 0;
 
 	if (!playing)
 		return;
@@ -337,6 +340,7 @@ void AudioSynthWavetable::update(void) {
 
 	transmit(block);
 	release(block);
+	//Serial.printf("Latency: %dms\n", (int)timer);
 }
 
 void AudioSynthWavetable::frequency(float freq) {
