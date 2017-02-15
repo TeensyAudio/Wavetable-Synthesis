@@ -16,7 +16,6 @@ class Application(Frame):
         parent.title("Teensy Soundfont Decoder")
         s = Style()
         s.theme_use('default')
-        # s.configure("TFrame", background="#333")
 
         self.BOX_HEIGHT = 15
         self.inFile = None
@@ -27,12 +26,10 @@ class Application(Frame):
         # control variables
         self.i_names = StringVar()
         self.s_names = StringVar()
-        # self.u_names = StringVar()
 
         # List of instrument object instances
         self.Instruments = list()
 
-        # self.usrList = Listbox(parent, listvariable=self.u_names, height=self.BOX_HEIGHT)
         parent.columnconfigure(0, weight=1)
         parent.rowconfigure(0, weight=1)
         self.grid(column=0, row=0, sticky=N + S + E + W)
@@ -91,22 +88,21 @@ class Application(Frame):
         self.exp_button = Button(self.sub_frame_2, text='Decode', command=self.send_to_decoder)
         self.exp_button.grid(row=2, column=1, padx=5, pady=5, sticky=N + S + E + W)
 
+        # Main Menu Bar
         menu = Menu(parent)
         parent.config(menu=menu)
         filemenu = Menu(menu)
         menu.add_cascade(label='File', menu=filemenu)
         filemenu.add_command(label='Load SF2', command=self.get_file)
         filemenu.add_command(label="Save location...", command=self.set_dir)
-
         menu.add_command(label='Help', command=self.call_back)
         menu.add_command(label='About', command=self.call_back)
 
+        # Status Bar (at bottom)
         self.status_text = StringVar()
         self.status_text.set('Load a Soundfont File')
         parent.status = Label(parent, textvariable=self.status_text, border=1, anchor=W)
         parent.status.grid(column=0, row=3, sticky=W + E)
-
-        # self.close_button = Button(parent, text="Close", command=parent.quit)
 
         # Set Bindings
         self.instList.bind('<<ListboxSelect>>', self.update_samples)
@@ -142,6 +138,8 @@ class Application(Frame):
         self.inFile_label.config(text=self.inFile)
         with open(self.inFile, 'rb') as sf2_file:
             sf2 = Sf2File(sf2_file)
+
+        self.Instruments.clear()
 
         for inst in sf2.instruments:
             if inst.name == 'EOI':
