@@ -19,46 +19,41 @@
 //---------------------------------------------------------------------------------------
 #include <AudioSynthWavetable.h>
 #include "SF2_Decoded_Samples.h"
+#include "AudioSampleCashregister.h"
 //---------------------------------------------------------------------------------------
-AudioAnalyzeNoteFrequency notefreq;
 AudioOutputI2S            i2s1;
 AudioSynthWavetable       wavetable;
 AudioMixer4               mixer;
+AudioPlayMemory           playmem;
+AudioAnalyzePeak          test;
 //---------------------------------------------------------------------------------------
 AudioConnection patchCord0(wavetable, 0, mixer, 0);
-AudioConnection patchCord1(mixer, 0, notefreq, 0);
+AudioConnection patchCord1(playmem, 0, mixer, 1);
 AudioConnection patchCord2(mixer, 0, i2s1, 0);
 AudioConnection patchCord3(mixer, 0, i2s1, 1);
+AudioConnection patchCord4(mixer, 0, test, 0);
 //---------------------------------------------------------------------------------------
 AudioControlSGTL5000      sgtl5000_1;
 
+elapsedMillis timer_latency = 0;
 elapsedMillis timer = 0;
-int count = 107; // Initialized to first note; freq analyzer has trouble with frequencies > 4 kHz
-int analysis_count = 0;
-int analysis_count_total = 0;
-int delay_count = 0;
+int count = 127; // Initialized to first note
 int passed = 0;
 int note = 0;
-float freq = 0;
-float prob = 0;
-double error = 0;
-double freqSum = 0;
+int longest = 0;
+int shortest = sizeof(int);
+bool flag_test = false;
 bool flag_stop = false;
 
 const int TICK = 500;           // Timer period (ms)
-const int DELAY = 2;            // Spin count for analyzer
-const int LOWER_BOUND = 21;     // Lowest tested note
-const double TOLERANCE = 0.005; // Allowed error
+const int LOWER_BOUND = 0;      // Lowest tested note
+const int THRESHOLD = 10;       // Longest tolerated latency
+const int NUM_TESTS = count - LOWER_BOUND;
 
 void setup() {
   AudioMemory(30);
-  /*
-   *  Initialize the yin algorithm's absolute
-   *  threshold, this is good number.
-   */
-  notefreq.begin(.15);
   sgtl5000_1.enable();
-  sgtl5000_1.volume(0.7);
+  sgtl5000_1.volume(0.5);
   wavetable.setSamples(samples, sizeof(samples)/sizeof(sample_data));
   while (timer < 2000); // Spin for serial monitor
 }
@@ -67,56 +62,40 @@ void loop() {
   if (!flag_stop) {
     if (timer >= TICK) {
       //wavetable.stop();
-      timer = 0;
+      //timer = 0;
       //while (timer < TICK);
-      // Take average of samples and compute error
-      if (delay_count >= DELAY) {
-        analysis_count_total++;
-        freq = freqSum/analysis_count;
-        error = freq/noteToFreq(note);
-        if (error < 1) error = 1 - error;
-        else error -= 1;
-        Serial.printf("error=%3.5f\n", error);
-        if (error < TOLERANCE) {
-          Serial.println("Passed!\n");
-          passed++;
-        }
-        else Serial.println("Failed...\n");
-        analysis_count = 0;
-        freqSum = 0;
-        delay_count = 0;
-      }
       
       if (count == LOWER_BOUND) {
-        Serial.printf("%d/%d tests passed.", passed, analysis_count_total);
         wavetable.stop();
         flag_stop = true;
+        Serial.printf("Longest latency: %dms\n", longest);
+        Serial.printf("Shortest latency: %dms\n", shortest);
+        Serial.printf("%d/%d tests passed.", passed, NUM_TESTS);
         return;
       }
       
       note = count--;
+      timer_latency = 0;
       wavetable.playNote(note); // A3 = 57
+      //playmem.play(AudioSampleCashregister);
       Serial.printf("note=%d\n", note);
-      for (int i=0; i<70; i++)
-        Serial.print("-");
-      Serial.println();
       timer = 0;
+      flag_test = false;
     }
     
-    if (notefreq.available()) {
-      // Toss the first couple samples as they are often erroneous
-      if (delay_count++ >= DELAY) {
-        analysis_count++;
-        freq = notefreq.read();
-        prob = notefreq.probability();
-        freqSum += freq;
-        Serial.printf("Expected: %3.2f | Received: %3.2f | Probability: %.2f\n", noteToFreq(note), freq, prob);
+    if (test.available() && flag_test == false) {
+      int latency = (int)timer_latency;
+      Serial.printf("Latency: %dms\n", latency);
+      if (latency <= THRESHOLD) {
+        Serial.println("Passed!\n");
+        passed++;
+      } else {
+        Serial.println("Failed...\n");
       }
+      if (latency > longest) longest = latency;
+      if (latency < shortest) shortest = latency;
+      flag_test = true;
     }
   }
-}
-
-float noteToFreq(int note) {
-  return 27.5 * pow(2, (float)(note - 21)/12);
 }
 
