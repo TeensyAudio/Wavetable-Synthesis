@@ -21,6 +21,8 @@ class Application(Frame):
         self.BOX_HEIGHT = 15
         self.inFile = None
         self.currInst = None
+        self.out_dir = None
+        self.out_name = None
 
         # control variables
         self.i_names = StringVar()
@@ -36,33 +38,57 @@ class Application(Frame):
         self.grid(column=0, row=0, sticky=N + S + E + W)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=4)
-        frame_1 = Frame(self)
-        frame_1.grid(column=0, row=0, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
-        frame_1.columnconfigure(0, weight=1)
-        frame_1.rowconfigure(0, weight=1)
-        frame_1.rowconfigure(1, weight=1)
-        frame_2 = Frame(self)
-        frame_2.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
-        frame_2.columnconfigure(0, weight=1)
-        frame_2.columnconfigure(1, weight=1)
-        frame_2.rowconfigure(0, weight=1)
-        frame_2.rowconfigure(1, weight=4)
-        frame_2.rowconfigure(2, weight=1)
-        self.inFile_label = Label(frame_1, text='Please Select a Soundfont File', font=('default', 12))
+        self.rowconfigure(1, weight=6)
+    # upper frame
+        self.frame_1 = Frame(self)
+        self.frame_1.grid(column=0, row=0, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
+        self.frame_1.columnconfigure(0, weight=1)
+        self.frame_1.rowconfigure(0, weight=1)
+        self.frame_1.rowconfigure(1, weight=1)
+        # Banner
+        self.inFile_label = Label(self.frame_1, text='Please Select a Soundfont File', font=('default', 12))
         self.inFile_label.grid(row=0, column=0)
-        self.browse_button = Button(frame_1, text="Browse", command=self.get_file)
+        # Browse button
+        self.browse_button = Button(self.frame_1, text="Browse", command=self.get_file)
         self.browse_button.grid(row=1, column=0, sticky=E + W, padx=40)
-        self.instList_label = Label(frame_2, text='Instruments', font=('default', 14))
+    # lower frame
+        self.frame_2 = Frame(self)
+        self.frame_2.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
+        self.frame_2.columnconfigure(0, weight=1)
+        self.frame_2.columnconfigure(1, weight=1)
+        self.frame_2.rowconfigure(0, weight=1)
+        # left side of lower
+        self.sub_frame_1 = Frame(self.frame_2)
+        self.sub_frame_1.grid(column=0, row=0, sticky=N + S + E + W, padx=5)
+        self.sub_frame_1.columnconfigure(0, weight=1)
+        self.sub_frame_1.rowconfigure(0, weight=1)
+        self.sub_frame_1.rowconfigure(1, weight=16)
+            # Instruments
+        self.instList_label = Label(self.sub_frame_1, text='Instruments', font=('default', 14))
         self.instList_label.grid(row=0, column=0, padx=1, pady=1)
-        self.instList = Listbox(frame_2, listvariable=self.i_names, height=self.BOX_HEIGHT, font=('default', 12))
-        self.instList.grid(row=1, column=0, rowspan=2, sticky=N + S + E + W, padx=5, pady=5)
-        self.sampList_label = Label(frame_2, text='Samples', font=('default', 14))
-        self.sampList_label.grid(row=0, column=1, padx=1, pady=1)
-        self.sampList = Listbox(frame_2, listvariable=self.s_names, selectmode=EXTENDED, height=self.BOX_HEIGHT,
-                                font=('default', 12))
-        self.sampList.grid(row=1, column=1, sticky=N + S + E + W, padx=5, pady=5)
-        self.exp_button = Button(frame_2, text='Decode', command=self.send_to_decoder)
+        self.instList = Listbox(self.sub_frame_1, listvariable=self.i_names, font=('default', 12))
+        self.instList.grid(row=1, column=0, rowspan=2, sticky=N + S + E + W)
+        self.scrollbar_1 = Scrollbar(self.sub_frame_1, command=self.instList.yview)
+        self.scrollbar_1.grid(row=1, column=1, rowspan=2, sticky=N + S + E + W)
+        self.instList.config(yscrollcommand=self.scrollbar_1.set)
+        # right side of lower
+        self.sub_frame_2 = Frame(self.frame_2)
+        self.sub_frame_2.grid(column=1, row=0, sticky=N + S + E + W, padx=5)
+        self.sub_frame_2.columnconfigure(0, weight=1)
+        self.sub_frame_2.columnconfigure(1, weight=3)
+        self.sub_frame_2.columnconfigure(2, weight=1)
+        self.sub_frame_2.rowconfigure(0, weight=1)
+        self.sub_frame_2.rowconfigure(1, weight=15)
+        self.sub_frame_2.rowconfigure(2, weight=1)
+            # Samples
+        self.sampList_label = Label(self.sub_frame_2, text='Samples', font=('default', 14))
+        self.sampList_label.grid(row=0, column=0, columnspan=3, padx=1, pady=1)
+        self.sampList = Listbox(self.sub_frame_2, listvariable=self.s_names, selectmode=EXTENDED, font=('default', 12))
+        self.sampList.grid(row=1, column=0, columnspan=3, sticky=N + S + E + W)
+        self.scrollbar_2 = Scrollbar(self.sub_frame_2, command=self.sampList.yview)
+        self.scrollbar_2.grid(row=1, column=4, rowspan=1, sticky=N + S + E + W)
+        self.sampList.config(yscrollcommand=self.scrollbar_2.set)
+        self.exp_button = Button(self.sub_frame_2, text='Decode', command=self.send_to_decoder)
         self.exp_button.grid(row=2, column=1, padx=5, pady=5, sticky=N + S + E + W)
 
         menu = Menu(parent)
@@ -70,6 +96,7 @@ class Application(Frame):
         filemenu = Menu(menu)
         menu.add_cascade(label='File', menu=filemenu)
         filemenu.add_command(label='Load SF2', command=self.get_file)
+        filemenu.add_command(label="Save location...", command=self.set_dir)
 
         menu.add_command(label='Help', command=self.call_back)
         menu.add_command(label='About', command=self.call_back)
@@ -88,12 +115,18 @@ class Application(Frame):
     def call_back(self):
         print('called the callback')
 
+    def set_dir(self):
+        self.out_dir = filedialog.askdirectory()
+
     def send_to_decoder(self, *args):
         sel_samps = self.sampList.curselection()
         selected_bags = list()
         for samp in sel_samps:
             selected_bags.append(self.Instruments[self.currInst].Samples[int(samp)].bag_idx)
-        decoder.decode_selected(self.inFile, self.currInst, selected_bags, self.Instruments[self.currInst].gb_idx)
+        if decoder.decode_selected(self.inFile, self.currInst, selected_bags, self.Instruments[self.currInst].gb_idx):
+            self.status_text.set('Decode Successful!')
+        else:
+            self.status_text.set('ERROR! Failed to Decode!')
 
     def update_samples(self, *args):
         idxs = self.instList.curselection()

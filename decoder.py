@@ -167,9 +167,15 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
         global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index else None
 
         if user_title is None:
-            export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=sf2.instruments[inst_index].name)
+            if export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=sf2.instruments[inst_index].name):
+                return True
+            else:
+                return False
         else:
-            export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=user_title)
+            if export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=user_title):
+                return True
+            else:
+                return False
 
 
 def decode_all(path, inst_index, global_bag_index):
@@ -228,6 +234,7 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
                     cpp_file.write('\n')
                 pad_length -= 4
             cpp_file.write("};\n" if line_width == 8 else "\n};\n")
+            return True
 
 
 # prints out the sample metadata into the first portion of the sample array
