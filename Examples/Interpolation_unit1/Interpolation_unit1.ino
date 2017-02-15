@@ -47,8 +47,9 @@ bool flag_stop = false;
 
 const int TICK = 500;           // Timer period (ms)
 const int DELAY = 2;            // Spin count for analyzer
-const int LOWER_BOUND = 21;     // Lowest tested note
+const int LOWER_BOUND = 21;     // Note below lowest tested note
 const double TOLERANCE = 0.005; // Allowed error
+const int NUM_TESTS = count - LOWER_BOUND;
 
 void setup() {
   AudioMemory(30);
@@ -67,11 +68,10 @@ void loop() {
   if (!flag_stop) {
     if (timer >= TICK) {
       //wavetable.stop();
-      timer = 0;
+      //timer = 0;
       //while (timer < TICK);
       // Take average of samples and compute error
       if (delay_count >= DELAY) {
-        analysis_count_total++;
         freq = freqSum/analysis_count;
         error = freq/noteToFreq(note);
         if (error < 1) error = 1 - error;
@@ -88,7 +88,7 @@ void loop() {
       }
       
       if (count == LOWER_BOUND) {
-        Serial.printf("%d/%d tests passed.", passed, analysis_count_total);
+        Serial.printf("%d/%d tests passed.", passed, NUM_TESTS);
         wavetable.stop();
         flag_stop = true;
         return;

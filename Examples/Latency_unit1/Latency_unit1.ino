@@ -46,7 +46,7 @@ bool flag_test = false;
 bool flag_stop = false;
 
 const int TICK = 500;           // Timer period (ms)
-const int LOWER_BOUND = 0;      // Lowest tested note
+const int LOWER_BOUND = 0;      // Note below lowest tested note
 const int THRESHOLD = 10;       // Longest tolerated latency
 const int NUM_TESTS = count - LOWER_BOUND;
 
@@ -83,7 +83,7 @@ void loop() {
       flag_test = false;
     }
     
-    if (test.available() && flag_test == false) {
+    if (test.available() && !flag_test) {
       int latency = (int)timer_latency;
       Serial.printf("Latency: %dms\n", latency);
       if (latency <= THRESHOLD) {
