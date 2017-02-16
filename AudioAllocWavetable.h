@@ -26,8 +26,8 @@ public:
 		, amplitude(1.0)
 	{}
     
-    void init(AudioSynthWavetable* voices, uint8_t numVoices, sample_data * wavetable, float amp);
-    void setSamples(sample_data * wavetable);
+    void init(AudioSynthWavetable* voices, uint8_t numVoices, sample_data * wavetable, int num_samples, float amp);
+    void setSamples(sample_data * wavetable, int num_samples);
     void setAmplitude(float amp);
     void playFreq(float freq);
     void playNote(int note);

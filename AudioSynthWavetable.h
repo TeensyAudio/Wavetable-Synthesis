@@ -76,7 +76,7 @@ public:
 		, loop_end_phase(0)
 	{}
 
-	void setSamples(sample_data * samples);
+	void setSamples(sample_data * samples, int num_samples);
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;

@@ -35,9 +35,9 @@
 #define STATE_SUSTAIN	5
 #define STATE_RELEASE	6
 
-void AudioSynthWavetable::setSamples(sample_data * samples) {
+void AudioSynthWavetable::setSamples(sample_data * samples, int num_samples) {
 	this->samples = samples;
-	num_samples = 11;
+	this->num_samples = num_samples;
 }
 
 bool AudioSynthWavetable::isPlaying() {
@@ -118,13 +118,32 @@ void AudioSynthWavetable::play(void) {
 }
 
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
-	uint32_t val;
-	uint16_t note1, note2;
+	float freq1, freq2;
+	//elapsedMillis timer = 0;
 	for(int i = 0; i < num_samples; i++) {
-		note1 = samples[val].NOTE_RANGE_1;
-		note2 = samples[val].NOTE_RANGE_2;
-		if (freq >= noteToFreq(note1) && freq <= noteToFreq(note2)) {
+		freq1 = noteToFreq(samples[i].NOTE_RANGE_1);
+		freq2 = noteToFreq(samples[i].NOTE_RANGE_2);
+		if (freq >= freq1 && freq <= freq2) {
 			parseSample(i, custom_env);
+			Serial.println("Branch 1");
+			break;
+		} else if (i == 0 && freq < freq1) {
+			parseSample(0, custom_env);
+			Serial.println("Branch 2");
+			break;
+		} else if (i == num_samples-1 && freq > freq2) {
+			parseSample(num_samples-1, custom_env);
+			Serial.println("Branch 3");
+			break;
+		} else if (freq > freq2 && freq < noteToFreq(samples[i+1].NOTE_RANGE_1)) {
+			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2)) {
+				parseSample(i, custom_env);
+				Serial.println("Branch 4");
+			}
+			else {
+				parseSample(i+1, custom_env);
+				Serial.println("Branch 5");
+			}
 			break;
 		}
 	}
@@ -147,6 +166,7 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	}
 	tone_phase = 0;
 	playing = 1;
+	//Serial.printf("Latency: %dms\n", (int)timer);
 }
 
 void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
@@ -173,6 +193,7 @@ void AudioSynthWavetable::update(void) {
 	int32_t s1, s2, v1, v2, v3;
 	uint32_t *p, *end;
 	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
+	//elapsedMillis timer = 0;
 
 	if (!playing)
 		return;
@@ -316,6 +337,7 @@ void AudioSynthWavetable::update(void) {
 
 	transmit(block);
 	release(block);
+	//Serial.printf("Latency: %dms\n", (int)timer);
 }
 
 void AudioSynthWavetable::frequency(float freq) {

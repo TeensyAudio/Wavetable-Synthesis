@@ -56,7 +56,7 @@ Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
 Bounce button2 = Bounce(2, 15);
 
 void setup() {
-  Serial.begin(9600);
+//  Serial.begin(9600);
   pinMode(0, INPUT_PULLUP);
   pinMode(1, INPUT_PULLUP);
   pinMode(2, INPUT_PULLUP);
@@ -116,8 +116,8 @@ void loop() {
       AudioSample_Interpolate1[i*2] = AudioSample[i];
       AudioSample_Interpolate1[i*2+1] = AudioSample[i];
     }
-    Serial.print(msecs);
-    Serial.print('\n');
+//    Serial.print(msecs);
+//    Serial.print('\n');
     //playMem2.play(AudioSample_Interpolate1);
     //playWavetable2.soundOn(AudioSample_Interpolate1, 1);
     playWavetable2.soundOn();
@@ -131,8 +131,8 @@ void loop() {
     for (int i = (int)((AudioSample_Size-1)/2); i < AudioSample_Size; i++) {
       AudioSample_Interpolate[i] = 0;
     }
-    Serial.print(msecs);
-    Serial.print('\n');
+//    Serial.print(msecs);
+//    Serial.print('\n');
     //playWavetable3.soundOn(AudioSample_Interpolate1, 1);
     playWavetable3.soundOn();
   }
