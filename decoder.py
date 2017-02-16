@@ -148,7 +148,7 @@ def main(argv):
             input("Wrong option selection. Enter any key to try again..")
 
 
-def decode_selected(path, inst_index, selected_bags, global_bag_index):
+def decode_selected(path, inst_index, selected_bags, global_bag_index, user_title=None):
     with open(path, 'rb') as file:
         sf2 = Sf2File(file)
 
@@ -167,7 +167,16 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index):
 
         global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index else None
 
-        export_samples(bags_to_decode, global_bag, sf2.instruments[inst_index].name)
+        if user_title is None:
+            if export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=sf2.instruments[inst_index].name):
+                return True
+            else:
+                return False
+        else:
+            if export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=user_title):
+                return True
+            else:
+                return False
 
 
 def decode_all(path, inst_index, global_bag_index):
@@ -175,18 +184,19 @@ def decode_all(path, inst_index, global_bag_index):
 
 
 # Write a sample out to C++ style data files.
-def export_samples(bags, global_bag, inst_name="samples"):
-    h_file_name = "{}.h".format(inst_name)
-    cpp_file_name = "{}.cpp".format(inst_name)
+def export_samples(bags, global_bag, num_samples, file_title="samples"):
+    instrument_name = file_title
+    h_file_name = "{}.h".format(instrument_name)
+    cpp_file_name = "{}.cpp".format(instrument_name)
     with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
         h_file.write("#include \"AudioSynthWavetable.h\"\n")
         # Decode data to sample_data array in header file
-        h_file.write("extern sample_data {0}[{1}];\n".format(inst_name, len(bags)))
+        h_file.write("extern sample_data {0}[{1}];\n".format(instrument_name, num_samples))
 
         cpp_file.write("#include \"{}\"\n".format(h_file_name))
-        cpp_file.write("sample_data {0}[{1}] = {{\n".format(inst_name, len(bags)))
+        cpp_file.write("sample_data {0}[{1}] = {{\n".format(instrument_name, num_samples))
         for i in range(len(bags)):
-            out_str = gen_sample_meta_data_string(bags[i], global_bag if global_bag else bags[i], i, inst_name)
+            out_str = gen_sample_meta_data_string(bags[i], global_bag if global_bag else bags[i], i, instrument_name)
             cpp_file.write(out_str)
         cpp_file.write("};\n")
 
@@ -200,12 +210,10 @@ def export_samples(bags, global_bag, inst_name="samples"):
             ary_length = int(length_32 + pad_length)
 
             # Write array init to header file.
-            h_file.write("\nextern const uint32_t {0}_sample_{1}_{2}[{3}];\n".format(
-                inst_name, i, bags[i].sample.name, ary_length))
+            h_file.write("\nextern const uint32_t {0}_sample_{1}[{2}];\n".format(instrument_name, i, ary_length))
 
             # Write array contents to .cpp
-            cpp_file.write("\nconst uint32_t {0}_sample_{1}_{2}[{3}] = {{\n".format(
-                inst_name, i, bags[i].sample.name, ary_length))
+            cpp_file.write("\nconst uint32_t {0}_sample_{1}[{2}] = {{\n".format(instrument_name, i, ary_length))
 
             # Output 32-bit hex literals
             line_width = 0
@@ -227,6 +235,7 @@ def export_samples(bags, global_bag, inst_name="samples"):
                     cpp_file.write('\n')
                 pad_length -= 4
             cpp_file.write("};\n" if line_width == 8 else "\n};\n")
+            return True
 
 
 # prints out the sample metadata into the first portion of the sample array
