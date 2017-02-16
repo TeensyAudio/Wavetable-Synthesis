@@ -88,7 +88,10 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 		env_hold(data.HOLD_ENV);
 		env_attack(data.ATTACK_ENV);
 		env_decay(data.DECAY_ENV);
-		env_sustain(data.SUSTAIN_ENV/1000);
+		if (data.SUSTAIN_ENV > 0)
+			env_sustain(data.SUSTAIN_ENV/1000);
+		else
+			env_sustain(1);
 		env_release(data.RELEASE_ENV);
 	}
 
