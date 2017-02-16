@@ -4,6 +4,7 @@ import logging
 import sys
 import getopt
 import inspect
+import re
 
 DEBUG_FLAG = False
 
@@ -166,17 +167,9 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
                 print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(bag.sample.name))
 
         global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index else None
+        file_title = user_title if user_title else sf2.instruments[inst_index].name
 
-        if user_title is None:
-            if export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=sf2.instruments[inst_index].name):
-                return True
-            else:
-                return False
-        else:
-            if export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=user_title):
-                return True
-            else:
-                return False
+        export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title)
 
 
 def decode_all(path, inst_index, global_bag_index):
@@ -186,8 +179,8 @@ def decode_all(path, inst_index, global_bag_index):
 # Write a sample out to C++ style data files.
 def export_samples(bags, global_bag, num_samples, file_title="samples"):
     instrument_name = file_title
-    h_file_name = "{}.h".format(instrument_name)
-    cpp_file_name = "{}.cpp".format(instrument_name)
+    h_file_name = "{}_samples.h".format(instrument_name)
+    cpp_file_name = "{}_samples.cpp".format(instrument_name)
     with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
         h_file.write("#include \"AudioSynthWavetable.h\"\n")
         # Decode data to sample_data array in header file
@@ -235,7 +228,6 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
                     cpp_file.write('\n')
                 pad_length -= 4
             cpp_file.write("};\n" if line_width == 8 else "\n};\n")
-            return True
 
 
 # prints out the sample metadata into the first portion of the sample array
@@ -270,7 +262,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
         "KEY_RANGE_UPPER": bag.key_range[1] if bag.key_range else 0,
         "VELOCITY_RANGE_LOWER": bag.velocity_range[0] if bag.velocity_range else 0,
         "VELOCITY_RANGE_UPPER": bag.velocity_range[1] if bag.velocity_range else 0,
-        "SAMPLE_ARRAY_NAME": "{0}_sample_{1}_{2}".format(instrument_name, sample_num, bag.sample.name),
+        "SAMPLE_ARRAY_NAME": "{0}_sample_{1}_{2}".format(instrument_name, sample_num, re.sub(r'[\W]+', '', bag.sample.name)),
     }
 
     env_vals = {
@@ -302,6 +294,7 @@ def error(message):
 
 
 # Copying functionality from wav2sketch.c
+# Currently unused
 def ulaw_encode(audio):
     if audio >= 0:
         mag = audio
@@ -320,6 +313,7 @@ def ulaw_encode(audio):
     if mag >= 0x0200: return neg | 0x20 | ((mag >> 5) & 0x0F)   # 0000 001w xyz0 0000
     if mag >= 0x0100: return neg | 0x10 | ((mag >> 4) & 0x0F)   # 0000 0001 wxyz 0000
     return neg | 0x00 | ((mag >> 3) & 0x0F)   # 0000 0000 1wxy z000
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

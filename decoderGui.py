@@ -60,7 +60,7 @@ class Application(Frame):
         self.sub_frame_1.columnconfigure(0, weight=1)
         self.sub_frame_1.rowconfigure(0, weight=1)
         self.sub_frame_1.rowconfigure(1, weight=16)
-            # Instruments
+        # Instruments
         self.instList_label = Label(self.sub_frame_1, text='Instruments', font=('default', 14))
         self.instList_label.grid(row=0, column=0, padx=1, pady=1)
         self.instList = Listbox(self.sub_frame_1, listvariable=self.i_names, font=('default', 12))
@@ -77,7 +77,7 @@ class Application(Frame):
         self.sub_frame_2.rowconfigure(0, weight=1)
         self.sub_frame_2.rowconfigure(1, weight=15)
         self.sub_frame_2.rowconfigure(2, weight=1)
-            # Samples
+        # Samples
         self.sampList_label = Label(self.sub_frame_2, text='Samples', font=('default', 14))
         self.sampList_label.grid(row=0, column=0, columnspan=3, padx=1, pady=1)
         self.sampList = Listbox(self.sub_frame_2, listvariable=self.s_names, selectmode=EXTENDED, font=('default', 12))
@@ -119,10 +119,12 @@ class Application(Frame):
         selected_bags = list()
         for samp in sel_samps:
             selected_bags.append(self.Instruments[self.currInst].Samples[int(samp)].bag_idx)
-        if decoder.decode_selected(self.inFile, self.currInst, selected_bags, self.Instruments[self.currInst].gb_idx):
+
+        try:
+            decoder.decode_selected(self.inFile, self.currInst, selected_bags, self.Instruments[self.currInst].gb_idx)
             self.status_text.set('Decode Successful!')
-        else:
-            self.status_text.set('ERROR! Failed to Decode!')
+        except Exception as e:
+            self.status_text.set('Error during decode: {}'.format(e))
 
     def update_samples(self, *args):
         idxs = self.instList.curselection()
