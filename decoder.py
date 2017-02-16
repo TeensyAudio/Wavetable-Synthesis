@@ -229,7 +229,7 @@ def export_samples(bags, globalBag, num_samples):
             sample_num = 0
             for aBag in bags:
                 raw_wav_data = aBag.sample.raw_sample_data
-
+                
                 BCOUNT = 0
                 WCOUNT = 0
                 BUF32 = 0
@@ -304,13 +304,9 @@ def print_metadata_to_file(file, aBag, globalBag, sample_num, keyPair):
     file.write(str(aBag.cooked_loop_start) + ",\n") #loop start
     file.write(str(aBag.cooked_loop_end) + ",\n") #loop end
     
-    #if aBag.key_range:
     #write out key_range lower and upper bounds
     file.write(str(keyPair[0]) + ",\n") #key range lower
     file.write(str(keyPair[1]) + ",\n") #key range upper
-    #else: 
-    #    file.write("0,\n")
-    #    file.write("0,\n")
     
     if aBag.velocity_range:
         #write out velocity_range lower and upper bounds
@@ -384,8 +380,6 @@ def volume_envelope_delay(aBag):
 def is_sample_valid(sample):
     if sample.loop_duration >= sample.duration: return (False, 'Loop length >= sample length')
     if sample.end_loop > sample.duration: return (False, 'End loop index is larger than sample end index')
-    if sample.sample_rate != 11025 and sample.sample_rate != 22050 and sample.sample_rate != 44100:
-        return (False, 'Sample {} has invalid sample rate {}'.format(sample.name, sample.sample_rate))
     return (True, None)
 
 def error(message):
