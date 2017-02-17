@@ -16,9 +16,11 @@ class Application(Frame):
         parent.title("Teensy Soundfont Decoder")
         # vital variables
         self.inFile = None
+        # currInst logic needs to be changed if implementing ordering
         self.currInst = None
         self.out_dir = StringVar(value='Select Directory...')
         self.out_name = None
+        self.total_sample_size = IntVar(value=0)
 
         # control variables
         self.i_names = StringVar()
@@ -138,7 +140,12 @@ class Application(Frame):
         self.scrollbar_2.grid(row=1, column=4, rowspan=1, sticky=N + S + E + W)
         self.sampList.config(yscrollcommand=self.scrollbar_2.set)
         self.exp_button = Button(self.sub_frame_2, text='Decode', command=self.send_to_decoder)
-        self.exp_button.grid(row=2, column=1, padx=5, pady=5, sticky=N + S + E + W)
+        self.exp_button.grid(row=2, column=2, padx=5, pady=5, sticky=N + S + E +W)
+
+        # JOSH! THIS IS YOURS
+        # Use IntVar.get() / IntVar.set()
+        self.samp_size_label = Label(self.sub_frame_2, textvariable=self.total_sample_size)
+        self.samp_size_label.grid(row=2, column=1, padx=2, pady=2, sticky=N + S + E + W)
 
         # Main Menu Bar
         menu = Menu(parent)
@@ -187,7 +194,6 @@ class Application(Frame):
 
     def get_file(self):
         self.inFile = filedialog.askopenfilename(filetypes=(("sf2 files", "*.sf2"), ("SF2 files", "*.SF2")))
-        self.inFile_label.config(text=self.inFile)
         with open(self.inFile, 'rb') as sf2_file:
             sf2 = Sf2File(sf2_file)
 
