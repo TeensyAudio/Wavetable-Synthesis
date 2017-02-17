@@ -9,26 +9,34 @@ import sf2elements
 
 class Application(Frame):
     def __init__(self, parent, **kw):
-        Frame.__init__(self, parent, relief=SUNKEN)
+        Frame.__init__(self, parent)
 
         super().__init__(**kw)
         self.parent = parent
         parent.title("Teensy Soundfont Decoder")
-        s = Style()
-        s.theme_use('default')
-
-        self.BOX_HEIGHT = 15
+        # vital variables
         self.inFile = None
         self.currInst = None
-        self.out_dir = None
+        self.out_dir = StringVar(value='Select Directory...')
         self.out_name = None
 
         # control variables
         self.i_names = StringVar()
         self.s_names = StringVar()
+        self.ver_var = IntVar(value=1)
 
         # List of instrument object instances
         self.Instruments = list()
+
+        self.lrg_font = 14
+        self.med_font = 12
+        self.sml_font = 10
+        s = Style()
+        s.theme_use('default')
+        s.configure('.', font=('default', self.sml_font))
+        # s.configure('TRadiobutton', font=('default', self.med_font))
+        s.configure('TLabelframe.Label', font=('default', self.med_font))
+        def_pad = 3
 
         parent.columnconfigure(0, weight=1)
         parent.rowconfigure(0, weight=1)
@@ -36,18 +44,62 @@ class Application(Frame):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=6)
+        # self.config(relief=SUNKEN)
     # upper frame
         self.frame_1 = Frame(self)
         self.frame_1.grid(column=0, row=0, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
         self.frame_1.columnconfigure(0, weight=1)
+        self.frame_1.columnconfigure(1, weight=2)
+        self.frame_1.columnconfigure(2, weight=3)
         self.frame_1.rowconfigure(0, weight=1)
-        self.frame_1.rowconfigure(1, weight=1)
-        # Banner
-        self.inFile_label = Label(self.frame_1, text='Please Select a Soundfont File', font=('default', 12))
-        self.inFile_label.grid(row=0, column=0)
+        self.box_pad = 1
+        self.box_relief = RIDGE
+
+        # Box 1
+        self.box_1 = LabelFrame(self.frame_1, text='Select Teensy Version', relief=self.box_relief)
+        self.box_1.grid(column=0, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
+        self.box_1.columnconfigure(0, weight=1)
+        self.box_1.rowconfigure(0, weight=1)
+        self.box_1.rowconfigure(1, weight=2)
+        # self.box_1_label = Label(self.box_1, text='Select Teensy Version',relief=RAISED, font=('default', self.med_font))
+        # self.box_1_label.grid(row=0, padx=def_pad, pady=(def_pad+5), sticky=N)
+        self.rb_frame = Frame(self.box_1)
+        self.rb_frame.grid(row=1, padx=def_pad, sticky=N + E + W)
+        self.rb_frame.columnconfigure(0, weight=1)
+        self.rb_frame.rowconfigure(0, weight=1)
+        self.rb_frame.rowconfigure(1, weight=1)
+        self.ver_32 = Radiobutton(self.rb_frame, text='Teensy 3.2 (default)', variable=self.ver_var, value=1)
+        self.ver_32.grid(row=0, column=0, sticky=N + S + E + W, padx=def_pad)
+        self.ver_36 = Radiobutton(self.rb_frame, text='Teensy 3.6', variable=self.ver_var, value=2)
+        self.ver_36.grid(row=1, column=0, sticky=N + S + E + W, padx=def_pad)
+        # Box 2
+        self.box_2 = LabelFrame(self.frame_1, text='Load a Soundfont File', relief=self.box_relief)
+        self.box_2.grid(column=1, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
+        self.box_2.columnconfigure(0, weight=1)
+        self.box_2.rowconfigure(0, weight=1)
+        self.box_2.rowconfigure(1, weight=2)
+        # self.box_2_label = Label(self.box_2, text='Load a Soundfont File', font=('default', self.med_font))
+        # self.box_2_label.grid(row=0, padx=def_pad, pady=(def_pad+5), sticky=N)
         # Browse button
-        self.browse_button = Button(self.frame_1, text="Browse", command=self.get_file)
-        self.browse_button.grid(row=1, column=0, sticky=E + W, padx=40)
+        self.browse_button = Button(self.box_2, text="Browse", command=self.get_file)
+        self.browse_button.grid(row=1, column=0, padx=def_pad, pady=def_pad)
+        # Box 3
+        self.box_3 = LabelFrame(self.frame_1, text='Output Settings', relief=self.box_relief)
+        self.box_3.grid(column=2, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
+        self.box_3.columnconfigure(0, weight=1)
+        self.box_3.rowconfigure(0, weight=1)
+        self.box_3.rowconfigure(1, weight=1)
+
+        self.dir_line = Frame(self.box_3)
+        self.dir_line.grid(row=0, column=0)
+        self.folder_label = Label(self.dir_line, text='Folder')
+        self.folder_label.grid(row=0, column=0)
+        self.folder_entry = Entry(self.dir_line, textvariable=self.out_dir)
+        self.folder_entry.grid(row=0, column=1)
+        self.folder_button = Button(self.dir_line, text='Browse', command=self.set_dir)
+        self.folder_button.grid(row=0, column=2)
+        # self.box_3_label = Label(self.box_3, text='Output Settings', font=('default', self.med_font))
+        # self.box_3_label.grid(row=0, padx=def_pad, pady=(def_pad+5), sticky=N)
     # lower frame
         self.frame_2 = Frame(self)
         self.frame_2.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
@@ -61,9 +113,9 @@ class Application(Frame):
         self.sub_frame_1.rowconfigure(0, weight=1)
         self.sub_frame_1.rowconfigure(1, weight=16)
             # Instruments
-        self.instList_label = Label(self.sub_frame_1, text='Instruments', font=('default', 14))
+        self.instList_label = Label(self.sub_frame_1, text='Instruments', font=('default', self.lrg_font))
         self.instList_label.grid(row=0, column=0, padx=1, pady=1)
-        self.instList = Listbox(self.sub_frame_1, listvariable=self.i_names, font=('default', 12))
+        self.instList = Listbox(self.sub_frame_1, listvariable=self.i_names, font=('default', self.med_font))
         self.instList.grid(row=1, column=0, rowspan=2, sticky=N + S + E + W)
         self.scrollbar_1 = Scrollbar(self.sub_frame_1, command=self.instList.yview)
         self.scrollbar_1.grid(row=1, column=1, rowspan=2, sticky=N + S + E + W)
@@ -78,9 +130,9 @@ class Application(Frame):
         self.sub_frame_2.rowconfigure(1, weight=15)
         self.sub_frame_2.rowconfigure(2, weight=1)
             # Samples
-        self.sampList_label = Label(self.sub_frame_2, text='Samples', font=('default', 14))
+        self.sampList_label = Label(self.sub_frame_2, text='Samples', font=('default', self.lrg_font))
         self.sampList_label.grid(row=0, column=0, columnspan=3, padx=1, pady=1)
-        self.sampList = Listbox(self.sub_frame_2, listvariable=self.s_names, selectmode=EXTENDED, font=('default', 12))
+        self.sampList = Listbox(self.sub_frame_2, listvariable=self.s_names, selectmode=EXTENDED, font=('default', self.med_font))
         self.sampList.grid(row=1, column=0, columnspan=3, sticky=N + S + E + W)
         self.scrollbar_2 = Scrollbar(self.sub_frame_2, command=self.sampList.yview)
         self.scrollbar_2.grid(row=1, column=4, rowspan=1, sticky=N + S + E + W)
@@ -101,7 +153,7 @@ class Application(Frame):
         # Status Bar (at bottom)
         self.status_text = StringVar()
         self.status_text.set('Load a Soundfont File')
-        parent.status = Label(parent, textvariable=self.status_text, border=1, anchor=W)
+        parent.status = Label(parent, textvariable=self.status_text, border=1, anchor=W, relief=RIDGE, font=('default', self.sml_font))
         parent.status.grid(column=0, row=3, sticky=W + E)
 
         # Set Bindings
@@ -112,7 +164,7 @@ class Application(Frame):
         print('called the callback')
 
     def set_dir(self):
-        self.out_dir = filedialog.askdirectory()
+        self.out_dir.set(filedialog.askdirectory())
 
     def send_to_decoder(self, *args):
         sel_samps = self.sampList.curselection()
@@ -159,6 +211,6 @@ class Application(Frame):
 
 if __name__ == "__main__":
     root = Tk()
-    root.geometry("450x450+450+450")
+    root.geometry("650x650+450+100")  # height x width + horizontal + vertical
     app = Application(root)
     root.mainloop()
