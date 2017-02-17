@@ -1,4 +1,4 @@
-#include "SF2_Decoded_Samples.h" // http://www.freesound.org/people/kiddpark/sounds/201159/
+#include "steelstrgtr_samples.h"
 #include <Bounce.h>
 #include <AudioSynthWavetable.h>
 #include <Audio.h>
@@ -39,11 +39,12 @@ AudioConnection patchCord[] = {
 	{mixer[0], 0, mixer[3], 0},
 	{mixer[1], 0, mixer[3], 1},
 	{mixer[2], 0, mixer[3], 2},
- // {mixer[3], 0, notefreq, 0},
-	{mixer[3], 0, i2s1, 0},
-	{mixer[3], 0, i2s1, 1},
+	// {mixer[3], 0, notefreq, 0},
+	   {mixer[3], 0, i2s1, 0},
+	   {mixer[3], 0, i2s1, 1},
 };
 
+int used_voices = 0;
 int evict_voice = 0;
 
 // Bounce objects to read pushbuttons 
@@ -52,12 +53,12 @@ Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
 Bounce button2 = Bounce(2, 15);
 
 void setup() {
-//  Serial.begin(38400);
-  
-  pinMode(0, INPUT_PULLUP);
-  pinMode(1, INPUT_PULLUP);
-  pinMode(2, INPUT_PULLUP);
-	
+	//  Serial.begin(38400);
+
+	pinMode(0, INPUT_PULLUP);
+	pinMode(1, INPUT_PULLUP);
+	pinMode(2, INPUT_PULLUP);
+
 	AudioMemory(40);
 
 	sgtl5000_1.enable();
@@ -65,17 +66,19 @@ void setup() {
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 1);
-		wavetable[i].setSamples(samples, sizeof(samples)/sizeof(sample_data));
+		wavetable[i].setSamples(steelstrgtr, sizeof(steelstrgtr) / sizeof(sample_data));
 		wavetable[i].amplitude(1);
 		voices[i].channel = voices[i].note = 0xFF;
 	}
- // notefreq.begin(.15);
+
+	// notefreq.begin(.15);
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
-  //Serial.printf("%d", sizeof(samples)/sizeof(sample_data));
-  for (int i = 0; i < sizeof(samples)/sizeof(sample_data); i++) {
-//    Serial.printf("Sample %d: OP=%d, LL=%d, UL=%d\n", i, samples[i].ORIGINAL_PITCH, samples[i].NOTE_RANGE_1, samples[i].NOTE_RANGE_2);
-  }
+	//Serial.printf("%d", sizeof(samples)/sizeof(sample_data));
+
+	for (int i = 0; i < sizeof(steelstrgtr) / sizeof(sample_data); i++) {
+		//    Serial.printf("Sample %d: OP=%d, LL=%d, UL=%d\n", i, samples[i].ORIGINAL_PITCH, samples[i].NOTE_RANGE_1, samples[i].NOTE_RANGE_2);
+	}
 }
 
 void printVoices() {
@@ -93,7 +96,7 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
 	int voice_id = allocateVoice(voice_t{ channel, note });
 	voices[voice_id].channel = channel;
 	voices[voice_id].note = note;
-// Serial.printf("NOOTE: %x", note);
+	// Serial.printf("NOOTE: %x", note);
 	wavetable[voice_id].playNote(note);
 	//printVoices();
 }
@@ -114,45 +117,37 @@ void OnNoteOff(byte channel, byte note, byte velocity) {
 }
 
 void loop() {
-    button0.update();
-  button1.update();
-  button2.update();
+	button0.update();
+	button1.update();
+	button2.update();
 
-                                              if (button0.fallingEdge()) {
-                                                Serial.printf("humm");
-                                                  wavetable[0].playNote(0x4A);
-                                                }
-  
+	if (button0.fallingEdge()) {
+		Serial.printf("humm");
+		wavetable[0].playNote(0x4A);
+	}
+
 	usbMIDI.read();
- 
+
 }
 
 int allocateVoice(voice_t voice) {
-	int i;
+	int i, j;
 
-	//find matching channel/note
-	for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].channel == voice.channel && voices[i].note == voice.note)
-			break;
+	if (used_voices < TOTAL_VOICES) {
+		// i == first matching channel or used_voice, j == channel/note match or used_voice
+		for (i = 0; i < used_voices && voices[i].channel != voice.channel; ++i);
+		for (j = i; j < used_voices && voices[j].channel != voice.channel && voices[j].note != voice.note; ++j);
 
-	//find matching channel, non-playing note (i.e. prevent resetting sample)
-	if (i == TOTAL_VOICES) for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].channel == voice.channel && voices[i].note == 0xFF)
-			break;
+		// if no perfect match, select channel match
+		i = j == used_voices ? i : j;
+		used_voices++;
+	} else {
+		i = evict_voice++;
+	}
 
-	//find non-playing note
-	if (i == TOTAL_VOICES) for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].note == 0xFF)
-			break;
-
-	//else choose evict idx
-	i = i == TOTAL_VOICES ? evict_voice : i;
-
-	//possibly iterate evict so it doesn't match what we're now assigning
-	evict_voice = i == evict_voice ? evict_voice + 1 : evict_voice;
 
 	//loop evict idx
-	evict_voice = evict_voice == TOTAL_VOICES ? 0 : evict_voice;
+	evict_voice = evict_voice >= used_voices ? 0 : evict_voice;
 
 	return i;
 }
