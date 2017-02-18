@@ -170,17 +170,10 @@ int freeVoice(byte channel, byte note) {
 
 	used_voices--;
 
-	int wavetable_id = voices[used_voices].wavetable_id;
-	voices[i].channel = voices[used_voices].channel;
-	voices[i].note = voices[used_voices].note;
+	int wavetable_id = voices[i].wavetable_id;
+	voices[i] = voices[used_voices];
 	voices[used_voices].channel = channel;
-	voices[used_voices].wavetable_id = wavetable_id;
-
-
-	//find matching channel/note
-	for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].channel == channel && voices[i].note == note)
-			break;
+	voices[used_voices].wavetable_id = voices[i].wavetable_id;
 
 	return i;
 }
