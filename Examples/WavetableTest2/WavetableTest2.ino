@@ -10,6 +10,7 @@
 const int TOTAL_VOICES = 10;
 const int TOTAL_MIXERS = 4;
 struct voice_t {
+	int wavetable_id;
 	byte channel;
 	byte note;
 };
@@ -17,6 +18,10 @@ voice_t voices[TOTAL_VOICES];
 
 int allocateVoice(voice_t voice);
 int freeVoice(voice_t voice);
+
+int used_voices = 0;
+int evict_voice = 0;
+
 
 AudioControlSGTL5000 sgtl5000_1;
 AudioSynthWavetable wavetable[TOTAL_VOICES];
@@ -44,9 +49,6 @@ AudioConnection patchCord[] = {
 	   {mixer[3], 0, i2s1, 1},
 };
 
-int used_voices = 0;
-int evict_voice = 0;
-
 // Bounce objects to read pushbuttons 
 Bounce button0 = Bounce(0, 15);
 Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
@@ -63,6 +65,8 @@ void setup() {
 
 	sgtl5000_1.enable();
 	sgtl5000_1.volume(1);
+
+	for (int i = 0; i < TOTAL_VOICES; ++i) voices[i].wavetable_id = i;
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 1);
@@ -93,11 +97,9 @@ void printVoices() {
 void OnNoteOn(byte channel, byte note, byte velocity) {
 	//Serial.printf("NoteOn: channel==%hhu,note==%hhu\n", channel, note);
 	//printVoices();
-	int voice_id = allocateVoice(voice_t{ channel, note });
-	voices[voice_id].channel = channel;
-	voices[voice_id].note = note;
+	int voice_id = allocateVoice(channel, note);
 	// Serial.printf("NOOTE: %x", note);
-	wavetable[voice_id].playNote(note);
+	wavetable[voices[voice_id].wavetable_id].playNote(note);
 	//printVoices();
 }
 
@@ -107,7 +109,7 @@ void OnNoteOff(byte channel, byte note, byte velocity) {
 
 	//for (int i = 0; i < TOTAL_VOICES; ++i)
 	//	wavetable[i].stop();
-	int voice_id = freeVoice(voice_t{ channel, note });
+	int voice_id = freeVoice(channel, note);
 	if (voice_id == TOTAL_VOICES) return;
 
 	voices[voice_id].channel = 0xFF;
@@ -130,34 +132,54 @@ void loop() {
 
 }
 
-int allocateVoice(voice_t voice) {
-	int i, j;
+int allocateVoice(byte channel, byte note) {
+	int i;
 
 	if (used_voices < TOTAL_VOICES) {
-		// i == first matching channel or used_voice, j == channel/note match or used_voice
-		for (i = 0; i < used_voices && voices[i].channel != voice.channel; ++i);
-		for (j = i; j < used_voices && voices[j].channel != voice.channel && voices[j].note != voice.note; ++j);
-
-		// if no perfect match, select channel match
-		i = j == used_voices ? i : j;
+		for (i = 0; i < used_voices && voices[i].channel != channel && voices[i].note != note; ++i);
+		if (i == used_voices) {
+			while (i < TOTAL_VOICES && voices[i].channel != channel) ++i;
+			if (i < TOTAL_VOICES) {
+				int wavetable_id = voices[used_voices].wavetable_id;
+				voices[i].channel = voices[used_voices].channel;
+				voices[used_voices].wavetable_id = wavetable_id;
+			}
+			i = used_voices;
+		}
 		used_voices++;
 	} else {
-		i = evict_voice++;
+		i = evict_voice;
 	}
 
+	voices[i].channel = channel;
+	voices[i].note = note;
 
 	//loop evict idx
-	evict_voice = evict_voice >= used_voices ? 0 : evict_voice;
+
+	evict_voice = i + 1;
+	evict_voice = evict_voice >= TOTAL_VOICES ? 0 : evict_voice;
 
 	return i;
 }
 
-int freeVoice(voice_t voice) {
+int freeVoice(byte channel, byte note) {
 	int i;
+
+	for (i = 0; i < used_voices && voices[i].channel != channel && voices[i].note != note; ++i);
+	if (i == used_voices) return;
+
+	used_voices--;
+
+	int wavetable_id = voices[used_voices].wavetable_id;
+	voices[i].channel = voices[used_voices].channel;
+	voices[i].note = voices[used_voices].note;
+	voices[used_voices].channel = channel;
+	voices[used_voices].wavetable_id = wavetable_id;
+
 
 	//find matching channel/note
 	for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].channel == voice.channel && voices[i].note == voice.note)
+		if (voices[i].channel == channel && voices[i].note == note)
 			break;
 
 	return i;

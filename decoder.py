@@ -202,11 +202,14 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
 
             ary_length = int(length_32 + pad_length)
 
+            smpl_identifier = "{0}_sample_{1}_{2}[{3}]"\
+                .format(instrument_name, i, re.sub(r'[\W]+', '', bags[i].sample.name), ary_length)
+
             # Write array init to header file.
-            h_file.write("\nextern const uint32_t {0}_sample_{1}[{2}];\n".format(instrument_name, i, ary_length))
+            h_file.write("\nextern const uint32_t {0};\n".format(smpl_identifier))
 
             # Write array contents to .cpp
-            cpp_file.write("\nconst uint32_t {0}_sample_{1}[{2}] = {{\n".format(instrument_name, i, ary_length))
+            cpp_file.write("\nconst uint32_t {0} = {{\n".format(smpl_identifier))
 
             # Output 32-bit hex literals
             line_width = 0
