@@ -1,5 +1,60 @@
 #include "steelstrgtr_samples.h"
 
+sample_data steelstrgtr[3] = {
+	{
+		74,
+		4881,
+		44100,
+		4800,
+		4877,
+		0,
+		72,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		steelstrgtr_sample_0_acgtrg2
+	}, {
+		76,
+		6240,
+		44100,
+		6168,
+		6236,
+		73,
+		97,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		steelstrgtr_sample_1_acgtrb3
+	}, {
+		111,
+		5398,
+		44100,
+		2963,
+		5394,
+		98,
+		127,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		steelstrgtr_sample_2_kpianob5
+	}
+};
+
 const uint32_t steelstrgtr_sample_0_acgtrg2[2560] = {
 0x00000000,0x004e005b,0x004c0040,0x004c0054,0x009c0064,0x01b100e0,0xfc43fec8,0x011fff16,
 0x0101fbe3,0x004ffe6c,0x0094fdcc,0x09520c4f,0x0bd307c5,0x17391001,0x06c01171,0x0a5a04f3,

@@ -128,24 +128,24 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 		freq2 = noteToFreq(samples[i].NOTE_RANGE_2);
 		if (freq >= freq1 && freq <= freq2) {
 			parseSample(i, custom_env);
-			Serial.println("Branch 1");
+			//Serial.println("Branch 1");
 			break;
 		} else if (i == 0 && freq < freq1) {
 			parseSample(0, custom_env);
-			Serial.println("Branch 2");
+			//Serial.println("Branch 2");
 			break;
 		} else if (i == num_samples-1 && freq > freq2) {
 			parseSample(num_samples-1, custom_env);
-			Serial.println("Branch 3");
+			//Serial.println("Branch 3");
 			break;
 		} else if (freq > freq2 && freq < noteToFreq(samples[i+1].NOTE_RANGE_1)) {
 			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2)) {
 				parseSample(i, custom_env);
-				Serial.println("Branch 4");
+				//Serial.println("Branch 4");
 			}
 			else {
 				parseSample(i+1, custom_env);
-				Serial.println("Branch 5");
+				//Serial.println("Branch 5");
 			}
 			break;
 		}
@@ -213,7 +213,7 @@ void AudioSynthWavetable::update(void) {
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)this->waveform;
 	//Serial.printf("update: length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
-	// Serial.printf("update: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
+	//Serial.printf("update: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
 	//Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		//tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
@@ -349,8 +349,10 @@ void AudioSynthWavetable::frequency(float freq) {
 	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
 		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
 
+	float rate_coef = sample_rate / AUDIO_SAMPLE_RATE_EXACT;
+
 	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
 	//steps through the wavetable sample one element at a time; from there we
 	//only need to scale based a ratio of freq/sample_freq for the desired increment
-	tone_incr = (freq / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
+	tone_incr = ((rate_coef * freq) / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
 }
