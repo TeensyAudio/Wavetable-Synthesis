@@ -35,7 +35,7 @@
 #define STATE_SUSTAIN	5
 #define STATE_RELEASE	6
 
-void AudioSynthWavetable::setSamples(sample_data * samples, int num_samples) {
+void AudioSynthWavetable::setSamples(const sample_data * samples, int num_samples) {
 	this->samples = samples;
 	this->num_samples = num_samples;
 }
@@ -46,7 +46,7 @@ bool AudioSynthWavetable::isPlaying() {
 }
 
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
-	int note1, note2, velocity1, velocity2;
+	//int note1, note2, velocity1, velocity2;
 	sample_data data = samples[sample_num];
 	
 	tone_phase = 0;
@@ -77,11 +77,11 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	//setting start and end loop
 	setLoop(data.LOOP_START, data.LOOP_END);
 
-	note1 = data.NOTE_RANGE_1;
-	note2 = data.NOTE_RANGE_2;
+	//note1 = data.NOTE_RANGE_1;
+	//note2 = data.NOTE_RANGE_2;
 	
-	velocity1 = data.VELOCITY_RANGE_1;
-	velocity2 = data.VELOCITY_RANGE_2;
+	//velocity1 = data.VELOCITY_RANGE_1;
+	//velocity2 = data.VELOCITY_RANGE_2;
 	
 	if (!custom_env) {
 		env_delay(data.DELAY_ENV);

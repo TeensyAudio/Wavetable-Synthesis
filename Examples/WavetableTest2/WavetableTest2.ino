@@ -1,6 +1,6 @@
 #include "steelstrgtr_samples.h"
-#include <Bounce.h>
 #include <AudioSynthWavetable.h>
+#include <Bounce.h>
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -16,8 +16,8 @@ struct voice_t {
 };
 voice_t voices[TOTAL_VOICES];
 
-int allocateVoice(voice_t voice);
-int freeVoice(voice_t voice);
+int allocateVoice(byte channel, byte note);
+int freeVoice(byte channel, byte note);
 
 int used_voices = 0;
 int evict_voice = 0;
@@ -80,9 +80,9 @@ void setup() {
 	usbMIDI.setHandleNoteOff(OnNoteOff);
 	//Serial.printf("%d", sizeof(samples)/sizeof(sample_data));
 
-	for (int i = 0; i < sizeof(steelstrgtr) / sizeof(sample_data); i++) {
+	//for (int i = 0; i < sizeof(steelstrgtr) / sizeof(sample_data); i++) {
 		//    Serial.printf("Sample %d: OP=%d, LL=%d, UL=%d\n", i, samples[i].ORIGINAL_PITCH, samples[i].NOTE_RANGE_1, samples[i].NOTE_RANGE_2);
-	}
+	//}
 }
 
 void printVoices() {
@@ -112,9 +112,7 @@ void OnNoteOff(byte channel, byte note, byte velocity) {
 	int voice_id = freeVoice(channel, note);
 	if (voice_id == TOTAL_VOICES) return;
 
-	voices[voice_id].channel = 0xFF;
-	voices[voice_id].note = 0xFF;
-	wavetable[voice_id].stop();
+	wavetable[voices[voice_id].wavetable_id].stop();
 	//printVoices();
 }
 
@@ -154,8 +152,6 @@ int allocateVoice(byte channel, byte note) {
 	voices[i].channel = channel;
 	voices[i].note = note;
 
-	//loop evict idx
-
 	evict_voice = i + 1;
 	evict_voice = evict_voice >= TOTAL_VOICES ? 0 : evict_voice;
 
@@ -166,15 +162,15 @@ int freeVoice(byte channel, byte note) {
 	int i;
 
 	for (i = 0; i < used_voices && voices[i].channel != channel && voices[i].note != note; ++i);
-	if (i == used_voices) return;
+	if (i == used_voices) return TOTAL_VOICES;
 
 	used_voices--;
 
 	int wavetable_id = voices[i].wavetable_id;
 	voices[i] = voices[used_voices];
 	voices[used_voices].channel = channel;
-	voices[used_voices].wavetable_id = voices[i].wavetable_id;
+	voices[used_voices].wavetable_id = wavetable_id;
 
-	return i;
+	return used_voices;
 }
 

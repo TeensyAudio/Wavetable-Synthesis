@@ -1,29 +1,3 @@
-/* Audio Library for Teensy 3.X
- * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com
- *
- * Development of this audio library was funded by PJRC.COM, LLC by sales of
- * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop
- * open source software by purchasing Teensy or other PJRC products.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice, development funding notice, and this permission
- * notice shall be included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
 #pragma once
 
 #include "Arduino.h"
@@ -51,32 +25,15 @@ struct sample_data{
 	const int DECAY_ENV;
 	const int SUSTAIN_ENV;
 	const int RELEASE_ENV;
-	const unsigned int * sample;
+	const uint32_t* sample;
 };
 
 class AudioSynthWavetable : public AudioStream
 {
 public:
-	AudioSynthWavetable(void)
-		: AudioStream(0, NULL)
-		, waveform(NULL)
-		, num_samples(0)
-		, length(0)
-		, length_bits(0)
-		, sample_freq(440.0)
-		, playing(0)
-		, tone_phase(0)
-		, loop_phase(0)
-		, max_phase(0)
-		, tone_incr(0)
-		, tone_amp(0)
-		, loop_start(0)
-		, loop_end(0)
-		, loop_start_phase(0)
-		, loop_end_phase(0)
-	{}
+	AudioSynthWavetable(void) : AudioStream(0, NULL) {}
 
-	void setSamples(sample_data * samples, int num_samples);
+	void setSamples(const sample_data * samples, int num_samples);
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -158,16 +115,6 @@ public:
 	virtual void update(void);
 
 private:
-	uint32_t* waveform;
-	sample_data * samples;
-	int length, length_bits, loop_start, loop_end, loop_length;
-	float sample_freq;
-	uint8_t playing, num_samples;
-	uint32_t tone_phase, loop_phase, loop_start_phase, loop_end_phase;
-	uint32_t max_phase;
-	uint32_t tone_incr;
-	uint16_t tone_amp, sample_rate;
-	
 	uint16_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
 		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
@@ -184,17 +131,27 @@ private:
 	uint32_t pack_16b_16b(int32_t a, int32_t b) {
 		return (a << 16) | (b & 0x0000FFFF);
 	}
+
+	uint32_t* waveform = NULL;
+	const sample_data * samples = NULL;
+	int length = 0, length_bits = 0, loop_start = 0, loop_end = 0, loop_length = 0;
+	float sample_freq = 440.0;
+	uint8_t playing = 0, num_samples = 0;
+	uint32_t tone_phase = 0, loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
+	uint32_t max_phase = 0;
+	uint32_t tone_incr = 0;
+	uint16_t tone_amp = 0, sample_rate = 0;
     
 	// state
-	uint8_t  state;  // idle, delay, attack, hold, decay, sustain, release
-	uint16_t count;  // how much time remains in this state, in 8 sample units
-	float    mult;   // attenuation, 0=off, 0x10000=unity gain
-	float    inc;    // amount to change mult on each sample
+	uint8_t  state = 0;  // idle, delay, attack, hold, decay, sustain, release
+	uint16_t count = 0;  // how much time remains in this state, in 8 sample units
+	float    mult = 0;   // attenuation, 0=off, 0x10000=unity gain
+	float    inc = 0;    // amount to change mult on each sample
 	// settings
-	uint16_t delay_count;
-	uint16_t attack_count;
-	uint16_t hold_count;
-	uint16_t decay_count;
-	int32_t  sustain_mult;
-	uint16_t release_count;
+	uint16_t delay_count = 0;
+	uint16_t attack_count = 0;
+	uint16_t hold_count = 0;
+	uint16_t decay_count = 0;
+	int32_t  sustain_mult = 0;
+	uint16_t release_count = 0;
 };
