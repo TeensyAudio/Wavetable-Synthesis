@@ -253,7 +253,7 @@ void AudioSynthWavetable::update(void) {
 	//Envelope code
 	//*********************************************************************
 
-	uint32_t* p
+	uint32_t* p;
 	uint32_t* end;
 	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 
