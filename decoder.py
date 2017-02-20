@@ -169,6 +169,7 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
         global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index else None
         file_title = user_title if user_title else sf2.instruments[inst_index].name
 
+        file_title = re.sub(r'[\W]+', '', file_title)
         export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title)
 
 
