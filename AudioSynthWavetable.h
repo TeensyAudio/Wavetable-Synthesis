@@ -141,6 +141,9 @@ public:
 		hold_count = milliseconds2count(milliseconds);
 	}
 	void env_decay(float milliseconds) {
+		if (milliseconds <= 0) {
+			milliseconds = 100;
+		}
 		decay_count = milliseconds2count(milliseconds);
 	}
 	void env_sustain(float level) {

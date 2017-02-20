@@ -292,14 +292,15 @@ def print_metadata_to_header(file, aBag, globalBag, sample_num):
         holdTemp = globalBag.volume_envelope_hold
 		
     file.write(str(checkGenValue(delayTemp)) + ",\n") #delay_env
-    file.write(str(checkGenValue(holdTemp)) + ",\n")  #hold_env
-
+	
     #attack_env
     if(aBag.volume_envelope_attack == None):
         file.write(str(checkGenValue(globalBag.volume_envelope_attack)) + ",\n")
     else:
         file.write(str(checkGenValue(aBag.volume_envelope_attack)) + ",\n")
     
+    file.write(str(checkGenValue(holdTemp)) + ",\n")  #hold_env
+	
     #decay_env
     if(aBag.volume_envelope_decay == None):
         file.write(str(checkGenValue(globalBag.volume_envelope_decay)) + ",\n")
