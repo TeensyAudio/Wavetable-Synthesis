@@ -81,7 +81,7 @@ void setup() {
 	AudioMemory(40);
 
 	sgtl5000_1.enable();
-	sgtl5000_1.volume(0.5);
+	sgtl5000_1.volume(1.0);
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 1);
