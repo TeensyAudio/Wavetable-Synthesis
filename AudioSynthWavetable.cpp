@@ -26,6 +26,7 @@
 
 #include "AudioSynthWavetable.h"
 #include <SerialFlash.h>
+#include <dspinst.h>
 
 //#define STATE_IDLE	0
 //#define STATE_DELAY	1

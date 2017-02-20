@@ -118,15 +118,15 @@ private:
 		// Add 7 to round up
 		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
 	}
-	int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
-		return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
-	}
-	int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
-		return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
-	}
-	uint32_t pack_16b_16b(int32_t a, int32_t b) {
-		return (a << 16) | (b & 0x0000FFFF);
-	}
+	//int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
+	//	return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
+	//}
+	//int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
+	//	return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
+	//}
+	//uint32_t pack_16b_16b(int32_t a, int32_t b) {
+	//	return (a << 16) | (b & 0x0000FFFF);
+	//}
 
 	uint32_t* waveform = NULL;
 	const sample_data * samples = NULL;
