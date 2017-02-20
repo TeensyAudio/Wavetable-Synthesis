@@ -57,43 +57,21 @@ bool AudioSynthWavetable::isPlaying() {
 
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	total_parseSample -= micros();
-	//int note1, note2, velocity1, velocity2;
 	sample_data data = samples[sample_num];
 	
 	tone_phase = 0;
 	playing = 0;
-
-	/**********************extracting sample header data: *********************************/
-	/*
-	 Index 0 = Format & Sample size. Same as before.
-	 Index 1 = Original Pitch
-	 Index 2 = Sample Rate
-	 Index 3 = Loop Start
-	 Index 4 = Loop End
-	 Index 5 = Lower Bound Note Range | Upper Bound Note Range
-	 Index 6 = Lower Bound Velocity Range | Upper Bound Velocity Range
-	 Index 7 = Top 16-bits Delay envelope | Bottom 16-bits Hold Envelope
-	 Index 8 = Attack envelope
-	 Index 9 = Decay envelope
-	 Index 10 = Sustain envelope //not ms
-	 Index 11 = Release envelope
-	 */
 	 
-	//note: assuming 16-bit PCM at 44100 Hz for now
 	length = data.SAMPLE_LENGTH;
 	waveform = (uint32_t*)data.sample;
 	setSampleNote(data.ORIGINAL_PITCH);
 	sample_rate = data.SAMPLE_RATE;
 
+	cents_offset = data.CENTS_OFFSET;
+	
 	//setting start and end loop
 	setLoop(data.LOOP_START, data.LOOP_END);
 
-	//note1 = data.NOTE_RANGE_1;
-	//note2 = data.NOTE_RANGE_2;
-	
-	//velocity1 = data.VELOCITY_RANGE_1;
-	//velocity2 = data.VELOCITY_RANGE_2;
-	
 	if (!custom_env) {
 		env_delay(data.DELAY_ENV);
 		env_hold(data.HOLD_ENV);
@@ -363,7 +341,15 @@ void AudioSynthWavetable::frequency(float freq) {
 	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
 		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
 
+	Serial.println(freq);
+	Serial.println(cents_offset);
 	float rate_coef = sample_rate / AUDIO_SAMPLE_RATE_EXACT;
+	
+	//Add a cents offset
+	if (cents_offset != 0) {
+		freq = freq * pow(2.0, cents_offset/1200.0);
+	}
+	Serial.println(freq);
 
 	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
 	//steps through the wavetable sample one element at a time; from there we

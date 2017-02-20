@@ -239,6 +239,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
     out_fmt_str = \
         "\t{{\n" \
         "\t\t{ORIGINAL_PITCH},\n" \
+		"\t\t{CENTS_OFFSET},\n" \
         "\t\t{LENGTH},\n" \
         "\t\t{SAMPLE_RATE},\n" \
         "\t\t{LOOP_START},\n" \
@@ -258,6 +259,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
 
     out_vals = {
         "ORIGINAL_PITCH": bag.base_note if bag.base_note else bag.sample.original_pitch,
+		"CENTS_OFFSET": bag.fine_tuning,
         "LENGTH": bag.sample.duration,
         "SAMPLE_RATE": bag.sample.sample_rate,
         "LOOP_START": bag.cooked_loop_start,

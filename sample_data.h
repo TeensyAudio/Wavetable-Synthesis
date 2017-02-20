@@ -3,6 +3,7 @@
 
 struct sample_data{
 	const int ORIGINAL_PITCH;
+	const int CENTS_OFFSET;
 	const int SAMPLE_LENGTH;
 	const int SAMPLE_RATE;
 	const int LOOP_START;

@@ -130,7 +130,7 @@ private:
 
 	uint32_t* waveform = NULL;
 	const sample_data * samples = NULL;
-	int length = 0, length_bits = 0, loop_start = 0, loop_end = 0, loop_length = 0;
+	int length = 0, length_bits = 0, loop_start = 0, loop_end = 0, loop_length = 0, cents_offset = 0;
 	float sample_freq = 440.0;
 	uint8_t playing = 0, num_samples = 0;
 	uint32_t tone_phase = 0, loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
