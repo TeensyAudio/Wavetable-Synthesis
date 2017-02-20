@@ -27,13 +27,13 @@
 #include "AudioSynthWavetable.h"
 #include <SerialFlash.h>
 
-#define STATE_IDLE	0
-#define STATE_DELAY	1
-#define STATE_ATTACK	2
-#define STATE_HOLD	3
-#define STATE_DECAY	4
-#define STATE_SUSTAIN	5
-#define STATE_RELEASE	6
+//#define STATE_IDLE	0
+//#define STATE_DELAY	1
+//#define STATE_ATTACK	2
+//#define STATE_HOLD	3
+//#define STATE_DECAY	4
+//#define STATE_SUSTAIN	5
+//#define STATE_RELEASE	6
 
 uint32_t
 	AudioSynthWavetable::interpolation_update,
@@ -51,8 +51,7 @@ void AudioSynthWavetable::setSamples(const sample_data * samples, int num_sample
 }
 
 bool AudioSynthWavetable::isPlaying() {
-	if (state == STATE_IDLE) return false;
-	return true;
+	return envelopeState != STATE_IDLE;
 }
 
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
@@ -169,12 +168,11 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	mult = 0;
 	count = delay_count;
 	if (count > 0) {
-		state = STATE_DELAY;
+		envelopeState = STATE_DELAY;
 		inc = 0;
 		//Serial.printf("DELAY: %f\n", inc);
-	}
-	else {
-		state = STATE_ATTACK;
+	} else {
+		envelopeState = STATE_ATTACK;
 		count = attack_count;
 		// 2^16 divided by the number of samples
 		inc = (UNITY_GAIN / (count << 3));
@@ -201,7 +199,7 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 }
 
 void AudioSynthWavetable::stop(void) {
-	state = STATE_RELEASE;
+	envelopeState = STATE_RELEASE;
 	count = release_count;
 	inc = (-(float)mult / ((int32_t)count << 3));
 	//Serial.printf("RELEASE: %f\n", inc);
@@ -218,10 +216,7 @@ void AudioSynthWavetable::update(void) {
 	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 	//elapsedMillis timer = 0;
 
-	if (!playing)
-		return;
-
-	if (state == STATE_IDLE)
+	if (!playing || envelopeState == STATE_IDLE)
 		return;
 
 	block = allocate();
@@ -266,98 +261,82 @@ void AudioSynthWavetable::update(void) {
 
 	while (p < end) {
 		// we only care about the state when completing a region
-		if (count == 0) {
-			if (state == STATE_ATTACK) {
-				count = hold_count;
-				if (count > 0) {
-					state = STATE_HOLD;
-					mult = UNITY_GAIN;
-					inc = 0;
-					//Serial.printf("HOLD: %f\n", inc);
-				}
-				else {
-					state = STATE_DECAY;
-					count = decay_count;
-					if (count > 0)
-						inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
-					else
-						inc = 0;
-					//Serial.printf("DECAY: %f\n", inc);
-				}
-				continue;
-			}
-			else if (state == STATE_HOLD) {
-				state = STATE_DECAY;
-				count = decay_count;
-				if (count > 0)
-					inc = ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3));
-				else
-					inc = 0;
-				//Serial.printf("DECAY: %f\n", inc);
-				continue;
-			}
-			else if (state == STATE_DECAY) {
-				if (decay_count > 0) {
-					state = STATE_SUSTAIN;
-					count = 0xFFFF;
-					mult = sustain_mult;
-					inc = 0;
-					//Serial.printf("SUSTAIN: %f\n", inc);
-				}
-			}
-			else if (state == STATE_SUSTAIN) {
+		if (count == 0) switch (envelopeState) {
+		case STATE_DELAY:
+			envelopeState = STATE_ATTACK;
+			count = attack_count;
+			inc = (UNITY_GAIN / (count << 3));
+			//Serial.printf("ATTACK: %f\n", inc);
+			continue;
+		case STATE_ATTACK:
+			envelopeState = STATE_HOLD;
+			count = hold_count;
+			mult = hold_count ? UNITY_GAIN : mult;
+			inc = 0;
+			continue;
+		case STATE_HOLD:
+			envelopeState = STATE_DECAY;
+			count = decay_count;
+			inc = count > 0 ? ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3)) : 0;
+			//Serial.printf("DECAY: %f\n", inc);
+			continue;
+		case STATE_DECAY:
+			if (decay_count) {
+				envelopeState = STATE_SUSTAIN;
 				count = 0xFFFF;
+				mult = sustain_mult;
+				inc = 0;
+				//Serial.printf("SUSTAIN: %f\n", inc);
 			}
-			else if (state == STATE_RELEASE) {
-				state = STATE_IDLE;
-				playing = 0;
-				//Serial.println("IDLE");
-				while (p < end) {
-					*p++ = 0;
-					*p++ = 0;
-					*p++ = 0;
-					*p++ = 0;
-				}
-				break;
+			break;
+		case STATE_SUSTAIN:
+			count = 0xFFFF;
+			break;
+		case STATE_RELEASE:
+			envelopeState = STATE_IDLE;
+			playing = 0;
+			//Serial.println("IDLE");
+			while (p < end) {
+				*p++ = 0;
+				*p++ = 0;
+				*p++ = 0;
+				*p++ = 0;
 			}
-			else if (state == STATE_DELAY) {
-				state = STATE_ATTACK;
-				count = attack_count;
-				inc = (UNITY_GAIN / (count << 3));
-				//Serial.printf("ATTACK: %f\n", inc);
-				continue;
-			}
+			continue;
+		default:
+			p = end;
+			continue;
 		}
 		// process 8 samples, using only mult and inc
-		sample12 = *p++;
-		sample34 = *p++;
-		sample56 = *p++;
-		sample78 = *p++;
-		p -= 4;
+		sample12 = p[0];
 		mult += inc;
 		tmp1 = signed_multiply_32x16b((int32_t)mult, sample12);
 		mult += inc;
 		tmp2 = signed_multiply_32x16t((int32_t)mult, sample12);
-		sample12 = pack_16b_16b(tmp2, tmp1);
+		p[0] = pack_16b_16b(tmp2, tmp1);
+
+		sample34 = p[1];
 		mult += inc;
 		tmp1 = signed_multiply_32x16b((int32_t)mult, sample34);
 		mult += inc;
 		tmp2 = signed_multiply_32x16t((int32_t)mult, sample34);
-		sample34 = pack_16b_16b(tmp2, tmp1);
+		p[1] = pack_16b_16b(tmp2, tmp1);
+
+		sample56 = p[2];
 		mult += inc;
 		tmp1 = signed_multiply_32x16b((int32_t)mult, sample56);
 		mult += inc;
 		tmp2 = signed_multiply_32x16t((int32_t)mult, sample56);
-		sample56 = pack_16b_16b(tmp2, tmp1);
+		p[2] = pack_16b_16b(tmp2, tmp1);
+
+		sample78 = p[3];
 		mult += inc;
 		tmp1 = signed_multiply_32x16b((int32_t)mult, sample78);
 		mult += inc;
 		tmp2 = signed_multiply_32x16t((int32_t)mult, sample78);
-		sample78 = pack_16b_16b(tmp2, tmp1);
-		*p++ = sample12;
-		*p++ = sample34;
-		*p++ = sample56;
-		*p++ = sample78;
+		p[3] = pack_16b_16b(tmp2, tmp1);
+
+		p += 4;
 		count--;
 	}
 	envelope_update += micros();

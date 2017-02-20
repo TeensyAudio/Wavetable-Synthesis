@@ -10,6 +10,7 @@
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define AMP_DEF 63
 
+
 class AudioSynthWavetable : public AudioStream
 {
 public:
@@ -99,6 +100,17 @@ public:
 	static void print_performance();
 
 private:
+
+	enum envelopeStateEnum { 
+		STATE_IDLE,
+		STATE_DELAY,
+		STATE_ATTACK,
+		STATE_HOLD,
+		STATE_DECAY,
+		STATE_SUSTAIN,
+		STATE_RELEASE
+	};
+
 	uint16_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
 		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
@@ -127,7 +139,7 @@ private:
 	uint16_t tone_amp = 0, sample_rate = 0;
     
 	// state
-	uint8_t  state = 0;  // idle, delay, attack, hold, decay, sustain, release
+	envelopeStateEnum  envelopeState = STATE_IDLE;  // idle, delay, attack, hold, decay, sustain, release
 	uint16_t count = 0;  // how much time remains in this state, in 8 sample units
 	float    mult = 0;   // attenuation, 0=off, 0x10000=unity gain
 	float    inc = 0;    // amount to change mult on each sample
