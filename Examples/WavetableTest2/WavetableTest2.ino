@@ -14,6 +14,7 @@ const char* note_map[] = {
 };
 
 IntervalTimer midiMapTimer;
+IntervalTimer guitarHeroTimer;
 IntervalTimer performanceTimer;
 
 
@@ -71,7 +72,7 @@ const int TOTAL_BUTTONS = sizeof(buttons) / sizeof(Bounce);
 void printVoices();
 
 void setup() {
-	Serial.begin(38400);
+	Serial.begin(115200);
 
 	pinMode(0, INPUT_PULLUP);
 	pinMode(1, INPUT_PULLUP);
@@ -80,7 +81,7 @@ void setup() {
 	AudioMemory(40);
 
 	sgtl5000_1.enable();
-	sgtl5000_1.volume(1);
+	sgtl5000_1.volume(0.5);
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 1);
@@ -94,6 +95,14 @@ void setup() {
 	usbMIDI.setHandleNoteOff(OnNoteOff);
 
 	//performanceTimer.begin(AudioSynthWavetable::print_performance, 2000000);
+}
+
+void guitarHeroMode() {
+	char line[129];
+	line[128] = '\0';
+	for (int i = 0; i < 128; ++i) line[i] = '-';
+	for (int i = 0; i < used_voices; ++i) line[voices[i].note] = '*';
+	Serial.println(line);
 }
 
 #ifdef DEBUG_BABY
@@ -142,8 +151,13 @@ void loop() {
 	usbMIDI.read();
 	for (int i = 0; i < TOTAL_BUTTONS; ++i) buttons[i].update();
 	if (buttons[0].fallingEdge()) AudioSynthWavetable::print_performance();
-	if (buttons[1].risingEdge()) midiMapTimer.end();
+	if (buttons[1].risingEdge()) {
+		midiMapTimer.end();
+		Serial.print('\n');
+	}
 	if (buttons[1].fallingEdge()) midiMapTimer.begin(printVoices, 5000);
+	if (buttons[2].risingEdge()) guitarHeroTimer.end();
+	if (buttons[2].fallingEdge()) guitarHeroTimer.begin(guitarHeroMode, 1000000/60);
 }
 
 int allocateVoice(byte channel, byte note) {

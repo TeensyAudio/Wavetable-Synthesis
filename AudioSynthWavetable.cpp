@@ -163,8 +163,10 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 			break;
 		}
 	}
-	if (waveform == NULL)
+	if (waveform == NULL) {
+		total_playFrequency += micros();
 		return;
+	}
 	frequency(freq);
 	mult = 0;
 	count = delay_count;
@@ -215,12 +217,16 @@ void AudioSynthWavetable::update(void) {
 	int32_t s1, s2, v1, v2, v3;
 	//elapsedMillis timer = 0;
 
-	if (!playing || envelopeState == STATE_IDLE)
+	if (!playing || envelopeState == STATE_IDLE) {
+		total_update += micros();
 		return;
+	}
 
 	block = allocate();
-	if (block == NULL)
+	if (block == NULL) {
+		total_update += micros();
 		return;
+	}
 
 	out = block->data;
 
