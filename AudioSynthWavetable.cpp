@@ -35,6 +35,16 @@
 #define STATE_SUSTAIN	5
 #define STATE_RELEASE	6
 
+uint32_t
+	AudioSynthWavetable::interpolation_update,
+	AudioSynthWavetable::envelope_update,
+	AudioSynthWavetable::total_update,
+	AudioSynthWavetable::total_parseSample,
+	AudioSynthWavetable::total_playFrequency,
+	AudioSynthWavetable::total_frequency,
+	AudioSynthWavetable::total_playNote,
+	AudioSynthWavetable::total_amplitude;
+
 void AudioSynthWavetable::setSamples(const sample_data * samples, int num_samples) {
 	this->samples = samples;
 	this->num_samples = num_samples;
@@ -46,6 +56,7 @@ bool AudioSynthWavetable::isPlaying() {
 }
 
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
+	total_parseSample -= micros();
 	//int note1, note2, velocity1, velocity2;
 	sample_data data = samples[sample_num];
 	
@@ -111,6 +122,7 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	//Serial.printf("loop_end_phase=%u, ", loop_end_phase);
 	//Serial.printf("tone_phase=%u, ", tone_phase);
 	//Serial.printf("max_phase=%u\n", max_phase);
+	total_parseSample += micros();
 }
 
 void AudioSynthWavetable::play(void) {
@@ -121,6 +133,7 @@ void AudioSynthWavetable::play(void) {
 }
 
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
+	total_playFrequency -= micros();
 	float freq1, freq2;
 	//elapsedMillis timer = 0;
 	for(int i = 0; i < num_samples; i++) {
@@ -170,16 +183,21 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	tone_phase = 0;
 	playing = 1;
 	//Serial.printf("Latency: %dms\n", (int)timer);
+	total_playFrequency += micros();
 }
 
 void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
+	total_playNote -= micros();
 	float freq = noteToFreq(note);
 	this->playing = 0;
 	//Serial.printf("Amplitude: %i\n", amp);  
 	//amplitude((float)amp/(float)127);
+	total_amplitude -= micros();
 	amplitude(midi_volume_transform(amp));
+	total_amplitude += micros();
 	//Serial.println(freq);
 	playFrequency(freq, custom_env);
+	total_playNote += micros();
 }
 
 void AudioSynthWavetable::stop(void) {
@@ -190,6 +208,8 @@ void AudioSynthWavetable::stop(void) {
 }
 
 void AudioSynthWavetable::update(void) {
+	total_update -= micros();
+
 	audio_block_t* block;
 	int16_t* out;
 	uint32_t index, scale;
@@ -210,6 +230,7 @@ void AudioSynthWavetable::update(void) {
 
 	out = block->data;
 
+	interpolation_update -= micros();
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)this->waveform;
 	//Serial.printf("update: length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
@@ -231,12 +252,14 @@ void AudioSynthWavetable::update(void) {
 		*out++ = (int16_t)((v3 * tone_amp) >> 16);
 		tone_phase += tone_incr;
 	}
+	interpolation_update += micros();
 
 
 	//*********************************************************************
 	//Envelope code
 	//*********************************************************************
 
+	envelope_update -= micros();
 	p = (uint32_t *)block->data;
 	// p increments by 1 for every 2 samples processed.
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
@@ -337,13 +360,16 @@ void AudioSynthWavetable::update(void) {
 		*p++ = sample78;
 		count--;
 	}
+	envelope_update += micros();
 
 	transmit(block);
 	release(block);
 	//Serial.printf("Latency: %dms\n", (int)timer);
+	total_update += micros();
 }
 
 void AudioSynthWavetable::frequency(float freq) {
+	total_frequency -= micros();
 	if (freq < 0.0)
 		freq = 0.0;
 	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
@@ -355,4 +381,26 @@ void AudioSynthWavetable::frequency(float freq) {
 	//steps through the wavetable sample one element at a time; from there we
 	//only need to scale based a ratio of freq/sample_freq for the desired increment
 	tone_incr = ((rate_coef * freq) / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
+	total_frequency += micros();
 }
+
+void AudioSynthWavetable::print_performance() {
+	Serial.printf(
+		"interpolation_update=%i\n"
+		"envelope_update=%i\n"
+		"total_update=%i\n"
+		"total_parseSample=%i\n"
+		"total_playFrequency=%i\n"
+		"total_frequency=%i\n"
+		"total_playNote=%i\n"
+		"total_amplitude=%i\n",
+		AudioSynthWavetable::interpolation_update,
+		AudioSynthWavetable::envelope_update,
+		AudioSynthWavetable::total_update,
+		AudioSynthWavetable::total_parseSample,
+		AudioSynthWavetable::total_playFrequency,
+		AudioSynthWavetable::total_frequency,
+		AudioSynthWavetable::total_playNote,
+		AudioSynthWavetable::total_amplitude);
+}
+

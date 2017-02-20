@@ -9,14 +9,16 @@
 
 #define DEBUG_BABY
 
-char* note_map[] = {
+const char* note_map[] = {
 	"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 };
 
 IntervalTimer midiMapTimer;
+IntervalTimer performanceTimer;
+
 
 const int TOTAL_VOICES = 16;
-const int TOTAL_MIXERS = 5;
+const int TOTAL_MIXERS = (TOTAL_VOICES-1)/4+2;
 struct voice_t {
 	int wavetable_id;
 	byte channel;
@@ -29,6 +31,7 @@ int freeVoice(byte channel, byte note);
 
 int used_voices = 0;
 int evict_voice = 0;
+int notes_played = 0;
 
 
 AudioControlSGTL5000 sgtl5000_1;
@@ -53,18 +56,17 @@ AudioConnection patchCord[] = {
 	{wavetable[13], 0, mixer[3], 1},
 	{wavetable[14], 0, mixer[3], 2},
 	{wavetable[15], 0, mixer[3], 3},
-	{mixer[0], 0, mixer[4], 0},
-	{mixer[1], 0, mixer[4], 1},
-	{mixer[2], 0, mixer[4], 2},
-	{mixer[3], 0, mixer[4], 3},
-	{mixer[4], 0, i2s1, 0},
-	{mixer[4], 0, i2s1, 1},
+	{mixer[0], 0, mixer[TOTAL_MIXERS-1], 0},
+	{mixer[1], 0, mixer[TOTAL_MIXERS-1], 1},
+	{mixer[2], 0, mixer[TOTAL_MIXERS-1], 2},
+	{mixer[3], 0, mixer[TOTAL_MIXERS-1], 3},
+	{mixer[TOTAL_MIXERS-1], 0, i2s1, 0},
+	{mixer[TOTAL_MIXERS-1], 0, i2s1, 1},
 };
 
 // Bounce objects to read pushbuttons 
-Bounce button0 = Bounce(0, 15);
-Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
-Bounce button2 = Bounce(2, 15);
+Bounce buttons[] = { {0, 15}, {1, 15}, {2, 15}, };
+const int TOTAL_BUTTONS = sizeof(buttons) / sizeof(Bounce);
 
 void printVoices();
 
@@ -91,26 +93,25 @@ void setup() {
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
 
-	midiMapTimer.begin(printVoices, 50000);
+	//performanceTimer.begin(AudioSynthWavetable::print_performance, 2000000);
 }
 
 #ifdef DEBUG_BABY
 void printVoices() {
-	static bool first_time = true;
-	if (first_time) {
-		first_time = false;
-		Serial.print(" usd evt::");
-		for (int i = 0; i < TOTAL_VOICES; ++i)
-			Serial.printf("%02i c   n", i);
-		Serial.print('\n');
-	}
-	Serial.printf("\n %02i %02i", used_voices, evict_voice);
+	static int last_notes_played = notes_played;
+	if (last_notes_played == notes_played)
+		return;
+	last_notes_played = notes_played;
+	int usage = AudioProcessorUsage();
+	Serial.printf("\nCPU:%03i voices:%02i CPU/Voice:%02i evict:%02i", usage, used_voices, usage/used_voices, evict_voice);
 	for (int i = 0; i < used_voices; ++i)
 		Serial.printf(" %02hhu %-2s", voices[i].channel, note_map[voices[i].note%12]);
+
 }
-#endif //DEBUG_ALLOC
+#endif //DEBUG_BABY
 
 void OnNoteOn(byte channel, byte note, byte velocity) {
+	notes_played++;
 #ifdef DEBUG_ALLOC
 	//Serial.printf("**** NoteOn: channel==%hhu,note==%hhu ****\n", channel, note);
 	printVoices();
@@ -139,6 +140,10 @@ void OnNoteOff(byte channel, byte note, byte velocity) {
 
 void loop() {
 	usbMIDI.read();
+	for (int i = 0; i < TOTAL_BUTTONS; ++i) buttons[i].update();
+	if (buttons[0].fallingEdge()) AudioSynthWavetable::print_performance();
+	if (buttons[1].risingEdge()) midiMapTimer.end();
+	if (buttons[1].fallingEdge()) midiMapTimer.begin(printVoices, 5000);
 }
 
 int allocateVoice(byte channel, byte note) {

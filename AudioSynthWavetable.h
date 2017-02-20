@@ -96,6 +96,8 @@ public:
 	
 	virtual void update(void);
 
+	static void print_performance();
+
 private:
 	uint16_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
@@ -136,4 +138,16 @@ private:
 	uint16_t decay_count = 0;
 	int32_t  sustain_mult = 0;
 	uint16_t release_count = 0;
+
+
+	static uint32_t
+		interpolation_update,
+		envelope_update,
+		total_update,
+		total_parseSample,
+		total_playFrequency,
+		total_frequency,
+		total_playNote,
+		total_amplitude;
 };
+
