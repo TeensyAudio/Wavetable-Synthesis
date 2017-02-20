@@ -213,8 +213,6 @@ void AudioSynthWavetable::update(void) {
 	int16_t* out;
 	uint32_t index, scale;
 	int32_t s1, s2, v1, v2, v3;
-	uint32_t *p, *end;
-	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 	//elapsedMillis timer = 0;
 
 	if (!playing || envelopeState == STATE_IDLE)
@@ -254,6 +252,10 @@ void AudioSynthWavetable::update(void) {
 	//*********************************************************************
 	//Envelope code
 	//*********************************************************************
+
+	uint32_t* p
+	uint32_t* end;
+	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 
 	envelope_update -= micros();
 	p = (uint32_t *)block->data;
