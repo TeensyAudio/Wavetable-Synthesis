@@ -183,7 +183,7 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
     h_file_name = "{}_samples.h".format(instrument_name)
     cpp_file_name = "{}_samples.cpp".format(instrument_name)
     with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
-        h_file.write("#include \"AudioSynthWavetable.h\"\n")
+        h_file.write("#pragma once\n#include \"sample_data.h\"\n\n")
         # Decode data to sample_data array in header file
         h_file.write("extern sample_data {0}[{1}];\n".format(instrument_name, num_samples))
 

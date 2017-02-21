@@ -341,15 +341,15 @@ void AudioSynthWavetable::frequency(float freq) {
 	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
 		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
 
-	Serial.println(freq);
-	Serial.println(cents_offset);
+	//Serial.println(freq);
+	//Serial.println(cents_offset);
 	float rate_coef = sample_rate / AUDIO_SAMPLE_RATE_EXACT;
 	
 	//Add a cents offset
 	if (cents_offset != 0) {
 		freq = freq * pow(2.0, cents_offset/1200.0);
 	}
-	Serial.println(freq);
+	//Serial.println(freq);
 
 	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
 	//steps through the wavetable sample one element at a time; from there we
@@ -359,22 +359,48 @@ void AudioSynthWavetable::frequency(float freq) {
 }
 
 void AudioSynthWavetable::print_performance() {
+	char format_str[] =
+		"total\t%i\t%.2f%%\tupdate()\t%i\t%.2f%%\tupdate_env\t%i\t\t\t\n"
+		"\t\t\t\t\t%.2f%%\tupdate_interpolate\t%i\t\t\t\n"
+		"\t\t%.2f%%\tplayNote()\t%i\t%.2f%%\tplayFrequency()\t%i\t%.2f%%\tparseSample()\t%i\n"
+		"\t\t\t\t\t\t\t\t%.2f%%\tfrequency()\t%i\n"
+		"\t\t\t\t\t%.2f%%\tamplitude()\t%i\n";
+
 	Serial.printf(
-		"interpolation_update=%i\n"
-		"envelope_update=%i\n"
-		"total_update=%i\n"
-		"total_parseSample=%i\n"
-		"total_playFrequency=%i\n"
-		"total_frequency=%i\n"
-		"total_playNote=%i\n"
-		"total_amplitude=%i\n",
-		AudioSynthWavetable::interpolation_update,
-		AudioSynthWavetable::envelope_update,
-		AudioSynthWavetable::total_update,
-		AudioSynthWavetable::total_parseSample,
-		AudioSynthWavetable::total_playFrequency,
-		AudioSynthWavetable::total_frequency,
-		AudioSynthWavetable::total_playNote,
-		AudioSynthWavetable::total_amplitude);
+		format_str,
+		total_update + total_playNote,
+		100 * (float)(total_update) / total_update + total_playNote,
+		total_update,
+		100 * (float)(envelope_update) / total_update + total_playNote,
+		envelope_update,
+		100 * (float)(interpolation_update) / total_update + total_playNote,
+		interpolation_update,
+		100 * (float)(total_playNote) / total_update + total_playNote,
+		total_playNote,
+		100 * (float)(total_playFrequency) / total_update + total_playNote,
+		total_playFrequency,
+		100 * (float)(total_parseSample) / total_update + total_playNote,
+		total_parseSample,
+		100 * (float)(total_frequency) / total_update + total_playNote,
+		total_frequency,
+		100 * (float)(total_amplitude) / total_update + total_playNote,
+		total_amplitude
+	);
+		//"interpolation_update=%i\n"
+		//"envelope_update=%i\n"
+		//"total_update=%i\n"
+		//"total_parseSample=%i\n"
+		//"total_playFrequency=%i\n"
+		//"total_frequency=%i\n"
+		//"total_playNote=%i\n"
+		//"total_amplitude=%i\n",
+		//AudioSynthWavetable::interpolation_update,
+		//AudioSynthWavetable::envelope_update,
+		//AudioSynthWavetable::total_update,
+		//AudioSynthWavetable::total_parseSample,
+		//AudioSynthWavetable::total_playFrequency,
+		//AudioSynthWavetable::total_frequency,
+		//AudioSynthWavetable::total_playNote,
+		//AudioSynthWavetable::total_amplitude);
 }
 

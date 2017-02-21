@@ -1,4 +1,4 @@
-#include "steelstrgtr_samples.h"
+#include "nylonstrgtr_samples.h"
 #include <AudioSynthWavetable.h>
 #include <Bounce.h>
 #include <Audio.h>
@@ -15,7 +15,7 @@ const char* note_map[] = {
 
 IntervalTimer midiMapTimer;
 IntervalTimer guitarHeroTimer;
-IntervalTimer performanceTimer;
+IntervalTimer volumeTimer;
 
 
 const int TOTAL_VOICES = 16;
@@ -71,6 +71,10 @@ const int TOTAL_BUTTONS = sizeof(buttons) / sizeof(Bounce);
 
 void printVoices();
 
+void setVolume() {
+	sgtl5000_1.volume((analogRead(PIN_A2)-1)/1022.0);
+}
+
 void setup() {
 	Serial.begin(115200);
 
@@ -82,10 +86,11 @@ void setup() {
 
 	sgtl5000_1.enable();
 	sgtl5000_1.volume(1.0);
+	volumeTimer.begin(setVolume, 100000);
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 1);
-		wavetable[i].setSamples(steelstrgtr, sizeof(steelstrgtr) / sizeof(sample_data));
+		wavetable[i].setSamples(nylonstrgtr, sizeof(nylonstrgtr) / sizeof(sample_data));
 		wavetable[i].amplitude(1);
 		voices[i].wavetable_id = i;
 		voices[i].channel = voices[i].note = 0xFF;
