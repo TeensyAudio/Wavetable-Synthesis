@@ -7,7 +7,7 @@ import inspect
 import re
 
 DEBUG_FLAG = False
-
+logging.disable(logging.WARNING)
 
 def print_debug(flag, message, function=None):
     if flag:
@@ -166,7 +166,7 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
             if selected_bags:
                 print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(bag.sample.name))
 
-        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index else None
+        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index >= 0 else None
         file_title = user_title if user_title else sf2.instruments[inst_index].name
 
         file_title = re.sub(r'[\W]+', '', file_title)
@@ -249,8 +249,8 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
         "\t\t{VELOCITY_RANGE_LOWER},\n" \
         "\t\t{VELOCITY_RANGE_UPPER},\n" \
         "\t\t{DELAY_ENV},\n" \
-        "\t\t{HOLD_ENV},\n" \
         "\t\t{ATTACK_ENV},\n" \
+		"\t\t{HOLD_ENV},\n" \
         "\t\t{DECAY_ENV},\n" \
         "\t\t{SUSTAIN_ENV},\n" \
         "\t\t{RELEASE_ENV},\n" \
@@ -274,8 +274,8 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
     env_vals = {
         # No property provided by SF2Utils; 33 is from form the SF2 spec
         "DELAY_ENV": bag.gens[33].cents if 33 in bag.gens else global_bag.gens[33].cents if 33 in global_bag.gens else None,
-        "HOLD_ENV": bag.volume_envelope_hold if bag.volume_envelope_hold else global_bag.volume_envelope_hold,
         "ATTACK_ENV": bag.volume_envelope_attack if bag.volume_envelope_attack else global_bag.volume_envelope_attack,
+		"HOLD_ENV": bag.volume_envelope_hold if bag.volume_envelope_hold else global_bag.volume_envelope_hold,
         "DECAY_ENV": bag.volume_envelope_decay if bag.volume_envelope_decay else global_bag.volume_envelope_decay,
         "SUSTAIN_ENV": bag.volume_envelope_sustain if bag.volume_envelope_sustain else global_bag.volume_envelope_sustain,
         "RELEASE_ENV": bag.volume_envelope_release if bag.volume_envelope_release else global_bag.volume_envelope_release,
