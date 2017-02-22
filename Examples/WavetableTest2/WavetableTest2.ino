@@ -1,22 +1,39 @@
-#include "SF2_Decoded_Samples.h" // http://www.freesound.org/people/kiddpark/sounds/201159/
-#include <Bounce.h>
+#include "nylonstrgtr_samples.h"
 #include <AudioSynthWavetable.h>
+#include <Bounce.h>
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
 
-const int TOTAL_VOICES = 10;
-const int TOTAL_MIXERS = 4;
+#define DEBUG_BABY
+
+const char* note_map[] = {
+	"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
+};
+
+IntervalTimer midiMapTimer;
+IntervalTimer guitarHeroTimer;
+IntervalTimer volumeTimer;
+
+
+const int TOTAL_VOICES = 16;
+const int TOTAL_MIXERS = (TOTAL_VOICES-1)/4+2;
 struct voice_t {
+	int wavetable_id;
 	byte channel;
 	byte note;
 };
 voice_t voices[TOTAL_VOICES];
 
-int allocateVoice(voice_t voice);
-int freeVoice(voice_t voice);
+int allocateVoice(byte channel, byte note);
+int freeVoice(byte channel, byte note);
+
+int used_voices = 0;
+int evict_voice = 0;
+int notes_played = 0;
+
 
 AudioControlSGTL5000 sgtl5000_1;
 AudioSynthWavetable wavetable[TOTAL_VOICES];
@@ -31,140 +48,172 @@ AudioConnection patchCord[] = {
 	{wavetable[4], 0, mixer[1], 0},
 	{wavetable[5], 0, mixer[1], 1},
 	{wavetable[6], 0, mixer[1], 2},
-	//{wavetable[7], 0, mixer[1], 3},
-	{wavetable[7], 0, mixer[2], 0},
-	{wavetable[8], 0, mixer[2], 1},
-	{wavetable[9], 0, mixer[2], 2},
-	//{wavetable[11], 0, mixer[2], 3},
-	{mixer[0], 0, mixer[3], 0},
-	{mixer[1], 0, mixer[3], 1},
-	{mixer[2], 0, mixer[3], 2},
- // {mixer[3], 0, notefreq, 0},
-	{mixer[3], 0, i2s1, 0},
-	{mixer[3], 0, i2s1, 1},
+	{wavetable[7], 0, mixer[1], 3},
+	{wavetable[8], 0, mixer[2], 0},
+	{wavetable[9], 0, mixer[2], 1},
+	{wavetable[10], 0, mixer[2], 2},
+	{wavetable[11], 0, mixer[2], 3},
+	{wavetable[12], 0, mixer[3], 0},
+	{wavetable[13], 0, mixer[3], 1},
+	{wavetable[14], 0, mixer[3], 2},
+	{wavetable[15], 0, mixer[3], 3},
+	{mixer[0], 0, mixer[TOTAL_MIXERS-1], 0},
+	{mixer[1], 0, mixer[TOTAL_MIXERS-1], 1},
+	{mixer[2], 0, mixer[TOTAL_MIXERS-1], 2},
+	{mixer[3], 0, mixer[TOTAL_MIXERS-1], 3},
+	{mixer[TOTAL_MIXERS-1], 0, i2s1, 0},
+	{mixer[TOTAL_MIXERS-1], 0, i2s1, 1},
 };
 
-int evict_voice = 0;
-
 // Bounce objects to read pushbuttons 
-Bounce button0 = Bounce(0, 15);
-Bounce button1 = Bounce(1, 15);  // 15 ms debounce time
-Bounce button2 = Bounce(2, 15);
+Bounce buttons[] = { {0, 15}, {1, 15}, {2, 15}, };
+const int TOTAL_BUTTONS = sizeof(buttons) / sizeof(Bounce);
+
+void printVoices();
+
+void setVolume() {
+	sgtl5000_1.volume((analogRead(PIN_A2)-1)/1022.0);
+}
 
 void setup() {
-//  Serial.begin(38400);
-  
-  pinMode(0, INPUT_PULLUP);
-  pinMode(1, INPUT_PULLUP);
-  pinMode(2, INPUT_PULLUP);
-	
+	Serial.begin(115200);
+
+	pinMode(0, INPUT_PULLUP);
+	pinMode(1, INPUT_PULLUP);
+	pinMode(2, INPUT_PULLUP);
+
 	AudioMemory(40);
 
 	sgtl5000_1.enable();
-	sgtl5000_1.volume(1);
+	sgtl5000_1.volume(1.0);
+	volumeTimer.begin(setVolume, 100000);
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 1);
-		wavetable[i].setSamples(samples, sizeof(samples)/sizeof(sample_data));
+		wavetable[i].setSamples(nylonstrgtr, sizeof(nylonstrgtr) / sizeof(sample_data));
 		wavetable[i].amplitude(1);
+		voices[i].wavetable_id = i;
 		voices[i].channel = voices[i].note = 0xFF;
 	}
- // notefreq.begin(.15);
+
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
-  //Serial.printf("%d", sizeof(samples)/sizeof(sample_data));
-  for (int i = 0; i < sizeof(samples)/sizeof(sample_data); i++) {
-//    Serial.printf("Sample %d: OP=%d, LL=%d, UL=%d\n", i, samples[i].ORIGINAL_PITCH, samples[i].NOTE_RANGE_1, samples[i].NOTE_RANGE_2);
-  }
+
+	//performanceTimer.begin(AudioSynthWavetable::print_performance, 2000000);
 }
 
-void printVoices() {
-	for (int i = 0; i < TOTAL_VOICES; ++i)
-		Serial.printf("%2i c   n ", i);
-	Serial.print('\n');
-	for (int i = 0; i < TOTAL_VOICES; ++i)
-		Serial.printf("%4hhu%4hhu ", voices[i].channel, voices[i].note);
-	Serial.print('\n');
+void guitarHeroMode() {
+	char line[129];
+	line[128] = '\0';
+	for (int i = 0; i < 128; ++i) line[i] = '-';
+	for (int i = 0; i < used_voices; ++i) line[voices[i].note] = '*';
+	Serial.println(line);
 }
+
+#ifdef DEBUG_BABY
+void printVoices() {
+	static int last_notes_played = notes_played;
+	if (last_notes_played == notes_played)
+		return;
+	last_notes_played = notes_played;
+	int usage = AudioProcessorUsage();
+	Serial.printf("\nCPU:%03i voices:%02i CPU/Voice:%02i evict:%02i", usage, used_voices, usage/used_voices, evict_voice);
+	for (int i = 0; i < used_voices; ++i)
+		Serial.printf(" %02hhu %-2s", voices[i].channel, note_map[voices[i].note%12]);
+
+}
+#endif //DEBUG_BABY
 
 void OnNoteOn(byte channel, byte note, byte velocity) {
-	//Serial.printf("NoteOn: channel==%hhu,note==%hhu\n", channel, note);
-	//printVoices();
-	int voice_id = allocateVoice(voice_t{ channel, note });
-	voices[voice_id].channel = channel;
-	voices[voice_id].note = note;
-// Serial.printf("NOOTE: %x", note);
-	wavetable[voice_id].playNote(note);
-	//printVoices();
+	notes_played++;
+#ifdef DEBUG_ALLOC
+	//Serial.printf("**** NoteOn: channel==%hhu,note==%hhu ****\n", channel, note);
+	printVoices();
+#endif //DEBUG_ALLOC
+	int voice_id = allocateVoice(channel, note);
+	wavetable[voices[voice_id].wavetable_id].playNote(note);
+#ifdef DEBUG_ALLOC
+	printVoices();
+#endif //DEBUG_ALLOC
 }
 
 void OnNoteOff(byte channel, byte note, byte velocity) {
-	//Serial.printf("NoteOff: channel==%hhu,note==%hhu\n", channel, note);
-	//printVoices();
+#ifdef DEBUG_ALLOC
+	//Serial.printf("**** NoteOff: channel==%hhu,note==%hhu ****\n", channel, note);
+	printVoices();
+#endif //DEBUG_ALLOC
 
-	//for (int i = 0; i < TOTAL_VOICES; ++i)
-	//	wavetable[i].stop();
-	int voice_id = freeVoice(voice_t{ channel, note });
+	int voice_id = freeVoice(channel, note);
 	if (voice_id == TOTAL_VOICES) return;
+	wavetable[voices[voice_id].wavetable_id].stop();
 
-	voices[voice_id].channel = 0xFF;
-	voices[voice_id].note = 0xFF;
-	wavetable[voice_id].stop();
-	//printVoices();
+#ifdef DEBUG_ALLOC
+	printVoices();
+#endif //DEBUG_ALLOC
 }
 
 void loop() {
-    button0.update();
-  button1.update();
-  button2.update();
-
-                                              if (button0.fallingEdge()) {
-                                                Serial.printf("humm");
-                                                  wavetable[0].playNote(0x4A);
-                                                }
-  
 	usbMIDI.read();
- 
+	for (int i = 0; i < TOTAL_BUTTONS; ++i) buttons[i].update();
+	if (buttons[0].fallingEdge()) AudioSynthWavetable::print_performance();
+	if (buttons[1].risingEdge()) {
+		midiMapTimer.end();
+		Serial.print('\n');
+	}
+	if (buttons[1].fallingEdge()) midiMapTimer.begin(printVoices, 5000);
+	if (buttons[2].risingEdge()) guitarHeroTimer.end();
+	if (buttons[2].fallingEdge()) guitarHeroTimer.begin(guitarHeroMode, 1000000/60);
 }
 
-int allocateVoice(voice_t voice) {
+int allocateVoice(byte channel, byte note) {
 	int i;
 
-	//find matching channel/note
-	for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].channel == voice.channel && voices[i].note == voice.note)
-			break;
+	if (used_voices < TOTAL_VOICES) {
+		//find match
+		for (i = 0; i < used_voices && !(voices[i].channel == channel && voices[i].note == note); ++i);
+		//if no match
+		if (i == used_voices) {
+			//find same channel (== same sample)
+			while (i < TOTAL_VOICES && voices[i].channel != channel) ++i;
+			//if found same channel, swap wavetable objects
+			if (i < TOTAL_VOICES) {
+				int wavetable_id = voices[i].wavetable_id;
+				voices[i].wavetable_id = voices[used_voices].wavetable_id;
+				voices[i].channel = voices[used_voices].channel;
+				voices[used_voices].wavetable_id = wavetable_id;
+			}
+			i = used_voices;
+			used_voices++;
+		}
+	} else {
+		i = evict_voice;
+	}
 
-	//find matching channel, non-playing note (i.e. prevent resetting sample)
-	if (i == TOTAL_VOICES) for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].channel == voice.channel && voices[i].note == 0xFF)
-			break;
+	voices[i].channel = channel;
+	voices[i].note = note;
 
-	//find non-playing note
-	if (i == TOTAL_VOICES) for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].note == 0xFF)
-			break;
-
-	//else choose evict idx
-	i = i == TOTAL_VOICES ? evict_voice : i;
-
-	//possibly iterate evict so it doesn't match what we're now assigning
-	evict_voice = i == evict_voice ? evict_voice + 1 : evict_voice;
-
-	//loop evict idx
-	evict_voice = evict_voice == TOTAL_VOICES ? 0 : evict_voice;
+	evict_voice = i + 1;
+	evict_voice = evict_voice >= TOTAL_VOICES ? 0 : evict_voice;
 
 	return i;
 }
 
-int freeVoice(voice_t voice) {
+int freeVoice(byte channel, byte note) {
 	int i;
 
-	//find matching channel/note
-	for (i = 0; i < TOTAL_VOICES; ++i)
-		if (voices[i].channel == voice.channel && voices[i].note == voice.note)
-			break;
+	//find match
+	for (i = 0; i < used_voices && !(voices[i].channel == channel && voices[i].note == note); ++i);
+	//return TOTAL_VOICES if no match
+	if (i == used_voices) return TOTAL_VOICES;
 
-	return i;
+	used_voices--;
+
+	//swap voice data if match (i.e. allocated voices are at beginning of array)
+	int wavetable_id = voices[i].wavetable_id;
+	voices[i] = voices[used_voices];
+	voices[used_voices].channel = channel;
+	voices[used_voices].wavetable_id = wavetable_id;
+
+	return used_voices;
 }
 
