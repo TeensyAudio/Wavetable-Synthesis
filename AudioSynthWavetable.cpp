@@ -269,7 +269,6 @@ void AudioSynthWavetable::update(void) {
 			envelopeState = STATE_ATTACK;
 			count = attack_count;
 			inc = (UNITY_GAIN / (count << 3));
-			//Serial.printf("ATTACK: %f\n", inc);
 			continue;
 		case STATE_ATTACK:
 			envelopeState = STATE_HOLD;
@@ -281,16 +280,12 @@ void AudioSynthWavetable::update(void) {
 			envelopeState = STATE_DECAY;
 			count = decay_count;
 			inc = count > 0 ? ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3)) : 0;
-			//Serial.printf("DECAY: %f\n", inc);
 			continue;
 		case STATE_DECAY:
-			if (decay_count) {
-				envelopeState = STATE_SUSTAIN;
-				count = 0xFFFF;
-				mult = sustain_mult;
-				inc = 0;
-				//Serial.printf("SUSTAIN: %f\n", inc);
-			}
+			envelopeState = STATE_SUSTAIN;
+			count = 0xFFFF;
+			mult = sustain_mult;
+			inc = 0;
 			break;
 		case STATE_SUSTAIN:
 			count = 0xFFFF;
@@ -298,13 +293,7 @@ void AudioSynthWavetable::update(void) {
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;
 			playing = 0;
-			//Serial.println("IDLE");
-			while (p < end) {
-				*p++ = 0;
-				*p++ = 0;
-				*p++ = 0;
-				*p++ = 0;
-			}
+			for (; p < end; p += 4) p[0] = p[1] = p[2] = p[3] = 0;
 			continue;
 		default:
 			p = end;
