@@ -8,7 +8,7 @@
 #define MAX_MS 11000.0      // Max section length (milliseconds)
 #define UNITY_GAIN 65536.0  // Max amplitude
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
-#define AMP_DEF 63
+#define AMP_DEF 69
 
 
 class AudioSynthWavetable : public AudioStream
@@ -62,7 +62,9 @@ public:
 	}
 	
 	static float noteToFreq(int note) {
-		return 27.5 * pow(2, (float)(note - 21)/12);
+		float exp = (note - 60.2186402864753403959303175237848168654319370812936513166) / 12.0;
+		float freq = pow(2, exp);
+		return freq;
 	}
 	
 	void env_delay(float milliseconds) {
@@ -130,8 +132,8 @@ private:
 
 	uint32_t* waveform = NULL;
 	const sample_data * samples = NULL;
-	int length = 0, length_bits = 0, loop_start = 0, loop_end = 0, loop_length = 0, cents_offset = 0;
-	float sample_freq = 440.0;
+	int length = 0, length_bits = 0, loop_start = 0, loop_end = 0, loop_length = 0;
+	float sample_freq = 440.0, cents_offset = 1.0;
 	uint8_t playing = 0, num_samples = 0;
 	uint32_t tone_phase = 0, loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
 	uint32_t max_phase = 0;
