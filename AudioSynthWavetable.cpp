@@ -89,7 +89,7 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 		env_attack(data.ATTACK_ENV);
 		env_decay(data.DECAY_ENV);
 		if (data.SUSTAIN_ENV > 0)
-			env_sustain(data.SUSTAIN_ENV/1000);
+			env_sustain((float)data.SUSTAIN_ENV / UNITY_GAIN);
 		else
 			env_sustain(1);
 		env_release(data.RELEASE_ENV);
@@ -274,13 +274,13 @@ void AudioSynthWavetable::update(void) {
 				continue;
 			}
 			else if (state == STATE_DECAY) {
-				if (decay_count > 0) {
-					state = STATE_SUSTAIN;
-					count = 0xFFFF;
-					mult = sustain_mult;
-					inc = 0;
-					Serial.printf("SUSTAIN: %f\n", inc);
-				}
+				//if (decay_count > 0) {
+				state = STATE_SUSTAIN;
+				count = 0xFFFF;
+				mult = sustain_mult;
+				inc = 0;
+				Serial.printf("SUSTAIN: %f\n", inc);
+				//}
 			}
 			else if (state == STATE_SUSTAIN) {
 				count = 0xFFFF;

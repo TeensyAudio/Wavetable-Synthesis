@@ -31,7 +31,7 @@
 #include <math.h>
 
 #define MAX_MS 11000.0      // Max section length (milliseconds)
-#define UNITY_GAIN 65536.0  // Max amplitude
+#define UNITY_GAIN 65536.0  // Max amplitude (centibels)
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define AMP_DEF 63
 
@@ -144,6 +144,7 @@ public:
 		if (milliseconds <= 0) {
 			milliseconds = 100;
 		}
+		if (milliseconds)
 		decay_count = milliseconds2count(milliseconds);
 	}
 	void env_sustain(float level) {
