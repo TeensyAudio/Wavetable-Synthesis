@@ -257,9 +257,10 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
         "\t\t{SAMPLE_ARRAY_NAME},\n" \
         "\t}},\n"
 
+    base_note = bag.base_note if bag.base_note else bag.sample.original_pitch
     out_vals = {
-        "ORIGINAL_PITCH": bag.base_note if bag.base_note else bag.sample.original_pitch,
-		"CENTS_OFFSET": bag.fine_tuning,
+        "ORIGINAL_PITCH": base_note,
+		"CENTS_OFFSET": (pow(2.0, float(bag.fine_tuning)/1200.0)) if bag.fine_tuning else 1.0,
         "LENGTH": bag.sample.duration,
         "SAMPLE_RATE": bag.sample.sample_rate,
         "LOOP_START": bag.cooked_loop_start,
@@ -293,6 +294,11 @@ def check_is_valid_sample(sample):
     if sample.end_loop > sample.duration:
         return False, 'End loop index is larger than sample end index'
     return True, None
+	
+def note_to_freq(note):
+    exp = (float(note) - 60.2186402864753403959303175237848168654319370812936513166) / 12.0
+    freq = float(pow(2, exp)) * 440.0
+    return freq
 
 
 def error(message):
