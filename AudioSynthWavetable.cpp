@@ -84,9 +84,9 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 		env_release(data.RELEASE_ENV);
 	}
 
-	length_bits = length & 0xFFFFF000 ? 13 : loop_length & 0xFFFFFF00 ? 9 : loop_length & 0xFFFFFFF0 ? 5 : 1;
-	for (int len = length >> length_bits; len; len >>= 1) ++length_bits;
-	int temp = length_bits
+	//length_bits = length & 0xFFFFF000 ? 13 : loop_length & 0xFFFFFF00 ? 9 : loop_length & 0xFFFFFFF0 ? 5 : 1;
+	//for (int len = length >> length_bits; len; len >>= 1) ++length_bits;
+	//int temp = length_bits
 	
 	length_bits = 1;
 	for (int len = length; len >>= 1; ++length_bits);

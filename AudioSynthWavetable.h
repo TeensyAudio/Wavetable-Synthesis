@@ -63,7 +63,8 @@ public:
 	
 	static float noteToFreq(int note) {
 		//return 440.0 * pow(2.0, (note - 69) / 12.0);
-		float exp = (note + 36.37631656) / 12.0;
+		//float exp = (note + 36.37631656) / 12.0;
+		float exp = note * 0.083333333 + 3.0313597;
 		float freq = pow(2, exp);
 		return freq;
 	}
