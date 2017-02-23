@@ -136,18 +136,18 @@ def main(argv):
                     print_menu(sample_names)
                     sample = safe_input('Select Sample [1-{}]: '.format(len(sample_names)), int, 1, len(sample_names))
                     print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(samples[sample-1].name))
-                    selected_bags.append(bag_to_sample[sample-1][0])
+                    if(bag_to_sample[sample-1][0] not in selected_bags):
+                        selected_bags.append(bag_to_sample[sample-1][0])
                     i_result = menu(options2)
                     if i_result == 1:
                         continue
                     elif i_result == 2:
                         decode_selected(path, instrument, selected_bags, global_bag_index)
-                        sys.exit('Program Terminated by User')
+                        sys.exit('Selected samples for instrument decoded successfully. Exiting Program.')
         elif choice == 2:
             sys.exit('Program Terminated by User')
         else:   # shouldn't be reached
             input("Wrong option selection. Enter any key to try again..")
-
 
 def decode_selected(path, inst_index, selected_bags, global_bag_index, user_title=None):
     with open(path, 'rb') as file:
@@ -166,7 +166,7 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
             if selected_bags:
                 print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(bag.sample.name))
 
-        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index >= 0 else None
+        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index != None else None
         file_title = user_title if user_title else sf2.instruments[inst_index].name
 
         file_title = re.sub(r'[\W]+', '', file_title)
@@ -187,10 +187,14 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
         # Decode data to sample_data array in header file
         h_file.write("extern sample_data {0}[{1}];\n".format(instrument_name, num_samples))
 
+        #Sort bags by key range and expand ranges to fill all key values
+        keyRanges = []
+        getKeyRanges(bags, keyRanges)
+
         cpp_file.write("#include \"{}\"\n".format(h_file_name))
         cpp_file.write("sample_data {0}[{1}] = {{\n".format(instrument_name, num_samples))
         for i in range(len(bags)):
-            out_str = gen_sample_meta_data_string(bags[i], global_bag if global_bag else bags[i], i, instrument_name)
+            out_str = gen_sample_meta_data_string(bags[i], global_bag if global_bag else bags[i], i, instrument_name, keyRanges[i])
             cpp_file.write(out_str)
         cpp_file.write("};\n")
 
@@ -235,11 +239,11 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
 
 
 # prints out the sample metadata into the first portion of the sample array
-def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
+def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, keyRange):
     out_fmt_str = \
         "\t{{\n" \
         "\t\t{ORIGINAL_PITCH},\n" \
-		"\t\t{CENTS_OFFSET},\n" \
+	"\t\t{CENTS_OFFSET},\n" \
         "\t\t{LENGTH},\n" \
         "\t\t{SAMPLE_RATE},\n" \
         "\t\t{LOOP_START},\n" \
@@ -250,7 +254,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
         "\t\t{VELOCITY_RANGE_UPPER},\n" \
         "\t\t{DELAY_ENV},\n" \
         "\t\t{ATTACK_ENV},\n" \
-		"\t\t{HOLD_ENV},\n" \
+	"\t\t{HOLD_ENV},\n" \
         "\t\t{DECAY_ENV},\n" \
         "\t\t{SUSTAIN_ENV},\n" \
         "\t\t{RELEASE_ENV},\n" \
@@ -260,13 +264,13 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
     base_note = bag.base_note if bag.base_note else bag.sample.original_pitch
     out_vals = {
         "ORIGINAL_PITCH": base_note,
-		"CENTS_OFFSET": (pow(2.0, float(bag.fine_tuning)/1200.0)) if bag.fine_tuning else 1.0,
+	"CENTS_OFFSET": (pow(2.0, float(bag.fine_tuning)/1200.0)) if bag.fine_tuning else 1.0,
         "LENGTH": bag.sample.duration,
         "SAMPLE_RATE": bag.sample.sample_rate,
         "LOOP_START": bag.cooked_loop_start,
         "LOOP_END": bag.cooked_loop_end,
-        "KEY_RANGE_LOWER": bag.key_range[0] if bag.key_range else 0,
-        "KEY_RANGE_UPPER": bag.key_range[1] if bag.key_range else 0,
+        "KEY_RANGE_LOWER": keyRange[0],
+        "KEY_RANGE_UPPER": keyRange[1],
         "VELOCITY_RANGE_LOWER": bag.velocity_range[0] if bag.velocity_range else 0,
         "VELOCITY_RANGE_UPPER": bag.velocity_range[1] if bag.velocity_range else 0,
         "SAMPLE_ARRAY_NAME": "{0}_sample_{1}_{2}".format(instrument_name, sample_num, re.sub(r'[\W]+', '', bag.sample.name)),
@@ -276,7 +280,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
         # No property provided by SF2Utils; 33 is from form the SF2 spec
         "DELAY_ENV": bag.gens[33].cents if 33 in bag.gens else global_bag.gens[33].cents if 33 in global_bag.gens else None,
         "ATTACK_ENV": bag.volume_envelope_attack if bag.volume_envelope_attack else global_bag.volume_envelope_attack,
-		"HOLD_ENV": bag.volume_envelope_hold if bag.volume_envelope_hold else global_bag.volume_envelope_hold,
+	"HOLD_ENV": bag.volume_envelope_hold if bag.volume_envelope_hold else global_bag.volume_envelope_hold,
         "DECAY_ENV": bag.volume_envelope_decay if bag.volume_envelope_decay else global_bag.volume_envelope_decay,
         "SUSTAIN_ENV": bag.volume_envelope_sustain if bag.volume_envelope_sustain else global_bag.volume_envelope_sustain,
         "RELEASE_ENV": bag.volume_envelope_release if bag.volume_envelope_release else global_bag.volume_envelope_release,
@@ -300,6 +304,37 @@ def note_to_freq(note):
     freq = float(pow(2, exp)) * 440.0
     return freq
 
+# Retrieves all key ranges for the samples and expands them to fill empty
+# space in the 0-127 range if needed.
+def getKeyRanges(bags, keyRanges):
+    # remove any bags without key ranges before sorting bags by key range
+    tempList = []
+    for aBag in bags:
+        if aBag.key_range == None:
+            tempList.append(aBag)
+            bags.remove(aBag)
+
+    # sort bags with key ranges and fill any gaps in range
+    if(len(bags) != 0):
+        bags.sort(key=lambda x:x.key_range[0]) 
+        for aBag in bags:
+            keyRanges.append([aBag.key_range[0], aBag.key_range[1]])
+
+    for i in range(len(keyRanges)):
+        if i == 0:
+            keyRanges[i][0] = 0
+
+        if i == len(keyRanges)-1:
+            keyRanges[i][1] = 127
+        else:
+            keyDiff = keyRanges[i+1][0]-keyRanges[i][1]
+            keyRanges[i][1] += int(keyDiff/2) + keyDiff%2
+            keyRanges[i+1][0] -= int(keyDiff/2) - 1
+
+    # append bags without key ranges to the end of the bags list
+    for aBag in tempList:
+        bags.append(aBag)
+        keyRanges.append([0, 127])
 
 def error(message):
     print("ERROR: " + message)
