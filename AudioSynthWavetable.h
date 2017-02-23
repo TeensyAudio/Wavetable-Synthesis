@@ -10,7 +10,6 @@
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define AMP_DEF 69
 
-
 class AudioSynthWavetable : public AudioStream
 {
 public:
@@ -154,7 +153,6 @@ private:
 	uint16_t decay_count = 0;
 	int32_t  sustain_mult = 0;
 	uint16_t release_count = 0;
-
 
 	static uint32_t
 		interpolation_update,
