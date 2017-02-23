@@ -99,15 +99,24 @@ void setup() {
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
 
-	//performanceTimer.begin(AudioSynthWavetable::print_performance, 2000000);
 }
 
-void guitarHeroMode() {
-	char line[129];
-	line[128] = '\0';
-	for (int i = 0; i < 128; ++i) line[i] = '-';
+void guitarHeroMode() { // now unicorn friendly
+	const int RESET = 20;
+	const int MIDI_NOTES = 128;
+	static char line[MIDI_NOTES+1] = { 0 };
+	static int accumulated = 0;
+	if (!accumulated) {
+		for (int i = 0; i < MIDI_NOTES; ++i) line[i] = ' ';
+		++accumulated;
+	}
 	for (int i = 0; i < used_voices; ++i) line[voices[i].note] = '*';
-	Serial.println(line);
+	if (accumulated == RESET) {
+		Serial.println(line);
+		accumulated = 0;
+	} else {
+		++accumulated;
+	}
 }
 
 #ifdef DEBUG_BABY
