@@ -6,4 +6,5 @@
 **/__vm/
 **/.idea/
 **/.vs/
+*.pyc
 __pycache__/
