@@ -155,7 +155,7 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
 
         bags_to_decode = \
             [sf2.instruments[inst_index].bags[n] for n in selected_bags] if selected_bags \
-            else sf2.instruments[inst_index].bags[1:] if global_bag_index \
+            else sf2.instruments[inst_index].bags[1:] if global_bag_index != None \
             else sf2.instruments[inst_index].bags
 
         for bag in bags_to_decode:
