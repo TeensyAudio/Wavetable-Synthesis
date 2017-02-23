@@ -283,7 +283,7 @@ void AudioSynthWavetable::update(void) {
 		case STATE_HOLD:
 			envelopeState = STATE_DECAY;
 			count = decay_count;
-			//inc = (sustain_mult - UNITY_GAIN) / ((int32_t)count << 3);
+			//inc = count > 0 ? (float)(-sustain_mult) / ((int32_t)count << 3) : 0;
 			inc = (float)(-sustain_mult) / ((int32_t)count << 3);
 			//Serial.printf("DECAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
