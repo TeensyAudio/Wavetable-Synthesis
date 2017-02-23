@@ -78,7 +78,7 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 		env_attack(data.ATTACK_ENV);
 		env_decay(data.DECAY_ENV);
 		if (data.SUSTAIN_ENV > 0)
-			env_sustain(data.SUSTAIN_ENV/1000);
+			env_sustain((float)data.SUSTAIN_ENV / UNITY_GAIN);
 		else
 			env_sustain(1);
 		env_release(data.RELEASE_ENV);
@@ -154,13 +154,13 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	if (count > 0) {
 		envelopeState = STATE_DELAY;
 		inc = 0;
-		//Serial.printf("DELAY: %f\n", inc);
+		//Serial.printf("DELAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
 	} else {
 		envelopeState = STATE_ATTACK;
 		count = attack_count;
 		// 2^16 divided by the number of samples
 		inc = (UNITY_GAIN / (count << 3));
-		//Serial.printf("ATTACK: %f\n", inc);
+		//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
 	}
 	tone_phase = 0;
 	playing = 1;
@@ -174,6 +174,7 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	int i;
 	for(i = 0; i < num_samples-1 && note > samples[i].NOTE_RANGE_2; i++);
 	parseSample(i, custom_env);
+	//Serial.printf("sustain_mult = %d\n", sustain_mult);
 	if (waveform == NULL) {
 		total_playFrequency += micros();
 		return;
@@ -182,6 +183,7 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	mult = 0;
 	count = delay_count;
 	envelopeState = STATE_DELAY;
+	//Serial.printf("DELAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
 	inc = 0;
 	tone_phase = 0;
 	playing = 1;
@@ -199,7 +201,7 @@ void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = release_count;
 	inc = (-(float)mult / ((int32_t)count << 3));
-	//Serial.printf("RELEASE: %f\n", inc);
+	//Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
 }
 
 void AudioSynthWavetable::update(void) {
@@ -269,29 +271,35 @@ void AudioSynthWavetable::update(void) {
 			envelopeState = STATE_ATTACK;
 			count = attack_count;
 			inc = (UNITY_GAIN / (count << 3));
+			//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_ATTACK:
 			envelopeState = STATE_HOLD;
 			count = hold_count;
 			mult = hold_count ? UNITY_GAIN : mult;
 			inc = 0;
+			//Serial.printf("HOLD: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_HOLD:
 			envelopeState = STATE_DECAY;
 			count = decay_count;
-			inc = count > 0 ? ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3)) : 0;
+			//inc = (sustain_mult - UNITY_GAIN) / ((int32_t)count << 3);
+			inc = (float)(-sustain_mult) / ((int32_t)count << 3);
+			//Serial.printf("DECAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_DECAY:
 			envelopeState = STATE_SUSTAIN;
 			count = 0xFFFF;
-			mult = sustain_mult;
+			mult = UNITY_GAIN - sustain_mult;
 			inc = 0;
+			//Serial.printf("SUSTAIN: %fdb\n", (float)mult/1000);
 			break;
 		case STATE_SUSTAIN:
 			count = 0xFFFF;
 			break;
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;
+			//Serial.println("IDLE");
 			playing = 0;
 			for (; p < end; p += 4) p[0] = p[1] = p[2] = p[3] = 0;
 			continue;
