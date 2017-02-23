@@ -308,29 +308,26 @@ def note_to_freq(note):
 # space in the 0-127 range if needed.
 def getKeyRanges(bags, keyRanges):
     # remove any bags without key ranges before sorting bags by key range
-    tempList = []
-    for aBag in bags:
-        if aBag.key_range == None:
-            tempList.append(aBag)
-            bags.remove(aBag)
+    tempList = [bag for bag in bags if bag.key_range == None]
+    bags = [bag for bag in bags if bag not in tempList]
 
     # sort bags with key ranges and fill any gaps in range
     if(len(bags) != 0):
-        bags.sort(key=lambda x:x.key_range[0]) 
+        bags.sort(key=lambda x:x.key_range[0])
         for aBag in bags:
             keyRanges.append([aBag.key_range[0], aBag.key_range[1]])
 
-    for i in range(len(keyRanges)):
-        if i == 0:
-            keyRanges[i][0] = 0
+        for i in range(len(keyRanges)):
+            if i == 0:
+                keyRanges[i][0] = 0
 
-        if i == len(keyRanges)-1:
-            keyRanges[i][1] = 127
-        else:
-            keyDiff = keyRanges[i+1][0]-keyRanges[i][1]-1
-            if keyDiff < 0: keyDiff = 0
-            keyRanges[i][1] += int(keyDiff/2) + keyDiff%2
-            keyRanges[i+1][0] -= int(keyDiff/2)
+            if i == len(keyRanges)-1:
+                keyRanges[i][1] = 127
+            else:
+                keyDiff = keyRanges[i+1][0]-keyRanges[i][1]-1
+                if keyDiff < 0: keyDiff = 0
+                keyRanges[i][1] += int(keyDiff/2) + keyDiff%2
+                keyRanges[i+1][0] -= int(keyDiff/2)
 
     # append bags without key ranges to the end of the bags list
     for aBag in tempList:
