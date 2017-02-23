@@ -327,9 +327,9 @@ def getKeyRanges(bags, keyRanges):
         if i == len(keyRanges)-1:
             keyRanges[i][1] = 127
         else:
-            keyDiff = keyRanges[i+1][0]-keyRanges[i][1]
+            keyDiff = keyRanges[i+1][0]-keyRanges[i][1]-1
             keyRanges[i][1] += int(keyDiff/2) + keyDiff%2
-            keyRanges[i+1][0] -= int(keyDiff/2) - 1
+            keyRanges[i+1][0] -= int(keyDiff/2)
 
     # append bags without key ranges to the end of the bags list
     for aBag in tempList:
