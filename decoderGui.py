@@ -165,6 +165,7 @@ class Application(Frame):
 
         # Set Bindings
         self.instList.bind('<<ListboxSelect>>', self.update_samples)
+        self.sampList.bind('<<ListboxSelect>>', self.update_selection_total)
         self.sampList.bind('<Double-1>', self.send_to_decoder)
 
     def call_back(self):
@@ -182,6 +183,14 @@ class Application(Frame):
             self.status_text.set('Decode Successful!')
         else:
             self.status_text.set('ERROR! Failed to Decode!')
+
+    def update_selection_total(self, *args):
+        total = 0
+        sampIdxs = self.sampList.curselection()
+        if len(sampIdxs) > 0:
+            for i in sampIdxs:
+                total += self.Instruments[self.currInst].Samples[i].size    
+        self.total_sample_size.set(total)
 
     def update_samples(self, *args):
         idxs = self.instList.curselection()
@@ -208,7 +217,7 @@ class Application(Frame):
                 if bag.sample is None:
                     self.Instruments[-1].set_gb_idx(bag_index)
                 elif bag.sample is not None and bag.sample not in self.Instruments[-1].Samples:
-                    self.Instruments[-1].Samples.append(sf2elements.Sample(bag.sample.name, bag_index))
+                    self.Instruments[-1].Samples.append(sf2elements.Sample(bag.sample.name, bag_index, bag.sample.duration))
                 bag_index += 1
         # Set instrument control variable
         self.i_names.set(list(map(lambda x: x.i_name, self.Instruments)))
