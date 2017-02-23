@@ -15,7 +15,11 @@ class AudioSynthWavetable : public AudioStream
 public:
 	AudioSynthWavetable(void) : AudioStream(0, NULL) {}
 
-	void setSamples(const sample_data * samples, int num_samples);
+	void setSamples(const sample_data * samples, int num_samples) {
+		this->samples = samples;
+		this->num_samples = num_samples;
+	}
+	
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -25,14 +29,6 @@ public:
 		for (int len = loop_length; len >>= 1; ++length_bits);
 		loop_phase = (loop_length - 1) << (32 - length_bits);
 	}
-	
-	void play(void);
-	void playFrequency(float freq, bool custom_env=0);
-	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
-	void stop(void);
-	bool isPlaying(void);
-	void frequency(float freq);
-	void parseSample(int sample_num, bool custom_env);
 	
 	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
@@ -48,7 +44,7 @@ public:
 		tone_amp = (uint16_t)(32767.0*v);
 	}
 
-	float midi_volume_transform(int midi_amp) {
+	static float midi_volume_transform(int midi_amp) {
 		// 4 approximates a logarithmic taper for the volume
 		// however, we might need to play with this value
 		// if people think the volume is too quiet at low
@@ -98,9 +94,16 @@ public:
 		release_count = milliseconds2count(milliseconds);
 	}
 	
+	// Defined in AudioSynthWavetable.cpp
+	void play(void);
+	void stop(void);
+	void parseSample(int sample_num, bool custom_env);
+	void playFrequency(float freq, bool custom_env=0);
+	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
+	bool isPlaying(void) { return envelopeState != STATE_IDLE; }
+	void frequency(float freq);
 	virtual void update(void);
-
-	static void print_performance();
+	static void print_performance(void);
 
 private:
 
@@ -133,13 +136,17 @@ private:
 
 	uint32_t* waveform = NULL;
 	const sample_data * samples = NULL;
-	int length = 0, length_bits = 0, loop_start = 0, loop_end = 0, loop_length = 0;
+	int length = 0, length_bits = 0;
+	int loop_start = 0, loop_end = 0, loop_length = 0;
 	float sample_freq = 440.0, cents_offset = 1.0;
-	uint8_t playing = 0, num_samples = 0;
-	uint32_t tone_phase = 0, loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
+	uint8_t playing = 0;
+	uint8_t num_samples = 0;
+	uint32_t loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
+	uint32_t tone_phase = 0;
 	uint32_t max_phase = 0;
 	uint32_t tone_incr = 0;
-	uint16_t tone_amp = 0, sample_rate = 0;
+	uint16_t tone_amp = 0;
+	uint16_t sample_rate = 0;
     
 	// state
 	envelopeStateEnum  envelopeState = STATE_IDLE;  // idle, delay, attack, hold, decay, sustain, release

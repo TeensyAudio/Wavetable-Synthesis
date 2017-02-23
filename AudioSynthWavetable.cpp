@@ -25,8 +25,8 @@
  */
 
 #include "AudioSynthWavetable.h"
-#include <SerialFlash.h>
 #include <dspinst.h>
+#include <SerialFlash.h>
 
 //#define STATE_IDLE	0
 //#define STATE_DELAY	1
@@ -46,13 +46,18 @@ uint32_t
 	AudioSynthWavetable::total_playNote,
 	AudioSynthWavetable::total_amplitude;
 
-void AudioSynthWavetable::setSamples(const sample_data * samples, int num_samples) {
-	this->samples = samples;
-	this->num_samples = num_samples;
+void AudioSynthWavetable::play(void) {
+	if (waveform == NULL)
+		return;
+	tone_phase = 0;
+	playing = 1;
 }
 
-bool AudioSynthWavetable::isPlaying() {
-	return envelopeState != STATE_IDLE;
+void AudioSynthWavetable::stop(void) {
+	envelopeState = STATE_RELEASE;
+	count = release_count;
+	inc = (-(float)mult / ((int32_t)count << 3));
+	//Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
 }
 
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
@@ -106,44 +111,33 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	total_parseSample += micros();
 }
 
-void AudioSynthWavetable::play(void) {
-	if (waveform == NULL)
-		return;
-	tone_phase = 0;
-	playing = 1;
-}
-
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	total_playFrequency -= micros();
-	float freq1, freq2;
+	//float freq1, freq2;
 	//elapsedMillis timer = 0;
-	for(int i = 0; i < num_samples; i++) {
+	/*for(int i = 0; i < num_samples; i++) {
 		freq1 = noteToFreq(samples[i].NOTE_RANGE_1);
 		freq2 = noteToFreq(samples[i].NOTE_RANGE_2);
 		if (freq >= freq1 && freq <= freq2) {
 			parseSample(i, custom_env);
-			//Serial.println("Branch 1");
 			break;
 		} else if (i == 0 && freq < freq1) {
 			parseSample(0, custom_env);
-			//Serial.println("Branch 2");
 			break;
 		} else if (i == num_samples-1 && freq > freq2) {
 			parseSample(num_samples-1, custom_env);
-			//Serial.println("Branch 3");
 			break;
 		} else if (freq > freq2 && freq < noteToFreq(samples[i+1].NOTE_RANGE_1)) {
-			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2)) {
+			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2))
 				parseSample(i, custom_env);
-				//Serial.println("Branch 4");
-			}
-			else {
+			else
 				parseSample(i+1, custom_env);
-				//Serial.println("Branch 5");
-			}
 			break;
 		}
-	}
+	}*/
+	int i;
+	for(i = 0; i < num_samples-1 && freq > noteToFreq(samples[i].NOTE_RANGE_2); i++);
+	parseSample(i, custom_env);
 	if (waveform == NULL) {
 		total_playFrequency += micros();
 		return;
@@ -197,11 +191,24 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	total_playNote += micros();
 }
 
-void AudioSynthWavetable::stop(void) {
-	envelopeState = STATE_RELEASE;
-	count = release_count;
-	inc = (-(float)mult / ((int32_t)count << 3));
-	//Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
+void AudioSynthWavetable::frequency(float freq) {
+	total_frequency -= micros();
+	if (freq < 0.0)
+		freq = 0.0;
+	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
+		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
+	
+	//Serial.println(freq);
+	//Serial.println(cents_offset);
+	float rate_coef = sample_rate / AUDIO_SAMPLE_RATE_EXACT;
+	
+	//Serial.println(freq);
+	
+	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
+	//steps through the wavetable sample one element at a time; from there we
+	//only need to scale based a ratio of freq/sample_freq for the desired increment
+	tone_incr = cents_offset * ((rate_coef * freq) / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
+	total_frequency += micros();
 }
 
 void AudioSynthWavetable::update(void) {
@@ -345,26 +352,6 @@ void AudioSynthWavetable::update(void) {
 	release(block);
 	//Serial.printf("Latency: %dms\n", (int)timer);
 	total_update += micros();
-}
-
-void AudioSynthWavetable::frequency(float freq) {
-	total_frequency -= micros();
-	if (freq < 0.0)
-		freq = 0.0;
-	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
-		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
-
-	//Serial.println(freq);
-	//Serial.println(cents_offset);
-	float rate_coef = sample_rate / AUDIO_SAMPLE_RATE_EXACT;
-	
-	//Serial.println(freq);
-
-	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
-	//steps through the wavetable sample one element at a time; from there we
-	//only need to scale based a ratio of freq/sample_freq for the desired increment
-	tone_incr = cents_offset * ((rate_coef * freq) / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
-	total_frequency += micros();
 }
 
 void AudioSynthWavetable::print_performance() {
