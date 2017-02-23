@@ -328,6 +328,7 @@ def getKeyRanges(bags, keyRanges):
             keyRanges[i][1] = 127
         else:
             keyDiff = keyRanges[i+1][0]-keyRanges[i][1]-1
+            if keyDiff < 0: keyDiff = 0
             keyRanges[i][1] += int(keyDiff/2) + keyDiff%2
             keyRanges[i+1][0] -= int(keyDiff/2)
 
