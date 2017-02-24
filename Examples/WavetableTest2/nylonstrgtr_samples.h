@@ -15,4 +15,4 @@ const instrument_data nylonstrgtr = { 3, nylonstrgtr_ranges, nylonstrgtr_samples
 // - output of range array
 // - output of instrument_data
 // - removal of note range from sample_data
-// - addition of / AUDIO_SAMPLE_RATE_EXACT for sample rate, converting it to a rate coefficient
+// - addition of / AUDIO_SAMPLE_RATE_EXACT for sample rate, replacing it with SAMPLE_RATE_COEFFICIENT
