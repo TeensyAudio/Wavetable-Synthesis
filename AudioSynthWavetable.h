@@ -82,7 +82,6 @@ public:
 		if (milliseconds <= 0) {
 			milliseconds = 100;
 		}
-		if (milliseconds)
 		decay_count = milliseconds2count(milliseconds);
 	}
 	void env_sustain(float level) {
