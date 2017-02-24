@@ -30,7 +30,7 @@ public:
 	}
 	
 	void setFreqAmp(float freq, float amp) {
-		frequency(freq);
+		setFrequency(freq);
 		amplitude(amp);
 	}
 	
@@ -101,9 +101,8 @@ public:
 	void playFrequency(float freq, bool custom_env=0);
 	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
 	bool isPlaying(void) { return envelopeState != STATE_IDLE; }
-	void frequency(float freq);
+	void setFrequency(float freq);
 	virtual void update(void);
-	static void print_performance(void);
 
 private:
 
@@ -118,7 +117,8 @@ private:
 	}
 
 	uint32_t* waveform = NULL;
-	const instrument_data* instrument;
+	const sample_data* current_sample = NULL;
+	const instrument_data* instrument = NULL;
 	int length = 0, length_bits = 0;
 	int loop_start = 0, loop_end = 0, loop_length = 0;
 	float sample_freq = 440.0, cents_offset = 1.0;
@@ -128,7 +128,6 @@ private:
 	uint32_t max_phase = 0;
 	uint32_t tone_incr = 0;
 	uint16_t tone_amp = 0;
-	uint16_t sample_rate = 0;
     
 	// state
 	envelopeStateEnum  envelopeState = STATE_IDLE;  // idle, delay, attack, hold, decay, sustain, release
@@ -142,15 +141,5 @@ private:
 	uint16_t decay_count = 0;
 	int32_t  sustain_mult = 0;
 	uint16_t release_count = 0;
-
-	static uint32_t
-		interpolation_update,
-		envelope_update,
-		total_update,
-		total_parseSample,
-		total_playFrequency,
-		total_frequency,
-		total_playNote,
-		total_amplitude;
 };
 

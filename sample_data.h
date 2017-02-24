@@ -5,7 +5,7 @@ struct sample_data {
 	const int ORIGINAL_PITCH;
 	const float CENTS_OFFSET;
 	const int SAMPLE_LENGTH;
-	const int SAMPLE_RATE;
+	const float SAMPLE_RATE_COEFFICIENT;
 	const int LOOP_START;
 	const int LOOP_END;
 	const int VELOCITY_RANGE_1;
