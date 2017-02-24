@@ -1,4 +1,4 @@
-#include "PerfectSine_samples.h"
+#include "SF2_Decoded_Samples.h"
 sample_data samples[2] = {
 {
 48,

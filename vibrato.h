@@ -1,4 +1,4 @@
-enum VibratoMode { Off=0, V1, V2, V3, C1, C2, C3 };
+/*enum VibratoMode { Off=0, V1, V2, V3, C1, C2, C3 };
 
 class Vibrato : public AudioStream {
  public:
@@ -55,4 +55,4 @@ class Vibrato : public AudioStream {
 
     int depth;
     int mix;
-};
+};*/
