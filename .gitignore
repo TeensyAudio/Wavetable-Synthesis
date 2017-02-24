@@ -4,4 +4,7 @@
 **/Debug/
 **/Release/
 **/__vm/
+**/.idea/
 **/.vs/
+*.pyc
+__pycache__/

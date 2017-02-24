@@ -1,82 +1,24 @@
-/* Audio Library for Teensy 3.X
- * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com
- *
- * Development of this audio library was funded by PJRC.COM, LLC by sales of
- * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop
- * open source software by purchasing Teensy or other PJRC products.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice, development funding notice, and this permission
- * notice shall be included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
 #pragma once
 
 #include "Arduino.h"
 #include "AudioStream.h"
 #include <math.h>
+#include <sample_data.h>
 
-#define MAX_MS 11000.0      // Max section length (milliseconds)
-#define UNITY_GAIN 65536.0  // Max amplitude (centibels)
+#define UNITY_GAIN 65536.0  // Max amplitude
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
-#define AMP_DEF 63
-
-struct sample_data{
-	const int ORIGINAL_PITCH;
-	const int SAMPLE_LENGTH;
-	const int SAMPLE_RATE;
-	const int LOOP_START;
-	const int LOOP_END;
-	const int NOTE_RANGE_1;
-	const int NOTE_RANGE_2;
-	const int VELOCITY_RANGE_1;
-	const int VELOCITY_RANGE_2;
-	const int DELAY_ENV;
-	const int ATTACK_ENV;
-	const int HOLD_ENV;
-	const int DECAY_ENV;
-	const int SUSTAIN_ENV;
-	const int RELEASE_ENV;
-	const unsigned int * sample;
-};
+#define AMP_DEF 69
 
 class AudioSynthWavetable : public AudioStream
 {
 public:
-	AudioSynthWavetable(void)
-		: AudioStream(0, NULL)
-		, waveform(NULL)
-		, num_samples(0)
-		, length(0)
-		, length_bits(0)
-		, sample_freq(440.0)
-		, playing(0)
-		, tone_phase(0)
-		, loop_phase(0)
-		, max_phase(0)
-		, tone_incr(0)
-		, tone_amp(0)
-		, loop_start(0)
-		, loop_end(0)
-		, loop_start_phase(0)
-		, loop_end_phase(0)
-	{}
+	AudioSynthWavetable(void) : AudioStream(0, NULL) {}
 
-	void setSamples(sample_data * samples, int num_samples);
+	void setSamples(const sample_data * samples, int num_samples) {
+		this->samples = samples;
+		this->num_samples = num_samples;
+	}
+	
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
@@ -86,14 +28,6 @@ public:
 		for (int len = loop_length; len >>= 1; ++length_bits);
 		loop_phase = (loop_length - 1) << (32 - length_bits);
 	}
-	
-	void play(void);
-	void playFrequency(float freq, bool custom_env=0);
-	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
-	void stop(void);
-	bool isPlaying(void);
-	void frequency(float freq);
-	void parseSample(int sample_num, bool custom_env);
 	
 	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
@@ -109,7 +43,7 @@ public:
 		tone_amp = (uint16_t)(32767.0*v);
 	}
 
-	float midi_volume_transform(int midi_amp) {
+	static float midi_volume_transform(int midi_amp) {
 		// 4 approximates a logarithmic taper for the volume
 		// however, we might need to play with this value
 		// if people think the volume is too quiet at low
@@ -122,7 +56,11 @@ public:
 	}
 	
 	static float noteToFreq(int note) {
-		return 27.5 * pow(2, (float)(note - 21)/12);
+		//return 440.0 * pow(2.0, (note - 69) / 12.0);
+		//float exp = (note + 36.37631656) / 12.0;
+		float exp = note * 0.083333333 + 3.0313597;
+		float freq = pow(2, exp);
+		return freq;
 	}
 	
 	void env_delay(float milliseconds) {
@@ -156,46 +94,80 @@ public:
 		release_count = milliseconds2count(milliseconds);
 	}
 	
+	// Defined in AudioSynthWavetable.cpp
+	void play(void);
+	void stop(void);
+	void parseSample(int sample_num, bool custom_env);
+	void playFrequency(float freq, bool custom_env=0);
+	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
+	bool isPlaying(void) { return envelopeState != STATE_IDLE; }
+	void frequency(float freq);
 	virtual void update(void);
+	static void print_performance(void);
 
 private:
-	uint32_t* waveform;
-	sample_data * samples;
-	int length, length_bits, loop_start, loop_end, loop_length;
-	float sample_freq;
-	uint8_t playing, num_samples;
-	uint32_t tone_phase, loop_phase, loop_start_phase, loop_end_phase;
-	uint32_t max_phase;
-	uint32_t tone_incr;
-	uint16_t tone_amp, sample_rate;
-	
-	uint16_t milliseconds2count(float milliseconds) {
+
+	enum envelopeStateEnum { 
+		STATE_IDLE,
+		STATE_DELAY,
+		STATE_ATTACK,
+		STATE_HOLD,
+		STATE_DECAY,
+		STATE_SUSTAIN,
+		STATE_RELEASE
+	};
+
+	uint32_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
-		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
 		// # of 8-sample units to process
 		// Add 7 to round up
 		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
 	}
-	int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
-		return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
-	}
-	int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
-		return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
-	}
-	uint32_t pack_16b_16b(int32_t a, int32_t b) {
-		return (a << 16) | (b & 0x0000FFFF);
-	}
+	//int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
+	//	return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
+	//}
+	//int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
+	//	return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
+	//}
+	//uint32_t pack_16b_16b(int32_t a, int32_t b) {
+	//	return (a << 16) | (b & 0x0000FFFF);
+	//}
+
+	uint32_t* waveform = NULL;
+	const sample_data * samples = NULL;
+	int length = 0, length_bits = 0;
+	int loop_start = 0, loop_end = 0, loop_length = 0;
+	float sample_freq = 440.0, cents_offset = 1.0;
+	uint8_t playing = 0;
+	uint8_t num_samples = 0;
+	uint32_t loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
+	uint32_t tone_phase = 0;
+	uint32_t max_phase = 0;
+	uint32_t tone_incr = 0;
+	uint16_t tone_amp = 0;
+	uint16_t sample_rate = 0;
     
 	// state
-	uint8_t  state;  // idle, delay, attack, hold, decay, sustain, release
-	uint16_t count;  // how much time remains in this state, in 8 sample units
-	float    mult;   // attenuation, 0=off, 0x10000=unity gain
-	float    inc;    // amount to change mult on each sample
+	envelopeStateEnum  envelopeState = STATE_IDLE;  // idle, delay, attack, hold, decay, sustain, release
+	uint32_t count = 0;  // how much time remains in this state, in 8 sample units
+	float    mult = 0;   // attenuation, 0=off, 0x10000=unity gain
+	float    inc = 0;    // amount to change mult on each sample
 	// settings
-	uint16_t delay_count;
-	uint16_t attack_count;
-	uint16_t hold_count;
-	uint16_t decay_count;
-	int32_t  sustain_mult;
-	uint16_t release_count;
+	uint32_t delay_count = 0;
+	uint32_t attack_count = 0;
+	uint32_t hold_count = 0;
+	uint32_t decay_count = 0;
+	int32_t  sustain_mult = 0; // Why not uint?..
+	uint32_t release_count = 0;
+
+	static uint32_t
+		interpolation_update,
+		envelope_update,
+		total_update,
+		total_parseSample,
+		total_playFrequency,
+		total_frequency,
+		total_playNote,
+		total_amplitude;
 };
+
