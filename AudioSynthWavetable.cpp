@@ -56,7 +56,7 @@ void AudioSynthWavetable::play(void) {
 void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = release_count;
-	inc = (-(float)mult / ((int32_t)count << 3));
+	inc = (-(float)mult / (count << 3));
 	Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
 }
 
@@ -291,18 +291,18 @@ void AudioSynthWavetable::update(void) {
 			envelopeState = STATE_DECAY;
 			count = decay_count;
 			//inc = count > 0 ? (float)(-sustain_mult) / ((int32_t)count << 3) : 0;
-			inc = (float)(-sustain_mult) / ((int32_t)count << 3);
+			inc = (float)(-sustain_mult) / (count << 3);
 			//Serial.printf("length: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_DECAY:
 			envelopeState = STATE_SUSTAIN;
-			count = 0xFFFF;
+			count = 0xFFFFFFFF;
 			mult = UNITY_GAIN - sustain_mult;
 			inc = 0;
 			//Serial.printf("SUSTAIN: %fdb\n", (float)mult/1000);
 			break;
 		case STATE_SUSTAIN:
-			count = 0xFFFF;
+			count = 0xFFFFFFFF;
 			break;
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;
