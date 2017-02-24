@@ -207,8 +207,8 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
 
             ary_length = int(length_32 + pad_length)
 
-            smpl_identifier = "{0}_sample_{1}_{2}[{3}]"\
-                .format(instrument_name, i, re.sub(r'[\W]+', '', bags[i].sample.name), ary_length)
+            smpl_identifier = "sample_{0}_{1}_{2}[{3}]"\
+                .format(i, instrument_name, re.sub(r'[\W]+', '', bags[i].sample.name), ary_length)
 
             # Write array init to header file.
             h_file.write("\nextern const uint32_t {0};\n".format(smpl_identifier))
@@ -273,7 +273,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "KEY_RANGE_UPPER": keyRange[1],
         "VELOCITY_RANGE_LOWER": bag.velocity_range[0] if bag.velocity_range else 0,
         "VELOCITY_RANGE_UPPER": bag.velocity_range[1] if bag.velocity_range else 0,
-        "SAMPLE_ARRAY_NAME": "{0}_sample_{1}_{2}".format(instrument_name, sample_num, re.sub(r'[\W]+', '', bag.sample.name)),
+        "SAMPLE_ARRAY_NAME": "sample_{0}_{1}_{2}".format(sample_num, instrument_name, re.sub(r'[\W]+', '', bag.sample.name)),
     }
 
     env_vals = {
