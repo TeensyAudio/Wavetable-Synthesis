@@ -9,11 +9,11 @@
 #include "AudioAllocWavetable.h"
 #include <SerialFlash.h>
 
-void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, sample_data * wavetable, int num_samples, float amp)
+void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, const instrument_data instrument, float amp)
 {
     this->voices = voices;
     this->numVoices = numVoices;
-    setSamples(wavetable, num_samples);
+	setSamples(instrument);
     setAmplitude(amp);
     for (int i=0; i<numVoices; i++) {
         voices[i].stop();
@@ -22,10 +22,10 @@ void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, s
     }
 }
 
-void AudioAllocWavetable::setSamples(sample_data * wavetable, int num_samples)
+void AudioAllocWavetable::setSamples(const instrument_data instrument)
 {
     for (int i=0; i<numVoices; i++) {
-        voices[i].setSamples(wavetable, num_samples);
+		voices[i].setSamples(instrument);
     }
 }
 

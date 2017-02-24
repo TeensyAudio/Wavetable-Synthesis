@@ -18,8 +18,8 @@ IntervalTimer guitarHeroTimer;
 IntervalTimer volumeTimer;
 
 
-const int TOTAL_VOICES = 16;
-const int TOTAL_MIXERS = (TOTAL_VOICES-1)/4+2;
+const int TOTAL_VOICES = 32;
+const int TOTAL_MIXERS = 11;
 struct voice_t {
 	int wavetable_id;
 	byte channel;
@@ -57,10 +57,32 @@ AudioConnection patchCord[] = {
 	{wavetable[13], 0, mixer[3], 1},
 	{wavetable[14], 0, mixer[3], 2},
 	{wavetable[15], 0, mixer[3], 3},
-	{mixer[0], 0, mixer[TOTAL_MIXERS-1], 0},
-	{mixer[1], 0, mixer[TOTAL_MIXERS-1], 1},
-	{mixer[2], 0, mixer[TOTAL_MIXERS-1], 2},
-	{mixer[3], 0, mixer[TOTAL_MIXERS-1], 3},
+	{wavetable[16], 0, mixer[4], 0},
+	{wavetable[17], 0, mixer[4], 1},
+	{wavetable[18], 0, mixer[4], 2},
+	{wavetable[19], 0, mixer[4], 3},
+	{wavetable[20], 0, mixer[5], 0},
+	{wavetable[21], 0, mixer[5], 1},
+	{wavetable[22], 0, mixer[5], 2},
+	{wavetable[23], 0, mixer[5], 3},
+	{wavetable[24], 0, mixer[6], 0},
+	{wavetable[25], 0, mixer[6], 1},
+	{wavetable[26], 0, mixer[6], 2},
+	{wavetable[27], 0, mixer[6], 3},
+	{wavetable[28], 0, mixer[7], 0},
+	{wavetable[29], 0, mixer[7], 1},
+	{wavetable[30], 0, mixer[7], 2},
+	{wavetable[31], 0, mixer[7], 3},
+	{mixer[0], 0, mixer[TOTAL_MIXERS-3], 0},
+	{mixer[1], 0, mixer[TOTAL_MIXERS-3], 1},
+	{mixer[2], 0, mixer[TOTAL_MIXERS-3], 2},
+	{mixer[3], 0, mixer[TOTAL_MIXERS-3], 3},
+	{mixer[4], 0, mixer[TOTAL_MIXERS-2], 0},
+	{mixer[5], 0, mixer[TOTAL_MIXERS-2], 1},
+	{mixer[6], 0, mixer[TOTAL_MIXERS-2], 2},
+	{mixer[7], 0, mixer[TOTAL_MIXERS-2], 3},
+	{mixer[TOTAL_MIXERS-3], 0, mixer[TOTAL_MIXERS-1], 0},
+	{mixer[TOTAL_MIXERS-2], 0, mixer[TOTAL_MIXERS-1], 1},
 	{mixer[TOTAL_MIXERS-1], 0, i2s1, 0},
 	{mixer[TOTAL_MIXERS-1], 0, i2s1, 1},
 };
@@ -75,6 +97,9 @@ void setVolume() {
 	sgtl5000_1.volume((analogRead(PIN_A2)-1)/1022.0);
 }
 
+void guitarHeroMode();
+void printVoices();
+
 void setup() {
 	Serial.begin(115200);
 
@@ -86,11 +111,11 @@ void setup() {
 
 	sgtl5000_1.enable();
 	sgtl5000_1.volume(1.0);
-	volumeTimer.begin(setVolume, 100000);
+	//volumeTimer.begin(setVolume, 100000);
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 1);
-		wavetable[i].setSamples(nylonstrgtr, sizeof(nylonstrgtr) / sizeof(sample_data));
+		wavetable[i].setSamples(nylonstrgtr);
 		wavetable[i].amplitude(1);
 		voices[i].wavetable_id = i;
 		voices[i].channel = voices[i].note = 0xFF;
@@ -98,16 +123,17 @@ void setup() {
 
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
-
+	guitarHeroTimer.begin(guitarHeroMode, 1000000/120);
+	//midiMapTimer.begin(printVoices, 5000);
 }
 
 void guitarHeroMode() { // now unicorn friendly
-	const int RESET = 20;
+	const int RESET = 4;
 	const int MIDI_NOTES = 128;
 	static char line[MIDI_NOTES+1] = { 0 };
 	static int accumulated = 0;
 	if (!accumulated) {
-		for (int i = 0; i < MIDI_NOTES; ++i) line[i] = ' ';
+		for (int i = 0; i < MIDI_NOTES; ++i) line[i] = '-';
 		++accumulated;
 	}
 	for (int i = 0; i < used_voices; ++i) line[voices[i].note] = '*';
@@ -163,15 +189,16 @@ void OnNoteOff(byte channel, byte note, byte velocity) {
 
 void loop() {
 	usbMIDI.read();
-	for (int i = 0; i < TOTAL_BUTTONS; ++i) buttons[i].update();
-	if (buttons[0].fallingEdge()) AudioSynthWavetable::print_performance();
-	if (buttons[1].risingEdge()) {
-		midiMapTimer.end();
-		Serial.print('\n');
-	}
-	if (buttons[1].fallingEdge()) midiMapTimer.begin(printVoices, 5000);
-	if (buttons[2].risingEdge()) guitarHeroTimer.end();
-	if (buttons[2].fallingEdge()) guitarHeroTimer.begin(guitarHeroMode, 1000000/60);
+	//for (int i = 0; i < TOTAL_BUTTONS; ++i) buttons[i].update();
+	//if (buttons[0].fallingEdge()) AudioSynthWavetable::print_performance();
+	//if (buttons[1].risingEdge()) {
+	//	midiMapTimer.end();
+	//	Serial.print('\n');
+	//}
+	//if (buttons[1].fallingEdge()) midiMapTimer.begin(printVoices, 5000);
+	//if (buttons[2].risingEdge()) guitarHeroTimer.end();
+	//if (buttons[2].fallingEdge())
+	//	guitarHeroTimer.begin(guitarHeroMode, 1000000/60);
 }
 
 int allocateVoice(byte channel, byte note) {

@@ -15,9 +15,8 @@ class AudioSynthWavetable : public AudioStream
 public:
 	AudioSynthWavetable(void) : AudioStream(0, NULL) {}
 
-	void setSamples(const sample_data * samples, int num_samples) {
-		this->samples = samples;
-		this->num_samples = num_samples;
+	void setSamples(const instrument_data& instrument) {
+		this->instrument = &instrument;
 	}
 	
 	void setLoop(int start, int end) {
@@ -57,11 +56,13 @@ public:
 	}
 	
 	static float noteToFreq(int note) {
-		//return 440.0 * pow(2.0, (note - 69) / 12.0);
-		//float exp = (note + 36.37631656) / 12.0;
-		float exp = note * 0.083333333 + 3.0313597;
-		float freq = pow(2, exp);
-		return freq;
+		//440.0 * pow(2.0, (note - 69) / 12.0);
+		float exp = note * (1.0/12.0) + 3.0313597;
+		return powf(2.0, exp);
+	}
+
+	static int freqToNote(float freq) {
+		return (12.0 / 440.0) * log2f(freq) + 69.5;
 	}
 	
 	void env_delay(float milliseconds) {
@@ -95,7 +96,6 @@ public:
 	}
 	
 	// Defined in AudioSynthWavetable.cpp
-	void play(void);
 	void stop(void);
 	void parseSample(int sample_num, bool custom_env);
 	void playFrequency(float freq, bool custom_env=0);
@@ -107,15 +107,7 @@ public:
 
 private:
 
-	enum envelopeStateEnum { 
-		STATE_IDLE,
-		STATE_DELAY,
-		STATE_ATTACK,
-		STATE_HOLD,
-		STATE_DECAY,
-		STATE_SUSTAIN,
-		STATE_RELEASE
-	};
+	enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE };
 
 	uint16_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
@@ -124,22 +116,12 @@ private:
 		// Add 7 to round up
 		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
 	}
-	//int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
-	//	return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
-	//}
-	//int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
-	//	return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
-	//}
-	//uint32_t pack_16b_16b(int32_t a, int32_t b) {
-	//	return (a << 16) | (b & 0x0000FFFF);
-	//}
 
 	uint32_t* waveform = NULL;
-	const sample_data * samples = NULL;
+	const instrument_data* instrument;
 	int length = 0, length_bits = 0;
 	int loop_start = 0, loop_end = 0, loop_length = 0;
 	float sample_freq = 440.0, cents_offset = 1.0;
-	uint8_t playing = 0;
 	uint8_t num_samples = 0;
 	uint32_t loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
 	uint32_t tone_phase = 0;

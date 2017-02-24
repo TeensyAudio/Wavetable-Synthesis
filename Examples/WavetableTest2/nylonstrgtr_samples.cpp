@@ -1,5 +1,6 @@
 #include "nylonstrgtr_samples.h"
-sample_data nylonstrgtr[3] = {
+
+const sample_data nylonstrgtr_samples[3] = {
 	{
 		70,
 		1.0269267887809788,
@@ -7,8 +8,6 @@ sample_data nylonstrgtr[3] = {
 		44100,
 		3727,
 		3824,
-		0,
-		56,
 		0,
 		0,
 		0,
@@ -26,8 +25,6 @@ sample_data nylonstrgtr[3] = {
 		44100,
 		5125,
 		5188,
-		57,
-		77,
 		0,
 		0,
 		0,
@@ -45,8 +42,6 @@ sample_data nylonstrgtr[3] = {
 		44100,
 		6168,
 		6236,
-		78,
-		97,
 		0,
 		0,
 		0,

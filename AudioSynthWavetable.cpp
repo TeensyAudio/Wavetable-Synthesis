@@ -28,14 +28,6 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-//#define STATE_IDLE	0
-//#define STATE_DELAY	1
-//#define STATE_ATTACK	2
-//#define STATE_HOLD	3
-//#define STATE_DECAY	4
-//#define STATE_SUSTAIN	5
-//#define STATE_RELEASE	6
-
 uint32_t
 	AudioSynthWavetable::interpolation_update,
 	AudioSynthWavetable::envelope_update,
@@ -46,47 +38,38 @@ uint32_t
 	AudioSynthWavetable::total_playNote,
 	AudioSynthWavetable::total_amplitude;
 
-void AudioSynthWavetable::play(void) {
-	if (waveform == NULL)
-		return;
-	tone_phase = 0;
-	playing = 1;
-}
-
 void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = release_count;
 	inc = (-(float)mult / ((int32_t)count << 3));
-	//Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
 }
 
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	total_parseSample -= micros();
-	sample_data data = samples[sample_num];
+	const sample_data* s = &instrument->samples[sample_num];
 	
 	tone_phase = 0;
-	playing = 0;
 	 
-	length = data.SAMPLE_LENGTH;
-	waveform = (uint32_t*)data.sample;
-	setSampleNote(data.ORIGINAL_PITCH);
-	sample_rate = data.SAMPLE_RATE;
+	length = s->SAMPLE_LENGTH;
+	waveform = (uint32_t*)s->sample;
+	setSampleNote(s->ORIGINAL_PITCH);
+	sample_rate = s->SAMPLE_RATE;
 
-	cents_offset = data.CENTS_OFFSET;
+	cents_offset = s->CENTS_OFFSET;
 	
 	//setting start and end loop
-	setLoop(data.LOOP_START, data.LOOP_END);
+	setLoop(s->LOOP_START, s->LOOP_END);
 
 	if (!custom_env) {
-		env_delay(data.DELAY_ENV);
-		env_hold(data.HOLD_ENV);
-		env_attack(data.ATTACK_ENV);
-		env_decay(data.DECAY_ENV);
-		if (data.SUSTAIN_ENV > 0)
-			env_sustain((float)data.SUSTAIN_ENV / UNITY_GAIN);
+		env_delay(s->DELAY_ENV);
+		env_hold(s->HOLD_ENV);
+		env_attack(s->ATTACK_ENV);
+		env_decay(s->DECAY_ENV);
+		if (s->SUSTAIN_ENV > 0)
+			env_sustain((float)s->SUSTAIN_ENV / UNITY_GAIN);
 		else
 			env_sustain(1);
-		env_release(data.RELEASE_ENV);
+		env_release(s->RELEASE_ENV);
 	}
 
 	//length_bits = length & 0xFFFFF000 ? 13 : loop_length & 0xFFFFFF00 ? 9 : loop_length & 0xFFFFFFF0 ? 5 : 1;
@@ -113,30 +96,8 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	total_playFrequency -= micros();
-	//float freq1, freq2;
-	//elapsedMillis timer = 0;
-	/*for(int i = 0; i < num_samples; i++) {
-		freq1 = noteToFreq(samples[i].NOTE_RANGE_1);
-		freq2 = noteToFreq(samples[i].NOTE_RANGE_2);
-		if (freq >= freq1 && freq <= freq2) {
-			parseSample(i, custom_env);
-			break;
-		} else if (i == 0 && freq < freq1) {
-			parseSample(0, custom_env);
-			break;
-		} else if (i == num_samples-1 && freq > freq2) {
-			parseSample(num_samples-1, custom_env);
-			break;
-		} else if (freq > freq2 && freq < noteToFreq(samples[i+1].NOTE_RANGE_1)) {
-			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2))
-				parseSample(i, custom_env);
-			else
-				parseSample(i+1, custom_env);
-			break;
-		}
-	}*/
-	int i;
-	for(i = 0; i < num_samples-1 && freq > noteToFreq(samples[i].NOTE_RANGE_2); i++);
+	int i, note;
+	for (i = 0, note = freqToNote(freq); note > instrument->sample_note_ranges[i]; i++);
 	parseSample(i, custom_env);
 	if (waveform == NULL) {
 		total_playFrequency += micros();
@@ -157,18 +118,15 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 		//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
 	}
 	tone_phase = 0;
-	playing = 1;
 	//Serial.printf("Latency: %dms\n", (int)timer);
 	total_playFrequency += micros();
 }
 
 void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	total_playNote -= micros();
-	this->playing = 0;
 	int i;
-	for(i = 0; i < num_samples-1 && note > samples[i].NOTE_RANGE_2; i++);
+	for(i = 0; note > instrument->sample_note_ranges[i]; i++);
 	parseSample(i, custom_env);
-	//Serial.printf("sustain_mult = %d\n", sustain_mult);
 	if (waveform == NULL) {
 		total_playFrequency += micros();
 		return;
@@ -177,17 +135,11 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	mult = 0;
 	count = delay_count;
 	envelopeState = STATE_DELAY;
-	//Serial.printf("DELAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
 	inc = 0;
 	tone_phase = 0;
-	playing = 1;
-	//Serial.printf("Latency: %dms\n", (int)timer);
-	//Serial.printf("Amplitude: %i\n", amp);  
-	//amplitude((float)amp/(float)127);
 	total_amplitude -= micros();
 	amplitude(midi_volume_transform(amp));
 	total_amplitude += micros();
-	//Serial.println(freq);
 	total_playNote += micros();
 }
 
@@ -220,7 +172,7 @@ void AudioSynthWavetable::update(void) {
 	int32_t s1, s2, v1, v2, v3;
 	//elapsedMillis timer = 0;
 
-	if (!playing || envelopeState == STATE_IDLE) {
+	if (envelopeState == STATE_IDLE) {
 		total_update += micros();
 		return;
 	}
@@ -278,36 +230,30 @@ void AudioSynthWavetable::update(void) {
 			envelopeState = STATE_ATTACK;
 			count = attack_count;
 			inc = (UNITY_GAIN / (count << 3));
-			//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_ATTACK:
 			envelopeState = STATE_HOLD;
 			count = hold_count;
 			mult = hold_count ? UNITY_GAIN : mult;
 			inc = 0;
-			//Serial.printf("HOLD: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_HOLD:
 			envelopeState = STATE_DECAY;
 			count = decay_count;
 			//inc = count > 0 ? (float)(-sustain_mult) / ((int32_t)count << 3) : 0;
 			inc = (float)(-sustain_mult) / ((int32_t)count << 3);
-			//Serial.printf("DECAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_DECAY:
 			envelopeState = STATE_SUSTAIN;
 			count = 0xFFFF;
 			mult = UNITY_GAIN - sustain_mult;
 			inc = 0;
-			//Serial.printf("SUSTAIN: %fdb\n", (float)mult/1000);
 			break;
 		case STATE_SUSTAIN:
 			count = 0xFFFF;
 			break;
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;
-			//Serial.println("IDLE");
-			playing = 0;
 			for (; p < end; p += 4) p[0] = p[1] = p[2] = p[3] = 0;
 			continue;
 		default:
