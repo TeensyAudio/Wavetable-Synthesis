@@ -8,30 +8,25 @@ const sample_data nylonstrgtr_samples[3] = {
 		12,
 		//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5;
 		(1048576.0*1.0269267887809788*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 466.1637615181 + 0.5,
+		//(sample_length-1) << (32 - sample_length_bits)
 		((uint32_t)3828 - 1) << (32 - 12),
+		//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
 		((uint32_t)3824 - 1) << (32 - 12),
+		//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
 		(((uint32_t)3824 - 1) << (32 - 12)) - (((uint32_t)3727 - 1) << (32 - 12)),
+		//DELAY_COUNT
 		((uint32_t)(0*SAMPLES_PER_MSEC) + 7) >> 3,
+		//ATTACK_COUNT
 		((uint32_t)((6 <= 0 ? 1.5 : 6)*SAMPLES_PER_MSEC) + 7) >> 3,
+		//HOLD_COUNT
 		((uint32_t)((20 <= 0 ? 0.5 : 20)*SAMPLES_PER_MSEC) + 7) >> 3,
+		//DECAY_COUNT
 		((uint32_t)((11993 <= 0 ? 100 : 11993)*SAMPLES_PER_MSEC) + 7) >> 3,
+		//RELEASE_COUNT
 		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
+		//SUSTAIN_MULT
 		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
-
-		70,
-		1.0269267887809788,
-		3828,
-		44100.0 / AUDIO_SAMPLE_RATE_EXACT,
-		3727,
-		3824,
-		0,
-		0,
-		0,
-		6,
-		20,
-		11993,
-		100000,
-		100,
+		//PCM A
 		(int16_t*)nylonstrgtr_sample_0_nguitrf2,
 	},
 	{
@@ -46,21 +41,6 @@ const sample_data nylonstrgtr_samples[3] = {
 		((uint32_t)((11993 <= 0 ? 100 : 11993)*SAMPLES_PER_MSEC) + 7) >> 3,
 		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
 		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
-
-		77,
-		0.9994225441413808,
-		5192,
-		44100.0 / AUDIO_SAMPLE_RATE_EXACT,
-		5125,
-		5188,
-		0,
-		0,
-		0,
-		6,
-		20,
-		11993,
-		100000,
-		100,
 		(int16_t*)nylonstrgtr_sample_1_nguitb2,
 	},
 	{
@@ -75,21 +55,6 @@ const sample_data nylonstrgtr_samples[3] = {
 		((uint32_t)((11993 <= 0 ? 100 : 11993)*SAMPLES_PER_MSEC) + 7) >> 3,
 		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
 		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
-
-		76,
-		1.0186558099572924,
-		6240,
-		44100.0 / AUDIO_SAMPLE_RATE_EXACT,
-		6168,
-		6236,
-		0,
-		0,
-		0,
-		6,
-		20,
-		11993,
-		100000,
-		100,
 		(int16_t*)nylonstrgtr_sample_2_acgtrb3,
 	},
 };

@@ -14,21 +14,6 @@ struct sample_data {
 	const uint32_t DECAY_COUNT;
 	const uint32_t RELEASE_COUNT;
 	const uint32_t SUSTAIN_MULT;
-
-	const int ORIGINAL_PITCH;
-	const float CENTS_OFFSET;
-	const int SAMPLE_LENGTH;
-	const float SAMPLE_RATE_COEFFICIENT;
-	const int LOOP_START;
-	const int LOOP_END;
-	const int VELOCITY_RANGE_1;
-	const int VELOCITY_RANGE_2;
-	const int DELAY_ENV;
-	const int ATTACK_ENV;
-	const int HOLD_ENV;
-	const int DECAY_ENV;
-	const int SUSTAIN_ENV;
-	const int RELEASE_ENV;
 	const int16_t* sample;
 };
 

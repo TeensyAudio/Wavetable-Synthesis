@@ -48,7 +48,6 @@ void AudioSynthWavetable::playNote(int note, int amp) {
 }
 
 void AudioSynthWavetable::setFrequency(float freq) {
-	//float rate_coef = current_sample->SAMPLE_RATE_COEFFICIENT;
 	//float per_hz_increment_rate = ((0x80000000 >> (index_bits - 1)) * cents_offset * rate_coef) / sample_freq + 0.5;
 	tone_incr = freq * current_sample->PER_HERTZ_PHASE_INCREMENT;
 	//(0x80000000 >> (index_bits - 1) by itself results in a tone_incr that
