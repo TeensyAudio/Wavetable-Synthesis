@@ -8,88 +8,70 @@ void AudioSynthWavetable::stop(void) {
 	inc = (-(float)mult / ((int32_t)count << 3));
 }
 
-void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
+void AudioSynthWavetable::parseSample(int sample_num) {
 	const sample_data* s = &instrument->samples[sample_num];
 	current_sample = s;
 	
-	tone_phase = 0;
-	 
-	length = s->SAMPLE_LENGTH;
-	waveform = (uint32_t*)s->sample;
-	setSampleNote(s->ORIGINAL_PITCH);
-
-	cents_offset = s->CENTS_OFFSET;
+	sample_length = s->SAMPLE_LENGTH;
 	
 	//setting start and end loop
-	setLoop(s->LOOP_START, s->LOOP_END);
+	int loop_start = s->LOOP_START;
+	int loop_end = s->LOOP_END;
+	int loop_length = loop_end - loop_start;
 
-	if (!custom_env) {
-		env_delay(s->DELAY_ENV);
-		env_hold(s->HOLD_ENV);
-		env_attack(s->ATTACK_ENV);
-		env_decay(s->DECAY_ENV);
-		if (s->SUSTAIN_ENV > 0)
-			env_sustain((float)s->SUSTAIN_ENV / UNITY_GAIN);
-		else
-			env_sustain(1);
-		env_release(s->RELEASE_ENV);
-	}
-
-	//length_bits = length & 0xFFFFF000 ? 13 : loop_length & 0xFFFFFF00 ? 9 : loop_length & 0xFFFFFFF0 ? 5 : 1;
-	//for (int len = length >> length_bits; len; len >>= 1) ++length_bits;
-	//int temp = length_bits
-	
 	length_bits = 1;
-	for (int len = length; len >>= 1; ++length_bits);
+	for (int len = loop_length; len >>= 1; ++length_bits);
+	loop_phase = (loop_length - 1) << (32 - length_bits);
 
-	max_phase = (length - 1) << (32 - length_bits);
+	length_bits = 1;
+	for (int len = sample_length; len >>= 1; ++length_bits);
+	max_phase = current_sample->MAX_PHASE;
+
 	if (loop_start >= 0)
 		loop_start_phase = (loop_start - 1) << (32 - length_bits);
 	if (loop_end > 0)
 		loop_end_phase = (loop_end - 1) << (32 - length_bits);
 	else
 		loop_end_phase = max_phase;
+	loop_phase_length = loop_end_phase - loop_start_phase 
 
+	delay_count = milliseconds2count(s->DELAY_ENV);
+	hold_count = milliseconds2count(s->HOLD_ENV <= 0 ? 0.5 : s->HOLD_ENV);
+	attack_count = milliseconds2count(s->ATTACK_ENV <= 0 ? 1.5 : s->ATTACK_ENV);
+	decay_count = milliseconds2count(s->DECAY_ENV <= 0 ? 100 : s->DECAY_ENV);
+	sustain_mult = s->SUSTAIN_ENV > 0 && s->SUSTAIN_ENV < UNITY_GAIN ? s->SUSTAIN_ENV : UNITY_GAIN;
+	release_count = milliseconds2count(s->RELEASE_ENV);
 }
 
-void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
+void AudioSynthWavetable::playFrequency(float freq) {
+	envelopeState = STATE_IDLE;
 	int i, note;
 	for (i = 0, note = freqToNote(freq); note > instrument->sample_note_ranges[i]; i++);
-	parseSample(i, custom_env);
-	if (waveform == NULL) {
-		return;
-	}
-	setFrequency(freq);
-	mult = 0;
-	count = delay_count;
-	if (count > 0) {
-		envelopeState = STATE_DELAY;
-		inc = 0;
-	} else {
-		envelopeState = STATE_ATTACK;
-		count = attack_count;
-		// 2^16 divided by the number of samples
-		inc = (UNITY_GAIN / (count << 3));
-	}
-	tone_phase = 0;
-}
-
-void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
-	int i;
-	for(i = 0; note > instrument->sample_note_ranges[i]; i++);
-	parseSample(i, custom_env);
-	if (waveform == NULL) return;
+	parseSample(i);
+	if (current_sample == NULL) return;
 	setFrequency(noteToFreq(note));
 	tone_phase = inc = mult = 0;
 	count = delay_count;
 	envelopeState = STATE_DELAY;
+}
+
+void AudioSynthWavetable::playNote(int note, int amp) {
+	envelopeState = STATE_IDLE;
+	int i;
+	for(i = 0; note > instrument->sample_note_ranges[i]; i++);
+	parseSample(i);
+	if (current_sample == NULL) return;
+	setFrequency(noteToFreq(note));
+	tone_phase = inc = mult = 0;
+	count = delay_count;
 	amplitude(midi_volume_transform(amp));
+	envelopeState = STATE_DELAY;
 }
 
 void AudioSynthWavetable::setFrequency(float freq) {
-	float rate_coef = current_sample->SAMPLE_RATE_COEFFICIENT;
-	float per_hz_increment_rate = ((0x80000000 >> (length_bits - 1)) * cents_offset * rate_coef) / sample_freq + 0.5;
-	tone_incr = freq * per_hz_increment_rate;
+	//float rate_coef = current_sample->SAMPLE_RATE_COEFFICIENT;
+	//float per_hz_increment_rate = ((0x80000000 >> (length_bits - 1)) * cents_offset * rate_coef) / sample_freq + 0.5;
+	tone_incr = freq * current_sample->PER_HERTZ_PHASE_INCREMENT;
 	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
 	//steps through the wavetable sample one element at a time; from there we
 	//only need to scale based a ratio of freq/sample_freq for the desired increment
@@ -97,31 +79,24 @@ void AudioSynthWavetable::setFrequency(float freq) {
 }
 
 void AudioSynthWavetable::update(void) {
+	if (envelopeState == STATE_IDLE)
+		return;
 
 	audio_block_t* block;
 	int16_t* out;
 	uint32_t index, scale;
 	int32_t s1, s2, v1, v2, v3;
-	//elapsedMillis timer = 0;
-
-	if (envelopeState == STATE_IDLE)
-		return;
 
 	block = allocate();
-	if (block == NULL) {
+	if (block == NULL)
 		return;
-	}
 
 	out = block->data;
 
 	//assuming 16 bit PCM, 44100 Hz
-	int16_t* waveform = (int16_t*)this->waveform;
+	int16_t* waveform = (int16_t*)current_sample->sample;
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-		//tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
-
-		if (tone_phase >= loop_end_phase)
-			tone_phase = tone_phase - loop_end_phase + loop_start_phase;
-		//tone_phase = tone_phase < loop_end_phase ? tone_phase : tone_phase - loop_end_phase + loop_start_phase;
+		tone_phase = tone_phase >= loop_end_phase ? tone_phase - loop_phase_length : tone_phase;
 		index = tone_phase >> (32 - length_bits);
 		scale = (tone_phase << length_bits) >> 16;
 		s1 = waveform[index];

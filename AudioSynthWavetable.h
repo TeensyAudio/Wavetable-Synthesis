@@ -15,27 +15,13 @@ class AudioSynthWavetable : public AudioStream
 public:
 	AudioSynthWavetable(void) : AudioStream(0, NULL) {}
 
-	void setSamples(const instrument_data& instrument) {
+	void setInstrument(const instrument_data& instrument) {
 		this->instrument = &instrument;
 	}
-	
-	void setLoop(int start, int end) {
-		loop_start = start;
-		loop_end = end;
-		loop_length = loop_end - loop_start;
-		
-		length_bits = 1;
-		for (int len = loop_length; len >>= 1; ++length_bits);
-		loop_phase = (loop_length - 1) << (32 - length_bits);
-	}
-	
+
 	void setFreqAmp(float freq, float amp) {
 		setFrequency(freq);
 		amplitude(amp);
-	}
-	
-	void setSampleNote(int note) {
-		sample_freq = noteToFreq(note);
 	}
 
 	void amplitude(float v) {
@@ -54,52 +40,22 @@ public:
 		// 0 and 1 using a logarithmic transformation
 		return (float)pow(midi_amp, logarithmicness) / (float)pow(127, logarithmicness);
 	}
-	
+
 	static float noteToFreq(int note) {
 		//440.0 * pow(2.0, (note - 69) / 12.0);
-		float exp = note * (1.0/12.0) + 3.0313597;
+		float exp = note * (1.0 / 12.0) + 3.0313597;
 		return powf(2.0, exp);
 	}
 
 	static int freqToNote(float freq) {
 		return (12.0 / 440.0) * log2f(freq) + 69.5;
 	}
-	
-	void env_delay(float milliseconds) {
-		delay_count = milliseconds2count(milliseconds);
-	}
-	void env_attack(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 1.5;
-		}
-		attack_count = milliseconds2count(milliseconds);
-	}
-	void env_hold(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 0.5;
-		}
-		hold_count = milliseconds2count(milliseconds);
-	}
-	void env_decay(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 100;
-		}
-		decay_count = milliseconds2count(milliseconds);
-	}
-	void env_sustain(float level) {
-		if (level < 0.0) level = 0;
-		else if (level > 1.0) level = 1.0;
-		sustain_mult = level * UNITY_GAIN;
-	}
-	void env_release(float milliseconds) {
-		release_count = milliseconds2count(milliseconds);
-	}
-	
+
 	// Defined in AudioSynthWavetable.cpp
 	void stop(void);
-	void parseSample(int sample_num, bool custom_env);
-	void playFrequency(float freq, bool custom_env=0);
-	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
+	void parseSample(int sample_num);
+	void playFrequency(float freq);
+	void playNote(int note, int amp = AMP_DEF);
 	bool isPlaying(void) { return envelopeState != STATE_IDLE; }
 	void setFrequency(float freq);
 	virtual void update(void);
@@ -113,22 +69,19 @@ private:
 		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
 		// # of 8-sample units to process
 		// Add 7 to round up
-		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
+		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC) + 7) >> 3;
 	}
 
-	uint32_t* waveform = NULL;
 	const sample_data* current_sample = NULL;
 	const instrument_data* instrument = NULL;
-	int length = 0, length_bits = 0;
-	int loop_start = 0, loop_end = 0, loop_length = 0;
-	float sample_freq = 440.0, cents_offset = 1.0;
+	int sample_length = 0, length_bits = 0;
 	uint8_t num_samples = 0;
-	uint32_t loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
+	uint32_t loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0, loop_phase_length = 0;
 	uint32_t tone_phase = 0;
 	uint32_t max_phase = 0;
 	uint32_t tone_incr = 0;
 	uint16_t tone_amp = 0;
-    
+
 	// state
 	envelopeStateEnum  envelopeState = STATE_IDLE;  // idle, delay, attack, hold, decay, sustain, release
 	uint16_t count = 0;  // how much time remains in this state, in 8 sample units

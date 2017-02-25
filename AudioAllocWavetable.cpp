@@ -25,7 +25,7 @@ void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, c
 void AudioAllocWavetable::setSamples(const instrument_data instrument)
 {
     for (int i=0; i<numVoices; i++) {
-		voices[i].setSamples(instrument);
+		voices[i].setInstrument(instrument);
     }
 }
 

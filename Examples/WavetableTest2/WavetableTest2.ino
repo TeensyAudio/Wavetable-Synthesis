@@ -115,7 +115,7 @@ void setup() {
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 1);
-		wavetable[i].setSamples(nylonstrgtr);
+		wavetable[i].setInstrument(nylonstrgtr);
 		wavetable[i].amplitude(1);
 		voices[i].wavetable_id = i;
 		voices[i].channel = voices[i].note = 0xFF;
