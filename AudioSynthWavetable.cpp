@@ -5,23 +5,21 @@
 void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = release_count;
-	inc = (-(float)mult / ((int32_t)count << 3));
+	inc = (-(float)mult / (count << 3));
 }
 
 void AudioSynthWavetable::parseSample(int sample_num) {
 	const sample_data* s = &instrument->samples[sample_num];
 	current_sample = s;
 	
-	index_bits = s->INDEX_BITS;
 	loop_end_phase = s->LOOP_PHASE_END;
 	loop_phase_length = s->LOOP_PHASE_LENGTH;
-
-	delay_count = milliseconds2count(s->DELAY_ENV);
-	hold_count = milliseconds2count(s->HOLD_ENV <= 0 ? 0.5 : s->HOLD_ENV);
-	attack_count = milliseconds2count(s->ATTACK_ENV <= 0 ? 1.5 : s->ATTACK_ENV);
-	decay_count = milliseconds2count(s->DECAY_ENV <= 0 ? 100 : s->DECAY_ENV);
-	release_count = milliseconds2count(s->RELEASE_ENV);
-	sustain_mult = s->SUSTAIN_ENV > 0 && s->SUSTAIN_ENV < UNITY_GAIN ? s->SUSTAIN_ENV : UNITY_GAIN;
+	delay_count = s->DELAY_COUNT;
+	attack_count = s->ATTACK_COUNT;
+	hold_count = s->HOLD_COUNT;
+	decay_count = s->DECAY_COUNT;
+	release_count = s->RELEASE_COUNT;
+	sustain_mult = s->SUSTAIN_MULT;
 }
 
 void AudioSynthWavetable::playFrequency(float freq) {
@@ -30,7 +28,7 @@ void AudioSynthWavetable::playFrequency(float freq) {
 	for (i = 0, note = freqToNote(freq); note > instrument->sample_note_ranges[i]; i++);
 	parseSample(i);
 	if (current_sample == NULL) return;
-	setFrequency(noteToFreq(note));
+	setFrequency(freq);
 	tone_phase = inc = mult = 0;
 	count = delay_count;
 	envelopeState = STATE_DELAY;
@@ -72,14 +70,15 @@ void AudioSynthWavetable::update(void) {
 	if (block == NULL)
 		return;
 
+	const sample_data* s = current_sample;
 	out = block->data;
 
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)current_sample->sample;
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-		tone_phase = tone_phase >= loop_end_phase ? tone_phase - loop_phase_length : tone_phase;
-		index = tone_phase >> (32 - index_bits);
-		scale = (tone_phase << index_bits) >> 16;
+		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+		index = tone_phase >> (32 - s->INDEX_BITS);
+		scale = (tone_phase << s->INDEX_BITS) >> 16;
 		s1 = waveform[index];
 		s2 = waveform[index + 1];
 		v1 = s1 * (0xFFFF - scale);
@@ -120,16 +119,16 @@ void AudioSynthWavetable::update(void) {
 			envelopeState = STATE_DECAY;
 			count = decay_count;
 			//inc = count > 0 ? (float)(-sustain_mult) / ((int32_t)count << 3) : 0;
-			inc = (float)(-sustain_mult) / ((int32_t)count << 3);
+			inc = (float)(-sustain_mult) / (count << 3);
 			continue;
 		case STATE_DECAY:
 			envelopeState = STATE_SUSTAIN;
-			count = 0xFFFF;
+			count = 0xFFFFFFFF;
 			mult = UNITY_GAIN - sustain_mult;
 			inc = 0;
 			break;
 		case STATE_SUSTAIN:
-			count = 0xFFFF;
+			count = 0xFFFFFFFF;
 			break;
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;

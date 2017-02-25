@@ -5,7 +5,6 @@
 #include <math.h>
 #include <sample_data.h>
 
-#define MAX_MS 11000.0      // Max section length (milliseconds)
 #define UNITY_GAIN 65536.0  // Max amplitude
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define AMP_DEF 69
@@ -64,9 +63,8 @@ private:
 
 	enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE };
 
-	uint16_t milliseconds2count(float milliseconds) {
+	uint32_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 0.0) milliseconds = 0.0;
-		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
 		// # of 8-sample units to process
 		// Add 7 to round up
 		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC) + 7) >> 3;
@@ -74,7 +72,6 @@ private:
 
 	const sample_data* current_sample = NULL;
 	const instrument_data* instrument = NULL;
-	int index_bits = 0;
 	uint8_t num_samples = 0;
 	uint32_t loop_end_phase = 0, loop_phase_length = 0;
 	uint32_t tone_phase = 0;
@@ -83,15 +80,15 @@ private:
 
 	// state
 	envelopeStateEnum  envelopeState = STATE_IDLE;  // idle, delay, attack, hold, decay, sustain, release
-	uint16_t count = 0;  // how much time remains in this state, in 8 sample units
+	uint32_t count = 0;  // how much time remains in this state, in 8 sample units
 	float    mult = 0;   // attenuation, 0=off, 0x10000=unity gain
 	float    inc = 0;    // amount to change mult on each sample
 	// settings
-	uint16_t delay_count = 0;
-	uint16_t attack_count = 0;
-	uint16_t hold_count = 0;
-	uint16_t decay_count = 0;
-	uint16_t release_count = 0;
-	int32_t  sustain_mult = 0;
+	uint32_t delay_count = 0;
+	uint32_t attack_count = 0;
+	uint32_t hold_count = 0;
+	uint32_t decay_count = 0;
+	int32_t  sustain_mult = 0; // Why not uint?..
+	uint32_t release_count = 0;
 };
 

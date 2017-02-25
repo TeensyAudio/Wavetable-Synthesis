@@ -1,13 +1,23 @@
 #include "nylonstrgtr_samples.h"
 
+#define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
+#define UNITY_GAIN 65536.0  // Max amplitude
+
 const sample_data nylonstrgtr_samples[3] = {
 	{
 		12,
 		//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5;
 		(1048576.0*1.0269267887809788*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 466.1637615181 + 0.5,
-		(3828 - 1) << (32 - 12),
-		(3824 - 1) << (32 - 12),
-		((3824 - 1) << (32 - 12)) - ((3727 - 1) << (32 - 12)),
+		((uint32_t)3828 - 1) << (32 - 12),
+		((uint32_t)3824 - 1) << (32 - 12),
+		(((uint32_t)3824 - 1) << (32 - 12)) - (((uint32_t)3727 - 1) << (32 - 12)),
+		((uint32_t)(0*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((6 <= 0 ? 1.5 : 6)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((20 <= 0 ? 0.5 : 20)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((11993 <= 0 ? 100 : 11993)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
+		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
+
 		70,
 		1.0269267887809788,
 		3828,
@@ -22,14 +32,21 @@ const sample_data nylonstrgtr_samples[3] = {
 		11993,
 		100000,
 		100,
-		nylonstrgtr_sample_0_nguitrf2,
+		(int16_t*)nylonstrgtr_sample_0_nguitrf2,
 	},
 	{
 		13,
 		(524288.0*0.9994225441413808*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 698.4564628660 + 0.5,
-		(5192 - 1) << (32 - 13),
-		(5188 - 1) << (32 - 13),
-		((5188 - 1) << (32 - 13)) - ((5125 - 1) << (32 - 13)),
+		((uint32_t)5192 - 1) << (32 - 13),
+		((uint32_t)5188 - 1) << (32 - 13),
+		(((uint32_t)5188 - 1) << (32 - 13)) - ((5125 - 1) << (32 - 13)),
+		((uint32_t)(0*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((6 <= 0 ? 1.5 : 6)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((20 <= 0 ? 0.5 : 20)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((11993 <= 0 ? 100 : 11993)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
+		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
+
 		77,
 		0.9994225441413808,
 		5192,
@@ -44,14 +61,21 @@ const sample_data nylonstrgtr_samples[3] = {
 		11993,
 		100000,
 		100,
-		nylonstrgtr_sample_1_nguitb2,
+		(int16_t*)nylonstrgtr_sample_1_nguitb2,
 	},
 	{
 		13,
 		(524288.0*1.0186558099572924*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 659.2551138257 + 0.5,
-		(6240 - 1) << (32 - 13),
-		(6236 - 1) << (32 - 13),
-		((6236 - 1) << (32 - 13)) - ((6168 - 1) << (32 - 13)),
+		((uint32_t)6240 - 1) << (32 - 13),
+		((uint32_t)6236 - 1) << (32 - 13),
+		(((uint32_t)6236 - 1) << (32 - 13)) - (((uint32_t)6168 - 1) << (32 - 13)),
+		((uint32_t)(0*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((6 <= 0 ? 1.5 : 6)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((20 <= 0 ? 0.5 : 20)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)((11993 <= 0 ? 100 : 11993)*SAMPLES_PER_MSEC) + 7) >> 3,
+		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
+		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
+
 		76,
 		1.0186558099572924,
 		6240,
@@ -66,7 +90,7 @@ const sample_data nylonstrgtr_samples[3] = {
 		11993,
 		100000,
 		100,
-		nylonstrgtr_sample_2_acgtrb3,
+		(int16_t*)nylonstrgtr_sample_2_acgtrb3,
 	},
 };
 
