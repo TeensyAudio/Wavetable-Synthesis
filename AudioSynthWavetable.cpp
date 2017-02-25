@@ -4,33 +4,19 @@
 
 void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
-	count = release_count;
+	count = current_sample->RELEASE_COUNT;
 	inc = (-(float)mult / (count << 3));
-}
-
-void AudioSynthWavetable::parseSample(int sample_num) {
-	const sample_data* s = &instrument->samples[sample_num];
-	current_sample = s;
-	
-	loop_end_phase = s->LOOP_PHASE_END;
-	loop_phase_length = s->LOOP_PHASE_LENGTH;
-	delay_count = s->DELAY_COUNT;
-	attack_count = s->ATTACK_COUNT;
-	hold_count = s->HOLD_COUNT;
-	decay_count = s->DECAY_COUNT;
-	release_count = s->RELEASE_COUNT;
-	sustain_mult = s->SUSTAIN_MULT;
 }
 
 void AudioSynthWavetable::playFrequency(float freq) {
 	envelopeState = STATE_IDLE;
 	int i, note;
 	for (i = 0, note = freqToNote(freq); note > instrument->sample_note_ranges[i]; i++);
-	parseSample(i);
+	current_sample = &instrument->samples[i];
 	if (current_sample == NULL) return;
 	setFrequency(freq);
 	tone_phase = inc = mult = 0;
-	count = delay_count;
+	count = current_sample->DELAY_COUNT;
 	envelopeState = STATE_DELAY;
 }
 
@@ -38,11 +24,11 @@ void AudioSynthWavetable::playNote(int note, int amp) {
 	envelopeState = STATE_IDLE;
 	int i;
 	for(i = 0; note > instrument->sample_note_ranges[i]; i++);
-	parseSample(i);
+	current_sample = &instrument->samples[i];
 	if (current_sample == NULL) return;
 	setFrequency(noteToFreq(note));
 	tone_phase = inc = mult = 0;
-	count = delay_count;
+	count = current_sample->DELAY_COUNT;
 	amplitude(midi_volume_transform(amp));
 	envelopeState = STATE_DELAY;
 }
@@ -84,6 +70,7 @@ void AudioSynthWavetable::update(void) {
 		v2 = s2 * scale;
 		v3 = (v1 + v2) >> 16;
 		*out++ = (int16_t)((v3 * tone_amp) >> 16);
+		//*out++ = v3;
 		tone_phase += tone_incr;
 	}
 
@@ -105,25 +92,25 @@ void AudioSynthWavetable::update(void) {
 		if (count == 0) switch (envelopeState) {
 		case STATE_DELAY:
 			envelopeState = STATE_ATTACK;
-			count = attack_count;
+			count = s->ATTACK_COUNT;
 			inc = (UNITY_GAIN / (count << 3));
 			continue;
 		case STATE_ATTACK:
 			envelopeState = STATE_HOLD;
-			count = hold_count;
-			mult = hold_count ? UNITY_GAIN : mult;
+			count = s->HOLD_COUNT;
+			mult = count ? UNITY_GAIN : mult;
 			inc = 0;
 			continue;
 		case STATE_HOLD:
 			envelopeState = STATE_DECAY;
-			count = decay_count;
-			//inc = count > 0 ? (float)(-sustain_mult) / ((int32_t)count << 3) : 0;
-			inc = (float)(-sustain_mult) / (count << 3);
+			count = s->DECAY_COUNT;
+			//inc = count > 0 ? (float)(-s->SUSTAIN_MULT) / ((int32_t)count << 3) : 0;
+			inc = (float)(-s->SUSTAIN_MULT) / (count << 3);
 			continue;
 		case STATE_DECAY:
 			envelopeState = STATE_SUSTAIN;
 			count = 0xFFFFFFFF;
-			mult = UNITY_GAIN - sustain_mult;
+			mult = UNITY_GAIN - s->SUSTAIN_MULT;
 			inc = 0;
 			break;
 		case STATE_SUSTAIN:

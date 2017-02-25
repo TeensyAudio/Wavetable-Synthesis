@@ -26,7 +26,7 @@ const sample_data nylonstrgtr_samples[3] = {
 		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
 		//SUSTAIN_MULT
 		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
-		//PCM A
+		//16-bit PCM encoded audio sample
 		(int16_t*)nylonstrgtr_sample_0_nguitrf2,
 	},
 	{

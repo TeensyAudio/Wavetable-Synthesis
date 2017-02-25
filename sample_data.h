@@ -13,7 +13,7 @@ struct sample_data {
 	const uint32_t HOLD_COUNT;
 	const uint32_t DECAY_COUNT;
 	const uint32_t RELEASE_COUNT;
-	const uint32_t SUSTAIN_MULT;
+	const int32_t SUSTAIN_MULT;
 	const int16_t* sample;
 };
 

@@ -73,7 +73,6 @@ private:
 	const sample_data* current_sample = NULL;
 	const instrument_data* instrument = NULL;
 	uint8_t num_samples = 0;
-	uint32_t loop_end_phase = 0, loop_phase_length = 0;
 	uint32_t tone_phase = 0;
 	uint32_t tone_incr = 0;
 	uint16_t tone_amp = 0;
@@ -84,11 +83,5 @@ private:
 	float    mult = 0;   // attenuation, 0=off, 0x10000=unity gain
 	float    inc = 0;    // amount to change mult on each sample
 	// settings
-	uint32_t delay_count = 0;
-	uint32_t attack_count = 0;
-	uint32_t hold_count = 0;
-	uint32_t decay_count = 0;
-	int32_t  sustain_mult = 0; // Why not uint?..
-	uint32_t release_count = 0;
 };
 
