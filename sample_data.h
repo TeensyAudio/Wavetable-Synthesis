@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 struct sample_data {
+	const int INDEX_BITS;
 	const float PER_HERTZ_PHASE_INCREMENT;
 	const int MAX_PHASE;
 	const int LOOP_PHASE_END;

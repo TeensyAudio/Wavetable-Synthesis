@@ -74,11 +74,10 @@ private:
 
 	const sample_data* current_sample = NULL;
 	const instrument_data* instrument = NULL;
-	int length_bits = 0;
+	int index_bits = 0;
 	uint8_t num_samples = 0;
 	uint32_t loop_end_phase = 0, loop_phase_length = 0;
 	uint32_t tone_phase = 0;
-	uint32_t max_phase = 0;
 	uint32_t tone_incr = 0;
 	uint16_t tone_amp = 0;
 
@@ -92,7 +91,7 @@ private:
 	uint16_t attack_count = 0;
 	uint16_t hold_count = 0;
 	uint16_t decay_count = 0;
-	int32_t  sustain_mult = 0;
 	uint16_t release_count = 0;
+	int32_t  sustain_mult = 0;
 };
 

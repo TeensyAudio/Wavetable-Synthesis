@@ -12,7 +12,7 @@ void AudioSynthWavetable::parseSample(int sample_num) {
 	const sample_data* s = &instrument->samples[sample_num];
 	current_sample = s;
 	
-	max_phase = s->MAX_PHASE;
+	index_bits = s->INDEX_BITS;
 	loop_end_phase = s->LOOP_PHASE_END;
 	loop_phase_length = s->LOOP_PHASE_LENGTH;
 
@@ -51,12 +51,12 @@ void AudioSynthWavetable::playNote(int note, int amp) {
 
 void AudioSynthWavetable::setFrequency(float freq) {
 	//float rate_coef = current_sample->SAMPLE_RATE_COEFFICIENT;
-	//float per_hz_increment_rate = ((0x80000000 >> (length_bits - 1)) * cents_offset * rate_coef) / sample_freq + 0.5;
+	//float per_hz_increment_rate = ((0x80000000 >> (index_bits - 1)) * cents_offset * rate_coef) / sample_freq + 0.5;
 	tone_incr = freq * current_sample->PER_HERTZ_PHASE_INCREMENT;
-	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
+	//(0x80000000 >> (index_bits - 1) by itself results in a tone_incr that
 	//steps through the wavetable sample one element at a time; from there we
 	//only need to scale based a ratio of freq/sample_freq for the desired increment
-	//tone_incr = cents_offset * ((rate_coef * freq) / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
+	//tone_incr = cents_offset * ((rate_coef * freq) / sample_freq) * (0x80000000 >> (index_bits - 1)) + 0.5;
 }
 
 void AudioSynthWavetable::update(void) {
@@ -78,8 +78,8 @@ void AudioSynthWavetable::update(void) {
 	int16_t* waveform = (int16_t*)current_sample->sample;
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		tone_phase = tone_phase >= loop_end_phase ? tone_phase - loop_phase_length : tone_phase;
-		index = tone_phase >> (32 - length_bits);
-		scale = (tone_phase << length_bits) >> 16;
+		index = tone_phase >> (32 - index_bits);
+		scale = (tone_phase << index_bits) >> 16;
 		s1 = waveform[index];
 		s2 = waveform[index + 1];
 		v1 = s1 * (0xFFFF - scale);

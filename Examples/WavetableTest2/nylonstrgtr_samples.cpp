@@ -2,7 +2,8 @@
 
 const sample_data nylonstrgtr_samples[3] = {
 	{
-		//((0x80000000 >> (length_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5;
+		12,
+		//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5;
 		(1048576.0*1.0269267887809788*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 466.1637615181 + 0.5,
 		(3828 - 1) << (32 - 12),
 		(3824 - 1) << (32 - 12),
@@ -24,6 +25,7 @@ const sample_data nylonstrgtr_samples[3] = {
 		nylonstrgtr_sample_0_nguitrf2,
 	},
 	{
+		13,
 		(524288.0*0.9994225441413808*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 698.4564628660 + 0.5,
 		(5192 - 1) << (32 - 13),
 		(5188 - 1) << (32 - 13),
@@ -45,7 +47,7 @@ const sample_data nylonstrgtr_samples[3] = {
 		nylonstrgtr_sample_1_nguitb2,
 	},
 	{
-
+		13,
 		(524288.0*1.0186558099572924*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 659.2551138257 + 0.5,
 		(6240 - 1) << (32 - 13),
 		(6236 - 1) << (32 - 13),
