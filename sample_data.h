@@ -2,8 +2,11 @@
 #include <stdint.h>
 
 struct sample_data {
+	const int INDEX_BITS;
 	const float PER_HERTZ_PHASE_INCREMENT;
 	const int MAX_PHASE;
+	const int LOOP_PHASE_END;
+	const int LOOP_PHASE_LENGTH;
 	const int ORIGINAL_PITCH;
 	const float CENTS_OFFSET;
 	const int SAMPLE_LENGTH;
