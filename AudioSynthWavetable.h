@@ -29,15 +29,9 @@ public:
 	}
 
 	static float midi_volume_transform(int midi_amp) {
-		// 4 approximates a logarithmic taper for the volume
-		// however, we might need to play with this value
-		// if people think the volume is too quiet at low
-		// input amplitudes
-		int logarithmicness = 4;
-
 		// scale midi_amp which is 0 t0 127 to be between
 		// 0 and 1 using a logarithmic transformation
-		return (float)pow(midi_amp, logarithmicness) / (float)pow(127, logarithmicness);
+		return powf(midi_amp / 127.0, 4);
 	}
 
 	static float noteToFreq(int note) {
