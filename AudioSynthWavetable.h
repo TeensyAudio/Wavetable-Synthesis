@@ -15,12 +15,12 @@ public:
 	AudioSynthWavetable(void) : AudioStream(0, NULL) {}
 
 	void setInstrument(const instrument_data& instrument) {
+		cli();
 		this->instrument = &instrument;
-	}
-
-	void setFreqAmp(float freq, float amp) {
-		setFrequency(freq);
-		amplitude(amp);
+		current_sample = NULL;
+		envelopeState = STATE_IDLE;
+		state_change = true;
+		sei();
 	}
 
 	void amplitude(float v) {
@@ -52,14 +52,14 @@ public:
 
 	// Defined in AudioSynthWavetable.cpp
 	void stop(void);
-	void parseSample(int sample_num);
-	void playFrequency(float freq);
+	void playFrequency(float freq, int amp = AMP_DEF);
 	void playNote(int note, int amp = AMP_DEF);
 	bool isPlaying(void) { return envelopeState != STATE_IDLE; }
-	void setFrequency(float freq);
 	virtual void update(void);
 
 private:
+	void setState(int note, int amp, float freq);
+	void setFrequency(float freq);
 
 	enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE };
 
@@ -70,18 +70,15 @@ private:
 		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC) + 7) >> 3;
 	}
 
-	const sample_data* current_sample = NULL;
-	const instrument_data* instrument = NULL;
-	uint8_t num_samples = 0;
-	uint32_t tone_phase = 0;
-	uint32_t tone_incr = 0;
-	uint16_t tone_amp = 0;
-
-	// state
-	envelopeStateEnum  envelopeState = STATE_IDLE;  // idle, delay, attack, hold, decay, sustain, release
-	uint32_t count = 0;  // how much time remains in this state, in 8 sample units
-	float    mult = 0;   // attenuation, 0=off, 0x10000=unity gain
-	float    inc = 0;    // amount to change mult on each sample
-	// settings
+	volatile const instrument_data* instrument = NULL;
+	volatile const sample_data* current_sample = NULL;
+	volatile uint32_t tone_phase = 0;
+	volatile uint32_t tone_incr = 0;
+	volatile uint16_t tone_amp = 0;
+	volatile envelopeStateEnum  envelopeState = STATE_IDLE; // idle, delay, attack, hold, decay, sustain, release
+	volatile uint32_t count = 0; // how much time remains in this state, in 8 sample units
+	volatile float mult = 0; // attenuation, 0=off, 0x10000=unity gain
+	volatile float inc = 0; // amount to change mult on each sample
+	volatile bool state_change = false;
 };
 

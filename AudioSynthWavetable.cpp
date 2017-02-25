@@ -8,29 +8,29 @@ void AudioSynthWavetable::stop(void) {
 	inc = (-(float)mult / (count << 3));
 }
 
-void AudioSynthWavetable::playFrequency(float freq) {
+void AudioSynthWavetable::playFrequency(float freq, int amp) {
+	setState(freqToNote(freq), amp, freq);
+}
+
+void AudioSynthWavetable::playNote(int note, int amp) {
+	setState(note, noteToFreq(note), amp);
+}
+
+void AudioSynthWavetable::setState(int note, int amp, float freq) {
+	cli()
+	int i;
 	envelopeState = STATE_IDLE;
-	int i, note;
-	for (i = 0, note = freqToNote(freq); note > instrument->sample_note_ranges[i]; i++);
+	for(i = 0; note > instrument->sample_note_ranges[i]; i++);
 	current_sample = &instrument->samples[i];
 	if (current_sample == NULL) return;
 	setFrequency(freq);
 	tone_phase = inc = mult = 0;
 	count = current_sample->DELAY_COUNT;
+	//amplitude(midi_volume_transform(amp));
+	tone_amp = 2855;
 	envelopeState = STATE_DELAY;
-}
-
-void AudioSynthWavetable::playNote(int note, int amp) {
-	envelopeState = STATE_IDLE;
-	int i;
-	for(i = 0; note > instrument->sample_note_ranges[i]; i++);
-	current_sample = &instrument->samples[i];
-	if (current_sample == NULL) return;
-	setFrequency(noteToFreq(note));
-	tone_phase = inc = mult = 0;
-	count = current_sample->DELAY_COUNT;
-	amplitude(midi_volume_transform(amp));
-	envelopeState = STATE_DELAY;
+	state_change = true;
+	sei()
 }
 
 void AudioSynthWavetable::setFrequency(float freq) {
@@ -51,15 +51,26 @@ void AudioSynthWavetable::update(void) {
 	uint32_t index, scale;
 	int32_t s1, s2, v1, v2, v3;
 
-	block = allocate();
-	if (block == NULL)
-		return;
 
-	const sample_data* s = current_sample;
+	block = allocate();
+	if (block == NULL) return;
+
+	cli();
+	this->state_change = false;
+	const sample_data* s = (const sample_data*)current_sample;
+	uint32_t tone_phase = this->tone_phase;
+	uint32_t tone_incr = this->tone_incr;
+	uint16_t tone_amp = this->tone_amp;
+	envelopeStateEnum  envelopeState = this->envelopeState;
+	uint32_t count = this->count;
+	float mult = this->mult;
+	float inc = this->inc;
+	sei();
+
 	out = block->data;
 
 	//assuming 16 bit PCM, 44100 Hz
-	int16_t* waveform = (int16_t*)current_sample->sample;
+	int16_t* waveform = (int16_t*)s->sample;
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		index = tone_phase >> (32 - s->INDEX_BITS);
@@ -86,6 +97,7 @@ void AudioSynthWavetable::update(void) {
 	p = (uint32_t *)block->data;
 	// p increments by 1 for every 2 samples processed.
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
+
 
 	while (p < end) {
 		// we only care about the state when completing a region
@@ -156,6 +168,16 @@ void AudioSynthWavetable::update(void) {
 		p += 4;
 		count--;
 	}
+
+	cli();
+	if (this->state_change == false) {
+		this->tone_phase = tone_phase;
+		this->envelopeState = envelopeState;
+		this->count = count;
+		this->mult = mult;
+		this->inc = inc;
+	}
+	sei();
 
 	transmit(block);
 	release(block);
