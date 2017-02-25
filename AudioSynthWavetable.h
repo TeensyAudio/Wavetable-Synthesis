@@ -74,9 +74,9 @@ private:
 
 	const sample_data* current_sample = NULL;
 	const instrument_data* instrument = NULL;
-	int sample_length = 0, length_bits = 0;
+	int length_bits = 0;
 	uint8_t num_samples = 0;
-	uint32_t loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0, loop_phase_length = 0;
+	uint32_t loop_end_phase = 0, loop_phase_length = 0;
 	uint32_t tone_phase = 0;
 	uint32_t max_phase = 0;
 	uint32_t tone_incr = 0;
