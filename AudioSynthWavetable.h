@@ -28,6 +28,32 @@ public:
 		for (int len = loop_length; len >>= 1; ++length_bits);
 		loop_phase = (loop_length - 1) << (32 - length_bits);
 	}
+
+/****************VIBRATO****************/
+
+	void init_vibrato(){
+		wp = 34; // 44117.64706Hz * 0.001s / 128 samples = 34 samples
+        for (int i=0; i<AUDIO_BLOCK_SAMPLES; i++) {
+            buf[i] = 0;
+        }
+
+        scan_phase = 0;
+	}
+
+	uint32_t triangle(uint32_t phase) {
+	    // Convert 32-bit phase into signed 31-bit triangle.
+	    if (phase & 0x80000000) {
+	        return 0x80000000 + (0x80000000 - phase);
+	    } else {
+	        return phase;
+	    }
+	}
+
+	int32_t lerp(int32_t a, int32_t b, uint16_t scale) {
+	    return ((0xFFFF - scale)*a + scale*b) >> 16;
+	}
+
+	/*********************************/
 	
 	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
@@ -105,6 +131,20 @@ public:
 	static void print_performance(void);
 
 private:
+
+
+/***********vibrato elements***********/
+	audio_block_t *inputQueueArray[1];
+	int wp;
+	int16_t buf[AUDIO_BLOCK_SAMPLES];
+
+	// Scanner position and scan direction. This modulates the read
+    // pointer into buf as a 7Hz triangle wave. We'll use 15 bits for
+    // position and the 16th to detect overflow.
+    //
+    // The write pointer is 34 samples ahead, so use 6 bits (5 + sign)
+    // as the position modifier so reads never outrun writes.
+    uint32_t scan_phase;
 
 	enum envelopeStateEnum { 
 		STATE_IDLE,

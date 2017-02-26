@@ -259,6 +259,54 @@ void AudioSynthWavetable::update(void) {
 
 
 	//*********************************************************************
+	//Vibrato Code
+	//*********************************************************************
+
+	audio_block_t *in = block->data;
+	int depth = 3; //temp-dev variable to set vibrato depth
+	int mix = 0; //mix -- might not be needed
+	
+
+	wp = 34; // 44117.64706Hz * 0.001s / 128 samples = 34 samples
+
+	uint8_t loc_wp = wp;
+    uint32_t loc_phase = scan_phase;
+
+    for (int i=0; i<AUDIO_BLOCK_SAMPLES; i++) {
+	    // Write the input audio to our delay line.
+	    buf[loc_wp] = in->data[i];
+
+	    // Read the delay line into the output buffer.
+
+	    // 7 bits of loc_wp to 1..8; subtract triangle. This gives 5
+	    // bits of sway on a 7 bit counter.
+	    int32_t loc_rp = (loc_wp << 24) - (int32_t)(triangle(loc_phase) >> depth);
+
+	    int16_t pos = loc_rp >> 24;
+	    int16_t a = buf[pos & 0x7f];
+	    int16_t b = buf[++pos & 0x7f];
+
+	    int16_t val = lerp(a, b, (loc_rp >> 8) & 0xFFFF);
+	    if (mix) {
+	        val = ((int32_t)val + buf[loc_wp]) >> 1;
+	    }
+
+	    out->data[i] = val;
+
+	    loc_phase += 679632;
+
+	    // Increment and wrap loc_wp.
+	    loc_wp++;
+	    loc_wp &= 0x7f;
+	}
+
+    wp = loc_wp;
+    scan_phase = loc_phase;
+	
+
+
+
+	//*********************************************************************
 	//Envelope code
 	//*********************************************************************
 
