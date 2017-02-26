@@ -2,24 +2,47 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-//#define TIME_TEST
+#define TIME_TEST_ON
 
-#ifdef TIME_TEST
-#define TIME_TEST_START() \
+#ifdef TIME_TEST_ON
+#define TIME_TEST(INTERVAL, CODE_BLOCK_TO_TEST) \
 static float MICROS_AVG = 0.0; \
-static int TEST_CNT = 0; \
-int TEST_START = -micros();
+static int TEST_CUR_CNT = 0; \
+static int TEST_LST_CNT = 0; \
+static int NEXT_DISPLAY = INTERVAL*1000; \
+static int TEST_TIME_ACC = 0; \
+TEST_TIME_ACC -= micros(); \
+CODE_BLOCK_TO_TEST \
+int micros_cur = micros(); \
+TEST_TIME_ACC += micros_cur; \
+++TEST_CUR_CNT; \
+if (NEXT_DISPLAY < micros_cur) { \
+	NEXT_DISPLAY += INTERVAL*1000; \
+	MICROS_AVG += (TEST_TIME_ACC - TEST_CUR_CNT * MICROS_AVG) / (TEST_LST_CNT + TEST_CUR_CNT); \
+	TEST_LST_CNT += TEST_CUR_CNT; \
+	TEST_TIME_ACC = TEST_CUR_CNT = 0; \
+	Serial.printf("avg: %f, n: %i\n", MICROS_AVG, TEST_LST_CNT); \
+}
 #else
-#define TIME_TEST_START() do { } while(0);
+#define TIME_TEST_START() do { } while(0); \
+CODE_BLOCK_TO_TEST
 #endif
 
-#ifdef TIME_TEST
-#define TIME_TEST_END() \
-MICROS_AVG += ( ( TEST_START + micros() ) - MICROS_AVG ) / ++TEST_CNT; \
-Serial.printf("avg: %f, n: %i\n", MICROS_AVG, TEST_CNT);
-#else
-#define TIME_TEST_END(X) do { } while(0);
-#endif
+//#ifdef TIME_TEST
+//#define TIME_TEST_END(INTERVAL) \
+//int micros_cur = micros(); \
+//TEST_TIME_ACC += micros_cur; \
+//++TEST_CUR_CNT; \
+//if (NEXT_DISPLAY < micros_cur) { \
+//	NEXT_DISPLAY += INTERVAL*1000; \
+//	MICROS_AVG += (TEST_TIME_ACC - TEST_CUR_CNT * MICROS_AVG) / (TEST_LST_CNT + TEST_CUR_CNT); \
+//	TEST_LST_CNT += TEST_CUR_CNT; \
+//	TEST_TIME_ACC = TEST_CUR_CNT = 0; \
+//	Serial.printf("avg: %f, n: %i\n", MICROS_AVG, TEST_LST_CNT); \
+//}
+//#else
+//#define TIME_TEST_END() do { } while(0);
+//#endif
 
 
 void AudioSynthWavetable::stop(void) {
@@ -119,7 +142,7 @@ void AudioSynthWavetable::update(void) {
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 
-	TIME_TEST_START()
+	TIME_TEST(1000, 
 	while (p < end) {
 		// we only care about the state when completing a region
 		if (count == 0) switch (envelopeState) {
@@ -182,7 +205,7 @@ void AudioSynthWavetable::update(void) {
 		p += 4;
 		count--;
 	}
-	TIME_TEST_END()
+	) //END TIME TEST
 
 	cli();
 	if (this->state_change == false) {
