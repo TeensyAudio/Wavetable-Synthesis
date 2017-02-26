@@ -5,7 +5,7 @@
 #include <math.h>
 #include <sample_data.h>
 
-#define UNITY_GAIN 65536.0  // Max amplitude
+#define UNITY_GAIN 65536  // Max amplitude
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define AMP_DEF 69
 

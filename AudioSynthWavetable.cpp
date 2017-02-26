@@ -2,53 +2,37 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-#define TIME_TEST_ON
+//#define TIME_TEST_ON
 
 #ifdef TIME_TEST_ON
 #define TIME_TEST(INTERVAL, CODE_BLOCK_TO_TEST) \
 static float MICROS_AVG = 0.0; \
 static int TEST_CUR_CNT = 0; \
 static int TEST_LST_CNT = 0; \
-static int NEXT_DISPLAY = INTERVAL*1000; \
+static int NEXT_DISPLAY = 0; \
 static int TEST_TIME_ACC = 0; \
-TEST_TIME_ACC -= micros(); \
+int micros_start = micros(); \
 CODE_BLOCK_TO_TEST \
-int micros_cur = micros(); \
-TEST_TIME_ACC += micros_cur; \
+int micros_end = micros(); \
+TEST_TIME_ACC += micros_end - micros_start; \
 ++TEST_CUR_CNT; \
-if (NEXT_DISPLAY < micros_cur) { \
-	NEXT_DISPLAY += INTERVAL*1000; \
+if (NEXT_DISPLAY < micros_end) { \
 	MICROS_AVG += (TEST_TIME_ACC - TEST_CUR_CNT * MICROS_AVG) / (TEST_LST_CNT + TEST_CUR_CNT); \
+	NEXT_DISPLAY = micros_end + INTERVAL*1000; \
 	TEST_LST_CNT += TEST_CUR_CNT; \
 	TEST_TIME_ACC = TEST_CUR_CNT = 0; \
 	Serial.printf("avg: %f, n: %i\n", MICROS_AVG, TEST_LST_CNT); \
 }
 #else
-#define TIME_TEST_START() do { } while(0); \
+#define TIME_TEST(INTERVAL, CODE_BLOCK_TO_TEST) do { } while(0); \
 CODE_BLOCK_TO_TEST
 #endif
-
-//#ifdef TIME_TEST
-//#define TIME_TEST_END(INTERVAL) \
-//int micros_cur = micros(); \
-//TEST_TIME_ACC += micros_cur; \
-//++TEST_CUR_CNT; \
-//if (NEXT_DISPLAY < micros_cur) { \
-//	NEXT_DISPLAY += INTERVAL*1000; \
-//	MICROS_AVG += (TEST_TIME_ACC - TEST_CUR_CNT * MICROS_AVG) / (TEST_LST_CNT + TEST_CUR_CNT); \
-//	TEST_LST_CNT += TEST_CUR_CNT; \
-//	TEST_TIME_ACC = TEST_CUR_CNT = 0; \
-//	Serial.printf("avg: %f, n: %i\n", MICROS_AVG, TEST_LST_CNT); \
-//}
-//#else
-//#define TIME_TEST_END() do { } while(0);
-//#endif
-
 
 void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = current_sample->RELEASE_COUNT;
 	inc = (-(float)mult / (count << 3));
+	Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_RELEASE", mult, inc, count);
 }
 
 void AudioSynthWavetable::playFrequency(float freq, int amp) {
@@ -72,6 +56,7 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	//amplitude(midi_volume_transform(amp));
 	tone_amp = 2855;
 	envelopeState = STATE_DELAY;
+	Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_DELAY", mult, inc, count);
 	state_change = true;
 	sei()
 }
@@ -86,19 +71,9 @@ void AudioSynthWavetable::setFrequency(float freq) {
 }
 
 void AudioSynthWavetable::update(void) {
+	cli();
 	if (envelopeState == STATE_IDLE)
 		return;
-
-	audio_block_t* block;
-	int16_t* out;
-	uint32_t index, scale;
-	int32_t s1, s2, v1, v2, v3;
-
-
-	block = allocate();
-	if (block == NULL) return;
-
-	cli();
 	this->state_change = false;
 	const sample_data* s = (const sample_data*)current_sample;
 	uint32_t tone_phase = this->tone_phase;
@@ -109,6 +84,14 @@ void AudioSynthWavetable::update(void) {
 	float mult = this->mult;
 	float inc = this->inc;
 	sei();
+
+	audio_block_t* block;
+	int16_t* out;
+	uint32_t index, scale;
+	int32_t s1, s2, v1, v2, v3;
+
+	block = allocate();
+	if (block == NULL) return;
 
 	out = block->data;
 
@@ -150,34 +133,41 @@ void AudioSynthWavetable::update(void) {
 			envelopeState = STATE_ATTACK;
 			count = s->ATTACK_COUNT;
 			inc = (UNITY_GAIN / (count << 3));
+			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_ATTACK", mult, inc, count);
 			continue;
 		case STATE_ATTACK:
 			envelopeState = STATE_HOLD;
 			count = s->HOLD_COUNT;
 			mult = count ? UNITY_GAIN : mult;
 			inc = 0;
+			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_HOLD", mult, inc, count);
 			continue;
 		case STATE_HOLD:
 			envelopeState = STATE_DECAY;
 			count = s->DECAY_COUNT;
 			//inc = count > 0 ? (float)(-s->SUSTAIN_MULT) / ((int32_t)count << 3) : 0;
 			inc = (float)(-s->SUSTAIN_MULT) / (count << 3);
+			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_DECAY", mult, inc, count);
 			continue;
 		case STATE_DECAY:
 			envelopeState = STATE_SUSTAIN;
 			count = 0xFFFFFFFF;
 			mult = UNITY_GAIN - s->SUSTAIN_MULT;
 			inc = 0;
+			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_SUSTAIN", mult, inc, count);
 			break;
 		case STATE_SUSTAIN:
 			count = 0xFFFFFFFF;
+			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_SUSTAIN", mult, inc, count);
 			break;
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;
 			for (; p < end; p += 4) p[0] = p[1] = p[2] = p[3] = 0;
+			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_IDLE", mult, inc, count);
 			continue;
 		default:
 			p = end;
+			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "DEFAULT", mult, inc, count);
 			continue;
 		}
 		// process 8 samples, using only mult and inc
