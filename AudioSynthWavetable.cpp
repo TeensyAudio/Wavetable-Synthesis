@@ -2,6 +2,26 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
+//#define TIME_TEST
+
+#ifdef TIME_TEST
+#define TIME_TEST_START() \
+static float MICROS_AVG = 0.0; \
+static int TEST_CNT = 0; \
+int TEST_START = -micros();
+#else
+#define TIME_TEST_START() do { } while(0);
+#endif
+
+#ifdef TIME_TEST
+#define TIME_TEST_END() \
+MICROS_AVG += ( ( TEST_START + micros() ) - MICROS_AVG ) / ++TEST_CNT; \
+Serial.printf("avg: %f, n: %i\n", MICROS_AVG, TEST_CNT);
+#else
+#define TIME_TEST_END(X) do { } while(0);
+#endif
+
+
 void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = current_sample->RELEASE_COUNT;
@@ -92,13 +112,14 @@ void AudioSynthWavetable::update(void) {
 
 	uint32_t* p;
 	uint32_t* end;
-	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
+	uint32_t tmp1, tmp2;
 
 	p = (uint32_t *)block->data;
 	// p increments by 1 for every 2 samples processed.
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 
+	TIME_TEST_START()
 	while (p < end) {
 		// we only care about the state when completing a region
 		if (count == 0) switch (envelopeState) {
@@ -137,37 +158,31 @@ void AudioSynthWavetable::update(void) {
 			continue;
 		}
 		// process 8 samples, using only mult and inc
-		sample12 = p[0];
 		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, sample12);
+		tmp1 = signed_multiply_32x16b((int32_t)mult, p[0]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, sample12);
+		tmp2 = signed_multiply_32x16t((int32_t)mult, p[0]);
 		p[0] = pack_16b_16b(tmp2, tmp1);
-
-		sample34 = p[1];
 		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, sample34);
+		tmp1 = signed_multiply_32x16b((int32_t)mult, p[1]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, sample34);
+		tmp2 = signed_multiply_32x16t((int32_t)mult, p[1]);
 		p[1] = pack_16b_16b(tmp2, tmp1);
-
-		sample56 = p[2];
 		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, sample56);
+		tmp1 = signed_multiply_32x16b((int32_t)mult, p[2]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, sample56);
+		tmp2 = signed_multiply_32x16t((int32_t)mult, p[2]);
 		p[2] = pack_16b_16b(tmp2, tmp1);
-
-		sample78 = p[3];
 		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, sample78);
+		tmp1 = signed_multiply_32x16b((int32_t)mult, p[3]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, sample78);
+		tmp2 = signed_multiply_32x16t((int32_t)mult, p[3]);
 		p[3] = pack_16b_16b(tmp2, tmp1);
 
 		p += 4;
 		count--;
 	}
+	TIME_TEST_END()
 
 	cli();
 	if (this->state_change == false) {
