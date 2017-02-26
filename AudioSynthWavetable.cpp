@@ -13,7 +13,7 @@ void AudioSynthWavetable::playFrequency(float freq, int amp) {
 }
 
 void AudioSynthWavetable::playNote(int note, int amp) {
-	setState(note, noteToFreq(note), amp);
+	setState(note, amp, noteToFreq(note));
 }
 
 void AudioSynthWavetable::setState(int note, int amp, float freq) {
