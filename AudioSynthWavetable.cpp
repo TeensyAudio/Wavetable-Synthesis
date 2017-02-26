@@ -113,6 +113,7 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	total_playFrequency -= micros();
+	playing = 0;
 	//float freq1, freq2;
 	//elapsedMillis timer = 0;
 	/*for(int i = 0; i < num_samples; i++) {
