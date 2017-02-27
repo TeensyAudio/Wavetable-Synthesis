@@ -101,6 +101,10 @@ void AudioSynthWavetable::update(void) {
 	int16_t* out;
 	uint32_t index, scale;
 	int32_t s1, s2, v1, v2, v3;
+	uint32_t* w12, w34;
+	uint32_t* p;
+	uint32_t* end;
+	uint32_t tmp1, tmp2;
 
 	block = allocate();
 	if (block == NULL) return;
@@ -111,18 +115,27 @@ void AudioSynthWavetable::update(void) {
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)s->sample;
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+		//tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+		//index = tone_phase >> (32 - s->INDEX_BITS);
+		//scale = (tone_phase << s->INDEX_BITS) >> 16;
+		//s1 = waveform[index];
+		//s2 = waveform[index + 1];
+		//v1 = s1 * int32_t(0xFFFF - scale);
+		//v2 = s2 * int32_t(scale);
+		//v3 = (v1 + v2) >> 16;
+		//*out++ = v3; //(int16_t)((v3 * tone_amp) >> 16);
+		//			 //*out++ = v3;
+		//tone_phase += tone_incr;
+
 		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		index = tone_phase >> (32 - s->INDEX_BITS);
-		scale = (tone_phase << s->INDEX_BITS);
-		scale = (scale >> 16) + ((scale >> 15) & 1);
-		s1 = waveform[index];
-		s2 = waveform[index + 1];
-		if (uint32_t(UINT16_MAX)+1 < scale) Serial.printf("FAIL");
-		v1 = s1 * int32_t((uint32_t(UINT16_MAX)+1) - scale);
-		v2 = s2 * int32_t(scale);
-		v3 = (v1 + v2) >> 16;
-		*out++ = v3; //(int16_t)((v3 * tone_amp) >> 16);
-		//*out++ = v3;
+		scale = (tone_phase << s->INDEX_BITS) >> 16;
+		w12 = (uint32_t*)(waveform+index);
+		v2 = signed_multiply_32x16t(scale, *w12);
+		*out++ = signed_multiply_accumulate_32x16b(v2, (0xFFFF - scale), *w12);
+		//v1 = signed_multiply_32x16b((0xFFFF - scale), *w12);
+		//v3 = v1 + v2;
+		//*out++ = v3; //(int16_t)((v3 * tone_amp) >> 16);
 		tone_phase += tone_incr;
 	}
 	) //end TIME_TEST
@@ -132,9 +145,6 @@ void AudioSynthWavetable::update(void) {
 	//Envelope code
 	//*********************************************************************
 	
-	uint32_t* p;
-	uint32_t* end;
-	uint32_t tmp1, tmp2;
 
 	p = (uint32_t *)block->data;
 	// p increments by 1 for every 2 samples processed.

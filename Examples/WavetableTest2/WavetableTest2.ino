@@ -94,7 +94,7 @@ const int TOTAL_BUTTONS = sizeof(buttons) / sizeof(Bounce);
 void printVoices();
 
 void setVolume() {
-	sgtl5000_1.volume((analogRead(PIN_A2)-1)/1022.0);
+	sgtl5000_1.volume(0.8*(analogRead(PIN_A2)-1)/1022.0);
 }
 
 void guitarHeroMode();
@@ -111,7 +111,7 @@ void setup() {
 
 	sgtl5000_1.enable();
 	sgtl5000_1.volume(0.8);
-	//volumeTimer.begin(setVolume, 100000);
+	volumeTimer.begin(setVolume, 100000);
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		mixer[i / 4].gain(i % 4, 0.25);
