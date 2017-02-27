@@ -46,6 +46,10 @@ uint32_t
 	AudioSynthWavetable::total_playNote,
 	AudioSynthWavetable::total_amplitude;
 
+/**
+ * @brief Begin playing a waveform.
+ *
+ */
 void AudioSynthWavetable::play(void) {
 	if (waveform == NULL)
 		return;
@@ -53,6 +57,13 @@ void AudioSynthWavetable::play(void) {
 	playing = 1;
 }
 
+/**
+ * @brief Stop playing waveform.
+ *
+ * Waveform does not immediately stop,
+ * but fades out based on release time.
+ *
+ */
 void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = release_count;
@@ -60,6 +71,13 @@ void AudioSynthWavetable::stop(void) {
 	Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
 }
 
+/**
+ * @brief Parse the sample specified by the index sample_num.
+ *
+ * @param sample_num an index within the sample array
+ * @param custom_env a value of 1 means a custom envelope
+ * is set; the default value is 0 (no custom envelope)
+ */
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	total_parseSample -= micros();
 	sample_data data = samples[sample_num];
@@ -111,6 +129,13 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	total_parseSample += micros();
 }
 
+/**
+ * @brief Play waveform at defined frequency.
+ *
+ * @param freq freqency of the generated output (range?)
+ * @param custom_env a value of 1 means a custom envelope
+ * is set; the default value is 0 (no custom envelope)
+ */
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	total_playFrequency -= micros();
 	playing = 0;
@@ -163,6 +188,14 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	total_playFrequency += micros();
 }
 
+/**
+ * @brief Play sample at specified note, amplitude.
+ *
+ * @param note the midi note number (a value between 0 and 127)
+ * @param amp amplitude of generated output
+ * @param custom_env a value of 1 means a custom envelope
+ * is set and a value is 0 means no custom envelope
+ */
 void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	total_playNote -= micros();
 	this->playing = 0;
@@ -192,6 +225,12 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	total_playNote += micros();
 }
 
+/**
+ * @brief Change the frequency of the waveform to the defined freq.
+ *
+ * If the frequency is zero sample generation is stopped.
+ * @param freq frequency of the generated output (range?)
+ */
 void AudioSynthWavetable::frequency(float freq) {
 	total_frequency -= micros();
 	if (freq < 0.0)
@@ -212,6 +251,10 @@ void AudioSynthWavetable::frequency(float freq) {
 	total_frequency += micros();
 }
 
+/**
+ * @brief Manages all the AudioSynthWavetable objects.
+ *
+ */
 void AudioSynthWavetable::update(void) {
 	total_update -= micros();
 
@@ -355,6 +398,10 @@ void AudioSynthWavetable::update(void) {
 	total_update += micros();
 }
 
+/**
+ *
+ *
+ */
 void AudioSynthWavetable::print_performance() {
 	char format_str[] =
 		"total\t%i\t%.2f%%\tupdate()\t%i\t%.2f%%\tupdate_env\t%i\t\t\t\n"

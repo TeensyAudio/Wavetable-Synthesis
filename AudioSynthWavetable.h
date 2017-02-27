@@ -12,37 +12,86 @@
 class AudioSynthWavetable : public AudioStream
 {
 public:
+	/**
+	 * Class constructor.
+	 */
 	AudioSynthWavetable(void) : AudioStream(0, NULL) {}
 
+	/**
+	 * @brief Set the wavetable samples.
+	 *
+	 * A wavetable uses a set of samples to generate sound.
+	 * This function is used to set the samples.
+	 * @param samples an array of samples from a decoded SoundFont file
+	 * @param num_samples number of samples in the array
+	 */
 	void setSamples(const sample_data * samples, int num_samples) {
 		this->samples = samples;
 		this->num_samples = num_samples;
 	}
 	
+	/**
+	 * @brief Set the loop start to and end points.
+	 *
+	 * @param start index within the sample array
+	 * representing the start of the loop
+	 * @param end index within the sample array
+	 * representing the end of the loop
+	 */
 	void setLoop(int start, int end) {
 		loop_start = start;
 		loop_end = end;
 		loop_length = loop_end - loop_start;
 		
+		// TODO: remove, if dead code (which I think it is)
 		length_bits = 1;
 		for (int len = loop_length; len >>= 1; ++length_bits);
 		loop_phase = (loop_length - 1) << (32 - length_bits);
 	}
 	
+	/**
+	 * @brief Set the frequency and amplitude of the
+	 * Wavetable
+	 *
+	 * You can use this to set the frequency and amplitude
+	 * before calling play().
+	 * @param freq frequency of the generated output (range?)
+	 * @param amp amplitude of generated output
+	 */
 	void setFreqAmp(float freq, float amp) {
 		frequency(freq);
 		amplitude(amp);
 	}
 	
+	/**
+	 * @brief Define the note of the sample
+	 * @param note the midi note number a value between 0 and 127
+	 */
 	void setSampleNote(int note) {
 		sample_freq = noteToFreq(note);
 	}
 
+	/**
+	 * @brief Changes the amplitude to 'v'
+	 *
+	 * A value of 0 will set the synth output to minimum amplitude
+	 * (i.e., no output). A value of 1 will set the output to the
+	 * maximum amplitude. Amplitude is set linearly with intermediate
+	 * values.
+	 * @param v a value between 0.0 and 1.0
+	 */
 	void amplitude(float v) {
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
 		tone_amp = (uint16_t)(32767.0*v);
 	}
 
+	/**
+	 * @brief Scale midi_amp to a value between 0.0 and 1.0
+	 * using a logarithmic tranformation.
+	 *
+	 * @param midi_amp a value between 0 and 127
+	 * @return a value between 0.0 to 1.0
+	 */
 	static float midi_volume_transform(int midi_amp) {
 		// 4 approximates a logarithmic taper for the volume
 		// however, we might need to play with this value
@@ -55,6 +104,13 @@ public:
 		return (float)pow(midi_amp, logarithmicness) / (float)pow(127, logarithmicness);
 	}
 	
+	/**
+	 * @brief Convert a MIDI note value to
+	 * its corresponding frequency.
+	 *
+	 * @param note a value between 0 and 127
+	 * @return a frequency
+	 */
 	static float noteToFreq(int note) {
 		//return 440.0 * pow(2.0, (note - 69) / 12.0);
 		//float exp = (note + 36.37631656) / 12.0;
@@ -62,33 +118,68 @@ public:
 		float freq = pow(2, exp);
 		return freq;
 	}
-	
+
+	/**
+	 * @brief Set the delay time.
+	 *
+	 * @param milliseconds length of delay (in milliseconds)
+	 */
 	void env_delay(float milliseconds) {
 		delay_count = milliseconds2count(milliseconds);
 	}
+
+	/**
+	 * @brief Set the attack time.
+	 *
+	 * @param milliseconds length of the attack time
+	 */
 	void env_attack(float milliseconds) {
 		if (milliseconds <= 0) {
 			milliseconds = 1.5;
 		}
 		attack_count = milliseconds2count(milliseconds);
 	}
+
+	/**
+	 * @brief Set the hold time.
+	 *
+	 * @param milliseconds the length of the hold time
+	 */
 	void env_hold(float milliseconds) {
 		if (milliseconds <= 0) {
 			milliseconds = 0.5;
 		}
 		hold_count = milliseconds2count(milliseconds);
 	}
+
+	/**
+	 * Set the decay time.
+	 *
+	 * @param milliseconds the length of the decay time
+	 */
 	void env_decay(float milliseconds) {
 		if (milliseconds <= 0) {
 			milliseconds = 100;
 		}
 		decay_count = milliseconds2count(milliseconds);
 	}
+
+	/**
+	 * @brief Set the sustain level.
+	 *
+	 * @param level a value between 0.0 and 1.0
+	 */
 	void env_sustain(float level) {
 		if (level < 0.0) level = 0;
 		else if (level > 1.0) level = 1.0;
 		sustain_mult = level * UNITY_GAIN;
 	}
+
+	/**
+	 * @brief Set the release time.
+	 *
+	 * @param milliseconds the length of the release time
+	 */
 	void env_release(float milliseconds) {
 		release_count = milliseconds2count(milliseconds);
 	}
@@ -99,6 +190,10 @@ public:
 	void parseSample(int sample_num, bool custom_env);
 	void playFrequency(float freq, bool custom_env=0);
 	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
+
+	/**
+	 * @return true (non-zero) if playing, otherwise false (zero) if not playing.
+	 */
 	bool isPlaying(void) { return envelopeState != STATE_IDLE; }
 	void frequency(float freq);
 	virtual void update(void);
