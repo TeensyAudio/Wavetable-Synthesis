@@ -30,17 +30,19 @@ CODE_BLOCK_TO_TEST
 #endif
 
 #ifdef ENVELOPE_DEBUG
-#define PRINT_ENV(NAME) Serial.printf("%14s-- mult:%10.2i inc:%10.2i count:%i\n", #NAME, mult, inc, count);
+#define PRINT_ENV(NAME) Serial.printf("%14s-- mult:%06.4f%% of UNITY_GAIN inc:%06.4f%% of UNITY_GAIN count:%i\n", #NAME, float(mult)/float(UNITY_GAIN), float(inc)/float(UNITY_GAIN), count);
 #else
 #define PRINT_ENV(NAME) do { } while(0);
 #endif
 
 
 void AudioSynthWavetable::stop(void) {
+	cli()
 	envelopeState = STATE_RELEASE;
 	count = current_sample->RELEASE_COUNT;
-	inc = (-(float)mult / (count << 3));
+	inc = -(mult+4) / (count * 8);
 	PRINT_ENV(STATE_RELEASE)
+	sei()
 }
 
 void AudioSynthWavetable::playFrequency(float freq, int amp) {
@@ -79,9 +81,11 @@ void AudioSynthWavetable::setFrequency(float freq) {
 }
 
 void AudioSynthWavetable::update(void) {
-	cli();
-	if (envelopeState == STATE_IDLE)
-		return;
+	cli()
+	if (envelopeState == STATE_IDLE) {
+		sei()
+			return;
+	}
 	this->state_change = false;
 	const sample_data* s = (const sample_data*)current_sample;
 	uint32_t tone_phase = this->tone_phase;
@@ -91,7 +95,7 @@ void AudioSynthWavetable::update(void) {
 	int32_t count = this->count;
 	int32_t mult = this->mult;
 	int32_t inc = this->inc;
-	sei();
+	sei()
 
 	audio_block_t* block;
 	int16_t* out;
@@ -108,13 +112,15 @@ void AudioSynthWavetable::update(void) {
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		index = tone_phase >> (32 - s->INDEX_BITS);
-		scale = (tone_phase << s->INDEX_BITS) >> 16;
+		scale = (tone_phase << s->INDEX_BITS);
+		scale = (scale >> 16) + ((scale >> 15) & 1);
 		s1 = waveform[index];
 		s2 = waveform[index + 1];
-		v1 = s1 * (0xFFFF - scale);
-		v2 = s2 * scale;
+		if (uint32_t(UINT16_MAX)+1 < scale) Serial.printf("FAIL");
+		v1 = s1 * int32_t((uint32_t(UINT16_MAX)+1) - scale);
+		v2 = s2 * int32_t(scale);
 		v3 = (v1 + v2) >> 16;
-		*out++ = (int16_t)((v3 * tone_amp) >> 16);
+		*out++ = v3; //(int16_t)((v3 * tone_amp) >> 16);
 		//*out++ = v3;
 		tone_phase += tone_incr;
 	}
@@ -123,7 +129,7 @@ void AudioSynthWavetable::update(void) {
 	//*********************************************************************
 	//Envelope code
 	//*********************************************************************
-
+	
 	uint32_t* p;
 	uint32_t* end;
 	uint32_t tmp1, tmp2;
@@ -133,10 +139,10 @@ void AudioSynthWavetable::update(void) {
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 
-	TIME_TEST(1000, 
+	TIME_TEST(10000, 
 	while (p < end) {
 		// we only care about the state when completing a region
-		if (count == 0) switch (envelopeState) {
+		if (count <= 0) switch (envelopeState) {
 		case STATE_DELAY:
 			envelopeState = STATE_ATTACK;
 			count = s->ATTACK_COUNT;
@@ -144,9 +150,9 @@ void AudioSynthWavetable::update(void) {
 			PRINT_ENV(STATE_ATTACK)
 			continue;
 		case STATE_ATTACK:
+			mult = UNITY_GAIN;
 			envelopeState = STATE_HOLD;
 			count = s->HOLD_COUNT;
-			mult = count ? UNITY_GAIN : mult;
 			inc = 0;
 			PRINT_ENV(STATE_HOLD)
 			continue;
@@ -157,19 +163,17 @@ void AudioSynthWavetable::update(void) {
 			PRINT_ENV(STATE_DECAY)
 			continue;
 		case STATE_DECAY:
-			envelopeState = STATE_SUSTAIN;
-			count = 0xFFFFFFFF;
 			mult = UNITY_GAIN - s->SUSTAIN_MULT;
+			envelopeState = mult < UNITY_GAIN/10000 ? STATE_RELEASE : STATE_SUSTAIN;
 			inc = 0;
-			PRINT_ENV(STATE_SUSTAIN)
-			break;
+			continue;
 		case STATE_SUSTAIN:
-			count = 0xFFFFFFFF;
+			count = INT32_MAX;
 			PRINT_ENV(STATE_SUSTAIN)
-			break;
+			continue;
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;
-			for (; p < end; p += 4) p[0] = p[1] = p[2] = p[3] = 0;
+			for (; p < end; ++p) *p = 0;
 			PRINT_ENV(STATE_IDLE)
 			continue;
 		default:
@@ -179,24 +183,24 @@ void AudioSynthWavetable::update(void) {
 		}
 		// process 8 samples, using only mult and inc
 		mult += inc;
-		tmp1 = signed_multiply_32x16b(mult>>14, p[0]);
+		tmp1 = signed_multiply_32x16b(mult>>15, p[0]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t(mult>>14, p[0]);
+		tmp2 = signed_multiply_32x16t(mult>>15, p[0]);
 		p[0] = pack_16b_16b(tmp2, tmp1);
 		mult += inc;
-		tmp1 = signed_multiply_32x16b(mult>>14, p[1]);
+		tmp1 = signed_multiply_32x16b(mult>>15, p[1]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t(mult>>14, p[1]);
+		tmp2 = signed_multiply_32x16t(mult>>15, p[1]);
 		p[1] = pack_16b_16b(tmp2, tmp1);
 		mult += inc;
-		tmp1 = signed_multiply_32x16b(mult>>14, p[2]);
+		tmp1 = signed_multiply_32x16b(mult>>15, p[2]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t(mult>>14, p[2]);
+		tmp2 = signed_multiply_32x16t(mult>>15, p[2]);
 		p[2] = pack_16b_16b(tmp2, tmp1);
 		mult += inc;
-		tmp1 = signed_multiply_32x16b(mult>>14, p[3]);
+		tmp1 = signed_multiply_32x16b(mult>>15, p[3]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t(mult>>14, p[3]);
+		tmp2 = signed_multiply_32x16t(mult>>15, p[3]);
 		p[3] = pack_16b_16b(tmp2, tmp1);
 
 		p += 4;
@@ -204,7 +208,7 @@ void AudioSynthWavetable::update(void) {
 	}
 	) //END TIME TEST
 
-	cli();
+	cli()
 	if (this->state_change == false) {
 		this->tone_phase = tone_phase;
 		this->envelopeState = envelopeState;
@@ -212,7 +216,7 @@ void AudioSynthWavetable::update(void) {
 		this->mult = mult;
 		this->inc = inc;
 	}
-	sei();
+	sei()
 
 	transmit(block);
 	release(block);

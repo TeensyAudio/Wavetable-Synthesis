@@ -110,11 +110,11 @@ void setup() {
 	AudioMemory(60);
 
 	sgtl5000_1.enable();
-	sgtl5000_1.volume(1.0);
+	sgtl5000_1.volume(0.8);
 	//volumeTimer.begin(setVolume, 100000);
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
-		mixer[i / 4].gain(i % 4, 1);
+		mixer[i / 4].gain(i % 4, 0.25);
 		wavetable[i].setInstrument(nylonstrgtr);
 		wavetable[i].amplitude(1);
 		voices[i].wavetable_id = i;

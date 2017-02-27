@@ -1,6 +1,6 @@
 #pragma once
 #include <AudioStream.h>
-#include "sample_data.h"
+#include <AudioSynthWavetable.h>
 
 extern const sample_data nylonstrgtr_samples[3];
 extern const uint32_t nylonstrgtr_sample_0_nguitrf2[1920];
