@@ -4,8 +4,9 @@
 #include "AudioStream.h"
 #include <math.h>
 #include <sample_data.h>
+#include <stdint.h>
 
-#define UNITY_GAIN 65536  // Max amplitude
+#define UNITY_GAIN INT32_MAX// Max amplitude
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define AMP_DEF 69
 
@@ -70,9 +71,9 @@ private:
 	volatile uint32_t tone_incr = 0;
 	volatile uint16_t tone_amp = 0;
 	volatile envelopeStateEnum  envelopeState = STATE_IDLE; // idle, delay, attack, hold, decay, sustain, release
-	volatile uint32_t count = 0; // how much time remains in this state, in 8 sample units
-	volatile float mult = 0; // attenuation, 0=off, 0x10000=unity gain
-	volatile float inc = 0; // amount to change mult on each sample
+	volatile int32_t count = 0; // how much time remains in this state, in 8 sample units
+	volatile int32_t mult = 0; // attenuation, 0=off, 0x10000=unity gain
+	volatile int32_t inc = 0; // amount to change mult on each sample
 	volatile bool state_change = false;
 };
 

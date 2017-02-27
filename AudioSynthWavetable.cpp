@@ -2,7 +2,8 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-//#define TIME_TEST_ON
+#define TIME_TEST_ON
+//#define ENVELOPE_DEBUG
 
 #ifdef TIME_TEST_ON
 #define TIME_TEST(INTERVAL, CODE_BLOCK_TO_TEST) \
@@ -28,11 +29,18 @@ if (NEXT_DISPLAY < micros_end) { \
 CODE_BLOCK_TO_TEST
 #endif
 
+#ifdef ENVELOPE_DEBUG
+#define PRINT_ENV(NAME) Serial.printf("%14s-- mult:%10.2i inc:%10.2i count:%i\n", #NAME, mult, inc, count);
+#else
+#define PRINT_ENV(NAME) do { } while(0);
+#endif
+
+
 void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = current_sample->RELEASE_COUNT;
 	inc = (-(float)mult / (count << 3));
-	Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_RELEASE", mult, inc, count);
+	PRINT_ENV(STATE_RELEASE)
 }
 
 void AudioSynthWavetable::playFrequency(float freq, int amp) {
@@ -56,7 +64,7 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	//amplitude(midi_volume_transform(amp));
 	tone_amp = 2855;
 	envelopeState = STATE_DELAY;
-	Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_DELAY", mult, inc, count);
+	PRINT_ENV(STATE_DELAY)
 	state_change = true;
 	sei()
 }
@@ -80,9 +88,9 @@ void AudioSynthWavetable::update(void) {
 	uint32_t tone_incr = this->tone_incr;
 	uint16_t tone_amp = this->tone_amp;
 	envelopeStateEnum  envelopeState = this->envelopeState;
-	uint32_t count = this->count;
-	float mult = this->mult;
-	float inc = this->inc;
+	int32_t count = this->count;
+	int32_t mult = this->mult;
+	int32_t inc = this->inc;
 	sei();
 
 	audio_block_t* block;
@@ -132,64 +140,63 @@ void AudioSynthWavetable::update(void) {
 		case STATE_DELAY:
 			envelopeState = STATE_ATTACK;
 			count = s->ATTACK_COUNT;
-			inc = (UNITY_GAIN / (count << 3));
-			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_ATTACK", mult, inc, count);
+			inc = UNITY_GAIN / (count * 8);
+			PRINT_ENV(STATE_ATTACK)
 			continue;
 		case STATE_ATTACK:
 			envelopeState = STATE_HOLD;
 			count = s->HOLD_COUNT;
 			mult = count ? UNITY_GAIN : mult;
 			inc = 0;
-			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_HOLD", mult, inc, count);
+			PRINT_ENV(STATE_HOLD)
 			continue;
 		case STATE_HOLD:
 			envelopeState = STATE_DECAY;
 			count = s->DECAY_COUNT;
-			//inc = count > 0 ? (float)(-s->SUSTAIN_MULT) / ((int32_t)count << 3) : 0;
-			inc = (float)(-s->SUSTAIN_MULT) / (count << 3);
-			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_DECAY", mult, inc, count);
+			inc = (-s->SUSTAIN_MULT) / (count * 8);
+			PRINT_ENV(STATE_DECAY)
 			continue;
 		case STATE_DECAY:
 			envelopeState = STATE_SUSTAIN;
 			count = 0xFFFFFFFF;
 			mult = UNITY_GAIN - s->SUSTAIN_MULT;
 			inc = 0;
-			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_SUSTAIN", mult, inc, count);
+			PRINT_ENV(STATE_SUSTAIN)
 			break;
 		case STATE_SUSTAIN:
 			count = 0xFFFFFFFF;
-			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_SUSTAIN", mult, inc, count);
+			PRINT_ENV(STATE_SUSTAIN)
 			break;
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;
 			for (; p < end; p += 4) p[0] = p[1] = p[2] = p[3] = 0;
-			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "STATE_IDLE", mult, inc, count);
+			PRINT_ENV(STATE_IDLE)
 			continue;
 		default:
 			p = end;
-			Serial.printf("%14s-- mult:%10.2f inc:%10.2f count:%i\n", "DEFAULT", mult, inc, count);
+			PRINT_ENV(DEFAULT)
 			continue;
 		}
 		// process 8 samples, using only mult and inc
 		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, p[0]);
+		tmp1 = signed_multiply_32x16b(mult>>14, p[0]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, p[0]);
+		tmp2 = signed_multiply_32x16t(mult>>14, p[0]);
 		p[0] = pack_16b_16b(tmp2, tmp1);
 		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, p[1]);
+		tmp1 = signed_multiply_32x16b(mult>>14, p[1]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, p[1]);
+		tmp2 = signed_multiply_32x16t(mult>>14, p[1]);
 		p[1] = pack_16b_16b(tmp2, tmp1);
 		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, p[2]);
+		tmp1 = signed_multiply_32x16b(mult>>14, p[2]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, p[2]);
+		tmp2 = signed_multiply_32x16t(mult>>14, p[2]);
 		p[2] = pack_16b_16b(tmp2, tmp1);
 		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, p[3]);
+		tmp1 = signed_multiply_32x16b(mult>>14, p[3]);
 		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, p[3]);
+		tmp2 = signed_multiply_32x16t(mult>>14, p[3]);
 		p[3] = pack_16b_16b(tmp2, tmp1);
 
 		p += 4;

@@ -18,8 +18,8 @@ IntervalTimer guitarHeroTimer;
 IntervalTimer volumeTimer;
 
 
-const int TOTAL_VOICES = 12;
-const int TOTAL_MIXERS = 4;
+const int TOTAL_VOICES = 32;
+const int TOTAL_MIXERS = 11;
 struct voice_t {
 	int wavetable_id;
 	byte channel;
@@ -53,36 +53,36 @@ AudioConnection patchCord[] = {
 	{wavetable[9], 0, mixer[2], 1},
 	{wavetable[10], 0, mixer[2], 2},
 	{wavetable[11], 0, mixer[2], 3},
-	//{wavetable[12], 0, mixer[3], 0},
-	//{wavetable[13], 0, mixer[3], 1},
-	//{wavetable[14], 0, mixer[3], 2},
-	//{wavetable[15], 0, mixer[3], 3},
-	//{wavetable[16], 0, mixer[4], 0},
-	//{wavetable[17], 0, mixer[4], 1},
-	//{wavetable[18], 0, mixer[4], 2},
-	//{wavetable[19], 0, mixer[4], 3},
-	//{wavetable[20], 0, mixer[5], 0},
-	//{wavetable[21], 0, mixer[5], 1},
-	//{wavetable[22], 0, mixer[5], 2},
-	//{wavetable[23], 0, mixer[5], 3},
-	//{wavetable[24], 0, mixer[6], 0},
-	//{wavetable[25], 0, mixer[6], 1},
-	//{wavetable[26], 0, mixer[6], 2},
-	//{wavetable[27], 0, mixer[6], 3},
-	//{wavetable[28], 0, mixer[7], 0},
-	//{wavetable[29], 0, mixer[7], 1},
-	//{wavetable[30], 0, mixer[7], 2},
-	//{wavetable[31], 0, mixer[7], 3},
-	{mixer[0], 0, mixer[TOTAL_MIXERS-1], 0},
-	{mixer[1], 0, mixer[TOTAL_MIXERS-1], 1},
-	{mixer[2], 0, mixer[TOTAL_MIXERS-1], 2},
-	//{mixer[3], 0, mixer[TOTAL_MIXERS-1], 3},
-	//{mixer[4], 0, mixer[TOTAL_MIXERS-2], 0},
-	//{mixer[5], 0, mixer[TOTAL_MIXERS-2], 1},
-	//{mixer[6], 0, mixer[TOTAL_MIXERS-2], 2},
-	//{mixer[7], 0, mixer[TOTAL_MIXERS-2], 3},
-	//{mixer[TOTAL_MIXERS-3], 0, mixer[TOTAL_MIXERS-1], 0},
-	//{mixer[TOTAL_MIXERS-2], 0, mixer[TOTAL_MIXERS-1], 1},
+	{wavetable[12], 0, mixer[3], 0},
+	{wavetable[13], 0, mixer[3], 1},
+	{wavetable[14], 0, mixer[3], 2},
+	{wavetable[15], 0, mixer[3], 3},
+	{wavetable[16], 0, mixer[4], 0},
+	{wavetable[17], 0, mixer[4], 1},
+	{wavetable[18], 0, mixer[4], 2},
+	{wavetable[19], 0, mixer[4], 3},
+	{wavetable[20], 0, mixer[5], 0},
+	{wavetable[21], 0, mixer[5], 1},
+	{wavetable[22], 0, mixer[5], 2},
+	{wavetable[23], 0, mixer[5], 3},
+	{wavetable[24], 0, mixer[6], 0},
+	{wavetable[25], 0, mixer[6], 1},
+	{wavetable[26], 0, mixer[6], 2},
+	{wavetable[27], 0, mixer[6], 3},
+	{wavetable[28], 0, mixer[7], 0},
+	{wavetable[29], 0, mixer[7], 1},
+	{wavetable[30], 0, mixer[7], 2},
+	{wavetable[31], 0, mixer[7], 3},
+	{mixer[0], 0, mixer[TOTAL_MIXERS-3], 0},
+	{mixer[1], 0, mixer[TOTAL_MIXERS-3], 1},
+	{mixer[2], 0, mixer[TOTAL_MIXERS-3], 2},
+	{mixer[3], 0, mixer[TOTAL_MIXERS-3], 3},
+	{mixer[4], 0, mixer[TOTAL_MIXERS-2], 0},
+	{mixer[5], 0, mixer[TOTAL_MIXERS-2], 1},
+	{mixer[6], 0, mixer[TOTAL_MIXERS-2], 2},
+	{mixer[7], 0, mixer[TOTAL_MIXERS-2], 3},
+	{mixer[TOTAL_MIXERS-3], 0, mixer[TOTAL_MIXERS-1], 0},
+	{mixer[TOTAL_MIXERS-2], 0, mixer[TOTAL_MIXERS-1], 1},
 	{mixer[TOTAL_MIXERS-1], 0, i2s1, 0},
 	{mixer[TOTAL_MIXERS-1], 0, i2s1, 1},
 };
@@ -107,7 +107,7 @@ void setup() {
 	pinMode(1, INPUT_PULLUP);
 	pinMode(2, INPUT_PULLUP);
 
-	AudioMemory(40);
+	AudioMemory(60);
 
 	sgtl5000_1.enable();
 	sgtl5000_1.volume(1.0);

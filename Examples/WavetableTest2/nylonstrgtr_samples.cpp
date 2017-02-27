@@ -25,7 +25,7 @@ const sample_data nylonstrgtr_samples[3] = {
 		//RELEASE_COUNT
 		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
 		//SUSTAIN_MULT
-		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
+		(int32_t)(100000<<15 > 0 && 100000<<15 < UNITY_GAIN ? 100000<<15 : UNITY_GAIN),
 		//16-bit PCM encoded audio sample
 		(int16_t*)nylonstrgtr_sample_0_nguitrf2,
 	},
@@ -40,7 +40,7 @@ const sample_data nylonstrgtr_samples[3] = {
 		((uint32_t)((20 <= 0 ? 0.5 : 20)*SAMPLES_PER_MSEC) + 7) >> 3,
 		((uint32_t)((11993 <= 0 ? 100 : 11993)*SAMPLES_PER_MSEC) + 7) >> 3,
 		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
-		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
+		(int32_t)(100000<<15 > 0 && 100000<<15 < UNITY_GAIN ? 100000<<15 : UNITY_GAIN),
 		(int16_t*)nylonstrgtr_sample_1_nguitb2,
 	},
 	{
@@ -54,7 +54,7 @@ const sample_data nylonstrgtr_samples[3] = {
 		((uint32_t)((20 <= 0 ? 0.5 : 20)*SAMPLES_PER_MSEC) + 7) >> 3,
 		((uint32_t)((11993 <= 0 ? 100 : 11993)*SAMPLES_PER_MSEC) + 7) >> 3,
 		((uint32_t)(100*SAMPLES_PER_MSEC) + 7) >> 3,
-		(int32_t)(100000 > 0 && 100000 < UNITY_GAIN ? 1000000 : UNITY_GAIN),
+		(int32_t)(100000<<15 > 0 && 100000<<15 < UNITY_GAIN ? 100000<<15 : UNITY_GAIN),
 		(int16_t*)nylonstrgtr_sample_2_acgtrb3,
 	},
 };
