@@ -183,7 +183,7 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
     h_file_name = "{}_samples.h".format(instrument_name)
     cpp_file_name = "{}_samples.cpp".format(instrument_name)
     with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
-        h_file.write("#pragma once\n#include \"sample_data.h\"\n\n")
+        h_file.write("#include \"AudioSynthWavetable.h\"\n")
         # Decode data to sample_data array in header file
         h_file.write("extern sample_data {0}[{1}];\n".format(instrument_name, num_samples))
 
@@ -257,10 +257,9 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
         "\t\t{SAMPLE_ARRAY_NAME},\n" \
         "\t}},\n"
 
-    base_note = bag.base_note if bag.base_note else bag.sample.original_pitch
     out_vals = {
-        "ORIGINAL_PITCH": base_note,
-		"CENTS_OFFSET": (pow(2.0, float(bag.fine_tuning)/1200.0)) if bag.fine_tuning else 1.0,
+        "ORIGINAL_PITCH": bag.base_note if bag.base_note else bag.sample.original_pitch,
+		"CENTS_OFFSET": bag.fine_tuning,
         "LENGTH": bag.sample.duration,
         "SAMPLE_RATE": bag.sample.sample_rate,
         "LOOP_START": bag.cooked_loop_start,
@@ -294,11 +293,6 @@ def check_is_valid_sample(sample):
     if sample.end_loop > sample.duration:
         return False, 'End loop index is larger than sample end index'
     return True, None
-	
-def note_to_freq(note):
-    exp = (float(note) - 60.2186402864753403959303175237848168654319370812936513166) / 12.0
-    freq = float(pow(2, exp)) * 440.0
-    return freq
 
 
 def error(message):
