@@ -107,6 +107,7 @@ void AudioSynthWavetable::update(void) {
 
 	out = block->data;
 
+	TIME_TEST(10000, 
 	//assuming 16 bit PCM, 44100 Hz
 	int16_t* waveform = (int16_t*)s->sample;
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
@@ -124,6 +125,7 @@ void AudioSynthWavetable::update(void) {
 		//*out++ = v3;
 		tone_phase += tone_incr;
 	}
+	) //end TIME_TEST
 
 
 	//*********************************************************************
@@ -139,7 +141,6 @@ void AudioSynthWavetable::update(void) {
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 
-	TIME_TEST(10000, 
 	while (p < end) {
 		// we only care about the state when completing a region
 		if (count <= 0) switch (envelopeState) {
@@ -206,7 +207,6 @@ void AudioSynthWavetable::update(void) {
 		p += 4;
 		count--;
 	}
-	) //END TIME TEST
 
 	cli()
 	if (this->state_change == false) {
