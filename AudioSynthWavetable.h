@@ -67,21 +67,12 @@ public:
 		delay_count = milliseconds2count(milliseconds);
 	}
 	void env_attack(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 1.5;
-		}
 		attack_count = milliseconds2count(milliseconds);
 	}
 	void env_hold(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 0.5;
-		}
 		hold_count = milliseconds2count(milliseconds);
 	}
 	void env_decay(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 100;
-		}
 		decay_count = milliseconds2count(milliseconds);
 	}
 	void env_sustain(float level) {
@@ -117,7 +108,7 @@ private:
 	};
 
 	uint32_t milliseconds2count(float milliseconds) {
-		if (milliseconds < 0.0) milliseconds = 0.0;
+		if (milliseconds < 1.0) milliseconds = 1.0;
 		// # of 8-sample units to process
 		// Add 7 to round up
 		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
@@ -156,7 +147,7 @@ private:
 	uint32_t attack_count = 0;
 	uint32_t hold_count = 0;
 	uint32_t decay_count = 0;
-	int32_t  sustain_mult = 0; // Why not uint?..
+	int32_t  sustain_mult = 0;
 	uint32_t release_count = 0;
 
 	static uint32_t

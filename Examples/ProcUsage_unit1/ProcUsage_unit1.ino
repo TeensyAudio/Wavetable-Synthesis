@@ -10,7 +10,7 @@
  7 2093  2217  2349  2489  2637  2794  2960  3136  3322  3520  3729  3951
  8 4186  4435  4699  4978  5274  5588  5920  6272  6645  7040  7459  7902
 */
-#define NUM_VOICES 32   // Audio concurrency seems to cap at 30
+#define NUM_VOICES 64
 
 #include <SerialFlash.h>
 #include <Audio.h>
@@ -20,72 +20,119 @@
 //---------------------------------------------------------------------------------------
 #include <AudioSynthWavetable.h>
 #include "VoiceOohs_samples.h"
+#include "GuitarHarmonics_samples.h"
+#include "SolarWind_samples.h"
 //---------------------------------------------------------------------------------------
 AudioOutputI2S            i2s1;
-AudioSynthWavetable       wavetables[NUM_VOICES];
-AudioMixer4               mixer[11];
+AudioSynthWavetable       wavetable[NUM_VOICES];
+AudioMixer4               mixer[21];
 //---------------------------------------------------------------------------------------
 AudioConnection PatchCord[] = {
-    {wavetables[0], 0, mixer[0], 0},
-    {wavetables[1], 0, mixer[0], 1},
-    {wavetables[2], 0, mixer[0], 2},
-    {wavetables[3], 0, mixer[0], 3},
-    {wavetables[4], 0, mixer[1], 0},
-    {wavetables[5], 0, mixer[1], 1},
-    {wavetables[6], 0, mixer[1], 2},
-    {wavetables[7], 0, mixer[1], 3},
-    {wavetables[8], 0, mixer[2], 0},
-    {wavetables[9], 0, mixer[2], 1},
-    {wavetables[10], 0, mixer[2], 2},
-    {wavetables[11], 0, mixer[2], 3},
-    {wavetables[12], 0, mixer[3], 0},
-    {wavetables[13], 0, mixer[3], 1},
-    {wavetables[14], 0, mixer[3], 2},
-    {wavetables[15], 0, mixer[3], 3},
-    {wavetables[16], 0, mixer[4], 0},
-    {wavetables[17], 0, mixer[4], 1},
-    {wavetables[18], 0, mixer[4], 2},
-    {wavetables[19], 0, mixer[4], 3},
-    {wavetables[20], 0, mixer[5], 0},
-    {wavetables[21], 0, mixer[5], 1},
-    {wavetables[22], 0, mixer[5], 2},
-    {wavetables[23], 0, mixer[5], 3},
-    {wavetables[24], 0, mixer[6], 0},
-    {wavetables[25], 0, mixer[6], 1},
-    {wavetables[26], 0, mixer[6], 2},
-    {wavetables[27], 0, mixer[6], 3},
-    {wavetables[28], 0, mixer[7], 0},
-    {wavetables[29], 0, mixer[7], 1},
-    {wavetables[30], 0, mixer[7], 2},
-    {wavetables[31], 0, mixer[7], 3},
-    {mixer[0], 0, mixer[8], 0},
-    {mixer[1], 0, mixer[8], 1},
-    {mixer[2], 0, mixer[8], 2},
-    {mixer[3], 0, mixer[8], 3},
-    {mixer[4], 0, mixer[9], 0},
-    {mixer[5], 0, mixer[9], 1},
-    {mixer[6], 0, mixer[9], 2},
-    {mixer[7], 0, mixer[9], 3},
-    {mixer[8], 0, mixer[10], 0},
-    {mixer[9], 0, mixer[10], 1},
-    {mixer[10], 0, i2s1, 0},
-    {mixer[10], 0, i2s1, 1},
+    {wavetable[0], 0, mixer[0], 0},
+    {wavetable[1], 0, mixer[0], 1},
+    {wavetable[2], 0, mixer[0], 2},
+    {wavetable[3], 0, mixer[0], 3},
+    {wavetable[4], 0, mixer[1], 0},
+    {wavetable[5], 0, mixer[1], 1},
+    {wavetable[6], 0, mixer[1], 2},
+    {wavetable[7], 0, mixer[1], 3},
+    {wavetable[8], 0, mixer[2], 0},
+    {wavetable[9], 0, mixer[2], 1},
+    {wavetable[10], 0, mixer[2], 2},
+    {wavetable[11], 0, mixer[2], 3},
+    {wavetable[12], 0, mixer[3], 0},
+    {wavetable[13], 0, mixer[3], 1},
+    {wavetable[14], 0, mixer[3], 2},
+    {wavetable[15], 0, mixer[3], 3},
+    {wavetable[16], 0, mixer[4], 0},
+    {wavetable[17], 0, mixer[4], 1},
+    {wavetable[18], 0, mixer[4], 2},
+    {wavetable[19], 0, mixer[4], 3},
+    {wavetable[20], 0, mixer[5], 0},
+    {wavetable[21], 0, mixer[5], 1},
+    {wavetable[22], 0, mixer[5], 2},
+    {wavetable[23], 0, mixer[5], 3},
+    {wavetable[24], 0, mixer[6], 0},
+    {wavetable[25], 0, mixer[6], 1},
+    {wavetable[26], 0, mixer[6], 2},
+    {wavetable[27], 0, mixer[6], 3},
+    {wavetable[28], 0, mixer[7], 0},
+    {wavetable[29], 0, mixer[7], 1},
+    {wavetable[30], 0, mixer[7], 2},
+    {wavetable[31], 0, mixer[7], 3},
+    {wavetable[32], 0, mixer[8], 0},
+    {wavetable[33], 0, mixer[8], 1},
+    {wavetable[34], 0, mixer[8], 2},
+    {wavetable[35], 0, mixer[8], 3},
+    {wavetable[36], 0, mixer[9], 0},
+    {wavetable[37], 0, mixer[9], 1},
+    {wavetable[38], 0, mixer[9], 2},
+    {wavetable[39], 0, mixer[9], 3},
+    {wavetable[40], 0, mixer[10], 0},
+    {wavetable[41], 0, mixer[10], 1},
+    {wavetable[42], 0, mixer[10], 2},
+    {wavetable[43], 0, mixer[10], 3},
+    {wavetable[44], 0, mixer[11], 0},
+    {wavetable[45], 0, mixer[11], 1},
+    {wavetable[46], 0, mixer[11], 2},
+    {wavetable[47], 0, mixer[11], 3},
+    {wavetable[48], 0, mixer[12], 0},
+    {wavetable[49], 0, mixer[12], 1},
+    {wavetable[50], 0, mixer[12], 2},
+    {wavetable[51], 0, mixer[12], 3},
+    {wavetable[52], 0, mixer[13], 0},
+    {wavetable[53], 0, mixer[13], 1},
+    {wavetable[54], 0, mixer[13], 2},
+    {wavetable[55], 0, mixer[13], 3},
+    {wavetable[56], 0, mixer[14], 0},
+    {wavetable[57], 0, mixer[14], 1},
+    {wavetable[58], 0, mixer[14], 2},
+    {wavetable[59], 0, mixer[14], 3},
+    {wavetable[60], 0, mixer[15], 0},
+    {wavetable[61], 0, mixer[15], 1},
+    {wavetable[62], 0, mixer[15], 2},
+    {wavetable[63], 0, mixer[15], 3},
+    /********************************/
+    {mixer[0], 0, mixer[16], 0},
+    {mixer[1], 0, mixer[16], 1},
+    {mixer[2], 0, mixer[16], 2},
+    {mixer[3], 0, mixer[16], 3},
+    {mixer[4], 0, mixer[17], 0},
+    {mixer[5], 0, mixer[17], 1},
+    {mixer[6], 0, mixer[17], 2},
+    {mixer[7], 0, mixer[17], 3},
+    {mixer[8], 0, mixer[18], 0},
+    {mixer[9], 0, mixer[18], 1},
+    {mixer[10], 0, mixer[18], 2},
+    {mixer[11], 0, mixer[18], 3},
+    {mixer[12], 0, mixer[19], 0},
+    {mixer[13], 0, mixer[19], 1},
+    {mixer[14], 0, mixer[19], 2},
+    {mixer[15], 0, mixer[19], 3},
+    /********************************/
+    {mixer[16], 0, mixer[20], 0},
+    {mixer[17], 0, mixer[20], 1},
+    {mixer[18], 0, mixer[20], 2},
+    {mixer[19], 0, mixer[20], 3},
+    /********************************/
+    {mixer[20], 0, i2s1, 0},
+    {mixer[20], 0, i2s1, 1},
   };
 //---------------------------------------------------------------------------------------
 AudioControlSGTL5000      sgtl5000_1;
 elapsedMillis timer = 0;
 int count = 0;
 bool flag_stop = false;
-int note = 40;    // Starting note doesn't seem to matter much
+int note = 20;
 
 const int TICK = 500;     // Timer period (ms)
 
 void setup() {
-  AudioMemory(30);
+  AudioMemory(100);
   sgtl5000_1.enable();
-  sgtl5000_1.volume(0.7);
+  sgtl5000_1.volume(0.5);
   for (int i = 0; i < NUM_VOICES; i++)
-    wavetables[i].setSamples(VoiceOohs, sizeof(VoiceOohs)/sizeof(sample_data));
+    wavetable[i].setSamples(SolarWind, sizeof(SolarWind)/sizeof(sample_data));
   while (timer < 2000);   // Spin for serial monitor
 }
 
@@ -95,13 +142,13 @@ void loop() {
       float proc_usage = AudioProcessorUsage();
       if (count > 0)
         Serial.printf("Processor usage: %3.5f\n\n", proc_usage);
-      if (count == NUM_VOICES || proc_usage > 90.0) {
+      if (count == NUM_VOICES || proc_usage > 95.0) {
         for (int i = 0; i < NUM_VOICES; i++)
-          wavetables[i].stop();
+          wavetable[i].stop();
         flag_stop = true;
         return;
       }
-      wavetables[count++].playNote(note++);
+      wavetable[count++].playNote(note++);
       Serial.printf("voices: %d\n", count);
       timer = 0;
     }
