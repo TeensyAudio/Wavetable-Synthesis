@@ -248,7 +248,7 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
 def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, keyRange):
     out_fmt_str = \
         "\t{{\n" \
-        "\t\t{ORIGINAL_PITCH},\t//Original Pitch\n" \
+        "\t\t{LENGTH_BITS},\t//Number of bits needed to hold length\n" \
         "\t\t({PHASE_MULT}*{CENTS_OFFSET}*({SAMPLE_RATE} / AUDIO_SAMPLE_RATE_EXACT)) / {SAMPLE_FREQ} + 0.5,\t//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5\n" \
         "\t\t((uint32_t){LENGTH}-1) << (32 - {LENGTH_BITS}),\t//(sample_length-1) << (32 - sample_length_bits)\n" \
         "\t\t((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS}),\t//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END\n" \
@@ -258,13 +258,13 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "\t\tuint32_t({HOLD_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//HOLD_COUNT\n" \
         "\t\tuint32_t({DECAY_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//DECAY_COUNT\n" \
         "\t\tuint32_t({RELEASE_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//RELEASE_COUNT\n" \
-        "\t\tuint32_t({SUSTAIN_FRAC}*UNITY_GAIN),\t//SUSTAIN_MULT\n" \
+        "\t\tint32_t({SUSTAIN_FRAC}*UNITY_GAIN),\t//SUSTAIN_MULT\n" \
         "\t\t(int16_t*){SAMPLE_ARRAY_NAME},\t//16-bit PCM encoded audio sample\n" \
         "\t}},\n"
 
     base_note = bag.base_note if bag.base_note else bag.sample.original_pitch
     cents_offset = (pow(2.0, float(bag.fine_tuning)/1200.0)) if bag.fine_tuning else 1.0
-    length_bits = 1
+    length_bits = 0
     length = bag.sample.duration
     len = length
     shift_res = 1
@@ -292,7 +292,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
 
     sustain_env = bag.volume_envelope_sustain if bag.volume_envelope_sustain else global_bag.volume_envelope_sustain
     if sustain_env is not None:
-        sustain_frac = sustain_env / 96
+        sustain_frac = float(sustain_env) / 96000.0
     else:
         sustain_frac = 0.0
 	
