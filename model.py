@@ -17,7 +17,7 @@ class MyModel():
         self.out_dir = None
         self.out_name = None
         self.total_sample_size = None
-        self.curr_samples = None
+        self.curr_samples = list()
 
         self.samples = list()
         self.Instruments = list()

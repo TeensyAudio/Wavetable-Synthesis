@@ -39,10 +39,13 @@ class MyController():
         curr_inst = self.model.getCurrInstrument()
         inFile = self.model.getInFile()
         gb_idx = self.model.Instruments[curr_inst].gb_idx
-        for samp in self.model.curr_samples:
+        selected_samples = _selection
+        for samp in selected_samples:
             selected_bags.append(self.model.Instruments[curr_inst].Samples[int(samp)].bag_idx)
         if decoder.decode_selected(inFile, curr_inst, selected_bags, gb_idx):
-            self.view.setStatus('')
+            self.view.setStatus('Decode Successful!')
+        else:
+            self.view.setStatus('ERROR! Failed to Decode!')
 
 # Model update responses
 

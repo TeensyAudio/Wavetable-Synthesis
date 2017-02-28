@@ -93,6 +93,7 @@ class MyView(Frame):
         self.samp_listbox = JJ.JJListBox(self.lower_frame, 'Samples', self.s_names)
         self.samp_listbox.grid(column=1, row=0, sticky=N + S + E + W, padx=5)
         self.samp_listbox.rcconfigure([(0, 1), (1, 16), (2, 1)], [(0, 1)])
+        self.samp_listbox.list_box.config(selectmode = EXTENDED)
         self.samp_listbox.under_frame = JJ.JJFrame(self.samp_listbox, 1, 2, 1, 1)
         self.samp_listbox.under_frame.grid(column=0, row=3)
         self.samp_listbox.decode_button = Button(self.samp_listbox.under_frame, text='Decode', command=self.samplesSelected)
