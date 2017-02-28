@@ -128,7 +128,7 @@ def main(argv):
             print('{} contains {} samples.'.format(sf2.instruments[instrument].name, len(sample_names)))
             method = menu(('Export All Samples', 'Select Samples to Export'))
             if method == 1:
-                decodeAll(path, instrument, global_bag_index)
+                decode_all(path, instrument, global_bag_index)
                 sys.exit('All samples for instrument decoded successfully. Exiting Program.')
             else:
                 selected_bags = []
@@ -136,26 +136,26 @@ def main(argv):
                     print_menu(sample_names)
                     sample = safe_input('Select Sample [1-{}]: '.format(len(sample_names)), int, 1, len(sample_names))
                     print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(samples[sample-1].name))
-                    if(bag_to_sample[sample-1][0] not in selected_bags):
-                        selected_bags.append(bag_to_sample[sample-1][0])
+                    selected_bags.append(bag_to_sample[sample-1][0])
                     i_result = menu(options2)
                     if i_result == 1:
                         continue
                     elif i_result == 2:
-                        decodeSelected(path, instrument, selected_bags, global_bag_index)
-                        sys.exit('Selected samples for instrument decoded successfully. Exiting Program.')
+                        decode_selected(path, instrument, selected_bags, global_bag_index)
+                        sys.exit('Program Terminated by User')
         elif choice == 2:
             sys.exit('Program Terminated by User')
         else:   # shouldn't be reached
             input("Wrong option selection. Enter any key to try again..")
 
-def decodeSelected(path, inst_index, selected_bags, global_bag_index, user_title=None):
+
+def decode_selected(path, inst_index, selected_bags, global_bag_index, user_title=None):
     with open(path, 'rb') as file:
         sf2 = Sf2File(file)
 
         bags_to_decode = \
             [sf2.instruments[inst_index].bags[n] for n in selected_bags] if selected_bags \
-            else sf2.instruments[inst_index].bags[1:] if global_bag_index != None \
+            else sf2.instruments[inst_index].bags[1:] if global_bag_index \
             else sf2.instruments[inst_index].bags
 
         for bag in bags_to_decode:
@@ -166,15 +166,15 @@ def decodeSelected(path, inst_index, selected_bags, global_bag_index, user_title
             if selected_bags:
                 print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(bag.sample.name))
 
-        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index != None else None
+        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index >= 0 else None
         file_title = user_title if user_title else sf2.instruments[inst_index].name
 
         file_title = re.sub(r'[\W]+', '', file_title)
         export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title)
 
 
-def decodeAll(path, inst_index, global_bag_index):
-    decodeSelected(path, inst_index, selected_bags=None, global_bag_index=global_bag_index)
+def decode_all(path, inst_index, global_bag_index):
+    decode_selected(path, inst_index, selected_bags=None, global_bag_index=global_bag_index)
 
 
 # Write a sample out to C++ style data files.
@@ -183,24 +183,14 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
     h_file_name = "{}_samples.h".format(instrument_name)
     cpp_file_name = "{}_samples.cpp".format(instrument_name)
     with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
-        h_file.write("#pragma once\n#include <AudioStream.h>\n#include <AudioSynthWavetable.h>\n\n")
+        h_file.write("#pragma once\n#include \"sample_data.h\"\n\n")
         # Decode data to sample_data array in header file
-        h_file.write("extern const sample_data {0}_samples[{1}];\n".format(instrument_name, num_samples))
-
-        #Sort bags by key range and expand ranges to fill all key values
-        keyRanges = []
-        getKeyRanges(bags, keyRanges)
-		
-        h_file.write("const int {0}_ranges[] = {{".format(instrument_name))
-        for keyRange in keyRanges:
-            h_file.write("{0}, ".format(keyRange[1]))
-        h_file.write("};\n\n")
-        h_file.write("const instrument_data {0} = {{{1}, {0}_ranges, {0}_samples }};\n\n".format(instrument_name, num_samples))
+        h_file.write("extern sample_data {0}[{1}];\n".format(instrument_name, num_samples))
 
         cpp_file.write("#include \"{}\"\n".format(h_file_name))
-        cpp_file.write("const sample_data {0}_samples[{1}] = {{\n".format(instrument_name, num_samples))
+        cpp_file.write("sample_data {0}[{1}] = {{\n".format(instrument_name, num_samples))
         for i in range(len(bags)):
-            out_str = gen_sample_meta_data_string(bags[i], global_bag if global_bag else bags[i], i, instrument_name, keyRanges[i])
+            out_str = gen_sample_meta_data_string(bags[i], global_bag if global_bag else bags[i], i, instrument_name)
             cpp_file.write(out_str)
         cpp_file.write("};\n")
 
@@ -213,8 +203,8 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
 
             ary_length = int(length_32 + pad_length)
 
-            smpl_identifier = "sample_{0}_{1}_{2}[{3}]"\
-                .format(i, instrument_name, re.sub(r'[\W]+', '', bags[i].sample.name), ary_length)
+            smpl_identifier = "{0}_sample_{1}_{2}[{3}]"\
+                .format(instrument_name, i, re.sub(r'[\W]+', '', bags[i].sample.name), ary_length)
 
             # Write array init to header file.
             h_file.write("\nextern const uint32_t {0};\n".format(smpl_identifier))
@@ -245,67 +235,50 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
 
 
 # prints out the sample metadata into the first portion of the sample array
-def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, keyRange):
+def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name):
     out_fmt_str = \
         "\t{{\n" \
-        "\t\t{LENGTH_BITS},\t//Number of bits needed to hold length\n" \
-        "\t\t({PHASE_MULT}*{CENTS_OFFSET}*({SAMPLE_RATE} / AUDIO_SAMPLE_RATE_EXACT)) / {SAMPLE_FREQ} + 0.5,\t//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5\n" \
-        "\t\t((uint32_t){LENGTH}-1) << (32 - {LENGTH_BITS}),\t//(sample_length-1) << (32 - sample_length_bits)\n" \
-        "\t\t((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS}),\t//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END\n" \
-        "\t\t(((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS})) - (((uint32_t){LOOP_START}-1) << (32 - {LENGTH_BITS})),\t//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH\n" \
-        "\t\tuint32_t({DELAY_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//DELAY_COUNT\n" \
-        "\t\tuint32_t({ATTACK_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//ATTACK_COUNT\n" \
-        "\t\tuint32_t({HOLD_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//HOLD_COUNT\n" \
-        "\t\tuint32_t({DECAY_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//DECAY_COUNT\n" \
-        "\t\tuint32_t({RELEASE_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//RELEASE_COUNT\n" \
-        "\t\tint32_t({SUSTAIN_FRAC}*UNITY_GAIN),\t//SUSTAIN_MULT\n" \
-        "\t\t(int16_t*){SAMPLE_ARRAY_NAME},\t//16-bit PCM encoded audio sample\n" \
+        "\t\t{ORIGINAL_PITCH},\n" \
+		"\t\t{CENTS_OFFSET},\n" \
+        "\t\t{LENGTH},\n" \
+        "\t\t{SAMPLE_RATE},\n" \
+        "\t\t{LOOP_START},\n" \
+        "\t\t{LOOP_END},\n" \
+        "\t\t{KEY_RANGE_LOWER},\n" \
+        "\t\t{KEY_RANGE_UPPER},\n" \
+        "\t\t{VELOCITY_RANGE_LOWER},\n" \
+        "\t\t{VELOCITY_RANGE_UPPER},\n" \
+        "\t\t{DELAY_ENV},\n" \
+        "\t\t{ATTACK_ENV},\n" \
+		"\t\t{HOLD_ENV},\n" \
+        "\t\t{DECAY_ENV},\n" \
+        "\t\t{SUSTAIN_ENV},\n" \
+        "\t\t{RELEASE_ENV},\n" \
+        "\t\t{SAMPLE_ARRAY_NAME},\n" \
         "\t}},\n"
 
     base_note = bag.base_note if bag.base_note else bag.sample.original_pitch
-    cents_offset = (pow(2.0, float(bag.fine_tuning)/1200.0)) if bag.fine_tuning else 1.0
-    length_bits = 0
-    length = bag.sample.duration
-    len = length
-    shift_res = 1
-    while len != 0:
-        length_bits += 1
-        len = len >> 1
-    phase_mult = (0x80000000 >> (length_bits - 1))
-    
     out_vals = {
         "ORIGINAL_PITCH": base_note,
-        "CENTS_OFFSET": cents_offset,
-        "PHASE_MULT": phase_mult,
-        "LENGTH": length,
-        "LENGTH_BITS": length_bits,
-        "SAMPLE_RATE": float(bag.sample.sample_rate),
-        "SAMPLE_FREQ": note_to_freq(base_note),
+		"CENTS_OFFSET": (pow(2.0, float(bag.fine_tuning)/1200.0)) if bag.fine_tuning else 1.0,
+        "LENGTH": bag.sample.duration,
+        "SAMPLE_RATE": bag.sample.sample_rate,
         "LOOP_START": bag.cooked_loop_start,
         "LOOP_END": bag.cooked_loop_end,
-        "KEY_RANGE_LOWER": keyRange[0],
-        "KEY_RANGE_UPPER": keyRange[1],
+        "KEY_RANGE_LOWER": bag.key_range[0] if bag.key_range else 0,
+        "KEY_RANGE_UPPER": bag.key_range[1] if bag.key_range else 0,
         "VELOCITY_RANGE_LOWER": bag.velocity_range[0] if bag.velocity_range else 0,
         "VELOCITY_RANGE_UPPER": bag.velocity_range[1] if bag.velocity_range else 0,
-        "SAMPLE_ARRAY_NAME": "sample_{0}_{1}_{2}".format(sample_num, instrument_name, re.sub(r'[\W]+', '', bag.sample.name)),
+        "SAMPLE_ARRAY_NAME": "{0}_sample_{1}_{2}".format(instrument_name, sample_num, re.sub(r'[\W]+', '', bag.sample.name)),
     }
 
-    sustain_env = bag.volume_envelope_sustain if bag.volume_envelope_sustain else global_bag.volume_envelope_sustain
-    if sustain_env is not None:
-        sustain_frac = float(sustain_env) / 96000.0
-    else:
-        sustain_frac = 0.0
-	
-    if sustain_frac > 1.0: 
-        sustain_frac = 1.0
-	
     env_vals = {
         # No property provided by SF2Utils; 33 is from form the SF2 spec
         "DELAY_ENV": bag.gens[33].cents if 33 in bag.gens else global_bag.gens[33].cents if 33 in global_bag.gens else None,
         "ATTACK_ENV": bag.volume_envelope_attack if bag.volume_envelope_attack else global_bag.volume_envelope_attack,
-        "HOLD_ENV": bag.volume_envelope_hold if bag.volume_envelope_hold else global_bag.volume_envelope_hold,
+		"HOLD_ENV": bag.volume_envelope_hold if bag.volume_envelope_hold else global_bag.volume_envelope_hold,
         "DECAY_ENV": bag.volume_envelope_decay if bag.volume_envelope_decay else global_bag.volume_envelope_decay,
-        "SUSTAIN_FRAC": sustain_frac,
+        "SUSTAIN_ENV": bag.volume_envelope_sustain if bag.volume_envelope_sustain else global_bag.volume_envelope_sustain,
         "RELEASE_ENV": bag.volume_envelope_release if bag.volume_envelope_release else global_bag.volume_envelope_release,
     }
     env_vals = {k: int(env_vals[k] * 1000) if env_vals[k] else 0 for k in env_vals}
@@ -323,39 +296,10 @@ def check_is_valid_sample(sample):
     return True, None
 	
 def note_to_freq(note):
-    exp = (float(note) - 69.0) / 12.0
+    exp = (float(note) - 60.2186402864753403959303175237848168654319370812936513166) / 12.0
     freq = float(pow(2, exp)) * 440.0
     return freq
 
-# Retrieves all key ranges for the samples and expands them to fill empty
-# space in the 0-127 range if needed.
-def getKeyRanges(bags, keyRanges):
-    # remove any bags without key ranges before sorting bags by key range
-    tempList = [bag for bag in bags if bag.key_range == None]
-    bags = [bag for bag in bags if bag not in tempList]
-
-    # sort bags with key ranges and fill any gaps in range
-    if(len(bags) != 0):
-        bags.sort(key=lambda x:x.key_range[0])
-        for aBag in bags:
-            keyRanges.append([aBag.key_range[0], aBag.key_range[1]])
-
-        for i in range(len(keyRanges)):
-            if i == 0:
-                keyRanges[i][0] = 0
-
-            if i == len(keyRanges)-1:
-                keyRanges[i][1] = 127
-            else:
-                keyDiff = keyRanges[i+1][0]-keyRanges[i][1]-1
-                if keyDiff < 0: keyDiff = 0
-                keyRanges[i][1] += int(keyDiff/2) + keyDiff%2
-                keyRanges[i+1][0] -= int(keyDiff/2)
-
-    # append bags without key ranges to the end of the bags list
-    for aBag in tempList:
-        bags.append(aBag)
-        keyRanges.append([0, 127])
 
 def error(message):
     print("ERROR: " + message)
