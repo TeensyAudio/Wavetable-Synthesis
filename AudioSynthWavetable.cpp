@@ -25,8 +25,8 @@
  */
 
 #include "AudioSynthWavetable.h"
-#include <SerialFlash.h>
 #include <dspinst.h>
+#include <SerialFlash.h>
 
 //#define STATE_IDLE	0
 //#define STATE_DELAY	1
@@ -46,15 +46,38 @@ uint32_t
 	AudioSynthWavetable::total_playNote,
 	AudioSynthWavetable::total_amplitude;
 
-void AudioSynthWavetable::setSamples(const sample_data * samples, int num_samples) {
-	this->samples = samples;
-	this->num_samples = num_samples;
+/**
+ * @brief Begin playing a waveform.
+ *
+ */
+void AudioSynthWavetable::play(void) {
+	if (waveform == NULL)
+		return;
+	tone_phase = 0;
+	playing = 1;
 }
 
-bool AudioSynthWavetable::isPlaying() {
-	return envelopeState != STATE_IDLE;
+/**
+ * @brief Stop playing waveform.
+ *
+ * Waveform does not immediately stop,
+ * but fades out based on release time.
+ *
+ */
+void AudioSynthWavetable::stop(void) {
+	envelopeState = STATE_RELEASE;
+	count = release_count;
+	inc = (-(float)mult / (count << 3));
+	Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
 }
 
+/**
+ * @brief Parse the sample specified by the index sample_num.
+ *
+ * @param sample_num an index within the sample array
+ * @param custom_env a value of 1 means a custom envelope
+ * is set; the default value is 0 (no custom envelope)
+ */
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	total_parseSample -= micros();
 	sample_data data = samples[sample_num];
@@ -78,7 +101,7 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 		env_attack(data.ATTACK_ENV);
 		env_decay(data.DECAY_ENV);
 		if (data.SUSTAIN_ENV > 0)
-			env_sustain(data.SUSTAIN_ENV/1000);
+			env_sustain((float)data.SUSTAIN_ENV / UNITY_GAIN);
 		else
 			env_sustain(1);
 		env_release(data.RELEASE_ENV);
@@ -106,44 +129,41 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	total_parseSample += micros();
 }
 
-void AudioSynthWavetable::play(void) {
-	if (waveform == NULL)
-		return;
-	tone_phase = 0;
-	playing = 1;
-}
-
+/**
+ * @brief Play waveform at defined frequency.
+ *
+ * @param freq freqency of the generated output (range?)
+ * @param custom_env a value of 1 means a custom envelope
+ * is set; the default value is 0 (no custom envelope)
+ */
 void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	total_playFrequency -= micros();
-	float freq1, freq2;
+	playing = 0;
+	//float freq1, freq2;
 	//elapsedMillis timer = 0;
-	for(int i = 0; i < num_samples; i++) {
+	/*for(int i = 0; i < num_samples; i++) {
 		freq1 = noteToFreq(samples[i].NOTE_RANGE_1);
 		freq2 = noteToFreq(samples[i].NOTE_RANGE_2);
 		if (freq >= freq1 && freq <= freq2) {
 			parseSample(i, custom_env);
-			//Serial.println("Branch 1");
 			break;
 		} else if (i == 0 && freq < freq1) {
 			parseSample(0, custom_env);
-			//Serial.println("Branch 2");
 			break;
 		} else if (i == num_samples-1 && freq > freq2) {
 			parseSample(num_samples-1, custom_env);
-			//Serial.println("Branch 3");
 			break;
 		} else if (freq > freq2 && freq < noteToFreq(samples[i+1].NOTE_RANGE_1)) {
-			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2)) {
+			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2))
 				parseSample(i, custom_env);
-				//Serial.println("Branch 4");
-			}
-			else {
+			else
 				parseSample(i+1, custom_env);
-				//Serial.println("Branch 5");
-			}
 			break;
 		}
-	}
+	}*/
+	int i;
+	for(i = 0; i < num_samples-1 && freq > noteToFreq(samples[i].NOTE_RANGE_2); i++);
+	parseSample(i, custom_env);
 	if (waveform == NULL) {
 		total_playFrequency += micros();
 		return;
@@ -154,13 +174,13 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	if (count > 0) {
 		envelopeState = STATE_DELAY;
 		inc = 0;
-		//Serial.printf("DELAY: %f\n", inc);
+		//Serial.printf("DELAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
 	} else {
 		envelopeState = STATE_ATTACK;
 		count = attack_count;
 		// 2^16 divided by the number of samples
 		inc = (UNITY_GAIN / (count << 3));
-		//Serial.printf("ATTACK: %f\n", inc);
+		//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
 	}
 	tone_phase = 0;
 	playing = 1;
@@ -168,12 +188,21 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
 	total_playFrequency += micros();
 }
 
+/**
+ * @brief Play sample at specified note, amplitude.
+ *
+ * @param note the midi note number (a value between 0 and 127)
+ * @param amp amplitude of generated output
+ * @param custom_env a value of 1 means a custom envelope
+ * is set and a value is 0 means no custom envelope
+ */
 void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	total_playNote -= micros();
 	this->playing = 0;
 	int i;
 	for(i = 0; i < num_samples-1 && note > samples[i].NOTE_RANGE_2; i++);
 	parseSample(i, custom_env);
+	//Serial.printf("sustain_mult = %d\n", sustain_mult);
 	if (waveform == NULL) {
 		total_playFrequency += micros();
 		return;
@@ -182,6 +211,7 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	mult = 0;
 	count = delay_count;
 	envelopeState = STATE_DELAY;
+	//Serial.printf("DELAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
 	inc = 0;
 	tone_phase = 0;
 	playing = 1;
@@ -195,13 +225,36 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
 	total_playNote += micros();
 }
 
-void AudioSynthWavetable::stop(void) {
-	envelopeState = STATE_RELEASE;
-	count = release_count;
-	inc = (-(float)mult / ((int32_t)count << 3));
-	//Serial.printf("RELEASE: %f\n", inc);
+/**
+ * @brief Change the frequency of the waveform to the defined freq.
+ *
+ * If the frequency is zero sample generation is stopped.
+ * @param freq frequency of the generated output (range?)
+ */
+void AudioSynthWavetable::frequency(float freq) {
+	total_frequency -= micros();
+	if (freq < 0.0)
+		freq = 0.0;
+	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
+		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
+	
+	//Serial.println(freq);
+	//Serial.println(cents_offset);
+	float rate_coef = sample_rate / AUDIO_SAMPLE_RATE_EXACT;
+	
+	//Serial.println(freq);
+	
+	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
+	//steps through the wavetable sample one element at a time; from there we
+	//only need to scale based a ratio of freq/sample_freq for the desired increment
+	tone_incr = cents_offset * ((rate_coef * freq) / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
+	total_frequency += micros();
 }
 
+/**
+ * @brief Manages all the AudioSynthWavetable objects.
+ *
+ */
 void AudioSynthWavetable::update(void) {
 	total_update -= micros();
 
@@ -269,29 +322,35 @@ void AudioSynthWavetable::update(void) {
 			envelopeState = STATE_ATTACK;
 			count = attack_count;
 			inc = (UNITY_GAIN / (count << 3));
+			//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_ATTACK:
 			envelopeState = STATE_HOLD;
 			count = hold_count;
 			mult = hold_count ? UNITY_GAIN : mult;
 			inc = 0;
+			//Serial.printf("HOLD: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_HOLD:
 			envelopeState = STATE_DECAY;
 			count = decay_count;
-			inc = count > 0 ? ((sustain_mult - UNITY_GAIN) / ((int32_t)count << 3)) : 0;
+			//inc = count > 0 ? (float)(-sustain_mult) / ((int32_t)count << 3) : 0;
+			inc = (float)(-sustain_mult) / (count << 3);
+			//Serial.printf("length: %fms\n", 8*count/SAMPLES_PER_MSEC);
 			continue;
 		case STATE_DECAY:
 			envelopeState = STATE_SUSTAIN;
-			count = 0xFFFF;
-			mult = sustain_mult;
+			count = 0xFFFFFFFF;
+			mult = UNITY_GAIN - sustain_mult;
 			inc = 0;
+			//Serial.printf("SUSTAIN: %fdb\n", (float)mult/1000);
 			break;
 		case STATE_SUSTAIN:
-			count = 0xFFFF;
+			count = 0xFFFFFFFF;
 			break;
 		case STATE_RELEASE:
 			envelopeState = STATE_IDLE;
+			//Serial.println("IDLE");
 			playing = 0;
 			for (; p < end; p += 4) p[0] = p[1] = p[2] = p[3] = 0;
 			continue;
@@ -339,26 +398,10 @@ void AudioSynthWavetable::update(void) {
 	total_update += micros();
 }
 
-void AudioSynthWavetable::frequency(float freq) {
-	total_frequency -= micros();
-	if (freq < 0.0)
-		freq = 0.0;
-	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
-		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
-
-	//Serial.println(freq);
-	//Serial.println(cents_offset);
-	float rate_coef = sample_rate / AUDIO_SAMPLE_RATE_EXACT;
-	
-	//Serial.println(freq);
-
-	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
-	//steps through the wavetable sample one element at a time; from there we
-	//only need to scale based a ratio of freq/sample_freq for the desired increment
-	tone_incr = cents_offset * ((rate_coef * freq) / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
-	total_frequency += micros();
-}
-
+/**
+ *
+ *
+ */
 void AudioSynthWavetable::print_performance() {
 	char format_str[] =
 		"total\t%i\t%.2f%%\tupdate()\t%i\t%.2f%%\tupdate_env\t%i\t\t\t\n"
