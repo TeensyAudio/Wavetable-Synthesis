@@ -323,7 +323,7 @@ def check_is_valid_sample(sample):
     return True, None
 	
 def note_to_freq(note):
-    exp = (float(note) - 60.2186402864753403959303175237848168654319370812936513166) / 12.0
+    exp = (float(note) - 69.0) / 12.0
     freq = float(pow(2, exp)) * 440.0
     return freq
 
