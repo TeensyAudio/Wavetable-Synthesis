@@ -7,7 +7,6 @@ class Instrument:
     def set_gb_idx(self, index):
         self.gb_idx = index
 
-
 class Sample:
     def __init__(self, s_name, bag_idx):
         self.s_name = s_name
