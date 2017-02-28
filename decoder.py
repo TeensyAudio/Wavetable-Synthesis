@@ -183,23 +183,22 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
     h_file_name = "{}_samples.h".format(instrument_name)
     cpp_file_name = "{}_samples.cpp".format(instrument_name)
     with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
-        h_file.write("#pragma once\n#include \"sample_data.h\"\n\n")
+        h_file.write("#pragma once\n#include <AudioStream.h>\n#include <AudioSynthWavetable.h>\n\n")
         # Decode data to sample_data array in header file
-        h_file.write("extern sample_data {0}[{1}];\n".format(instrument_name, num_samples))
+        h_file.write("extern const sample_data {0}_samples[{1}];\n".format(instrument_name, num_samples))
 
         #Sort bags by key range and expand ranges to fill all key values
         keyRanges = []
         getKeyRanges(bags, keyRanges)
+		
+        h_file.write("const int {0}_ranges[] = {{".format(instrument_name))
+        for keyRange in keyRanges:
+            h_file.write("{0}, ".format(keyRange[1]))
+        h_file.write("};\n\n")
+        h_file.write("const instrument_data {0} = {{{1}, {0}_ranges, {0}_samples }};\n\n".format(instrument_name, num_samples))
 
         cpp_file.write("#include \"{}\"\n".format(h_file_name))
-        cpp_file.write("instrument_data {0}_inst = {{\n".format(instrument_name))
-        cpp_file.write("\t\t{0},\t//Num samples\n".format(num_samples))
-        cpp_file.write("\t\t{\n")
-        for keyRange in keyRanges:
-            cpp_file.write("\t\t\t{0},\n".format(keyRange[1]))
-        cpp_file.write("\t\t},\t//Sample note ranges (upper bounds)\n")
-        cpp_file.write("\t\t{0}\n}};\n".format(instrument_name))
-        cpp_file.write("sample_data {0}[{1}] = {{\n".format(instrument_name, num_samples))
+        cpp_file.write("const sample_data {0}_samples[{1}] = {{\n".format(instrument_name, num_samples))
         for i in range(len(bags)):
             out_str = gen_sample_meta_data_string(bags[i], global_bag if global_bag else bags[i], i, instrument_name, keyRanges[i])
             cpp_file.write(out_str)
@@ -250,7 +249,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
     out_fmt_str = \
         "\t{{\n" \
         "\t\t{ORIGINAL_PITCH},\t//Original Pitch\n" \
-        "\t\t({PHASE_MULT}*{CENTS_OFFSET}*({SAMPLE_RATE} / AUDIO_SAME_RATE_EXACT)) / {SAMPLE_FREQ} + 0.5,\t//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5\n" \
+        "\t\t({PHASE_MULT}*{CENTS_OFFSET}*({SAMPLE_RATE} / AUDIO_SAMPLE_RATE_EXACT)) / {SAMPLE_FREQ} + 0.5,\t//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5\n" \
         "\t\t((uint32_t){LENGTH}-1) << (32 - {LENGTH_BITS}),\t//(sample_length-1) << (32 - sample_length_bits)\n" \
         "\t\t((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS}),\t//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END\n" \
         "\t\t(((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS})) - (((uint32_t){LOOP_START}-1) << (32 - {LENGTH_BITS})),\t//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH\n" \
