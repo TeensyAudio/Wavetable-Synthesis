@@ -18,7 +18,8 @@
 #include <SD.h>
 //---------------------------------------------------------------------------------------
 #include <AudioSynthWavetable.h>
-#include "SF2_Decoded_Samples.h"
+//#include "PerfectSine_samples.h"
+#include "VoiceOohs_samples.h"
 //---------------------------------------------------------------------------------------
 AudioAnalyzeNoteFrequency notefreq;
 AudioOutputI2S            i2s1;
@@ -35,7 +36,6 @@ AudioControlSGTL5000      sgtl5000_1;
 elapsedMillis timer = 0;
 int count = 107; // Initialized to first note; freq analyzer has trouble with frequencies > 4 kHz
 int analysis_count = 0;
-int analysis_count_total = 0;
 int delay_count = 0;
 int passed = 0;
 int note = 0;
@@ -48,7 +48,7 @@ bool flag_stop = false;
 const int TICK = 500;           // Timer period (ms)
 const int DELAY = 2;            // Spin count for analyzer
 const int LOWER_BOUND = 21;     // Note below lowest tested note
-const double TOLERANCE = 0.005; // Allowed error
+const double TOLERANCE = 0.010; // Allowed error
 const int NUM_TESTS = count - LOWER_BOUND;
 
 void setup() {
@@ -60,31 +60,24 @@ void setup() {
   notefreq.begin(.15);
   sgtl5000_1.enable();
   sgtl5000_1.volume(0.7);
-  wavetable.setSamples(samples, sizeof(samples)/sizeof(sample_data));
+  wavetable.setSamples(VoiceOohs, sizeof(VoiceOohs)/sizeof(sample_data));
   while (timer < 2000); // Spin for serial monitor
 }
 
 void loop() {
   if (!flag_stop) {
     if (timer >= TICK) {
-      //wavetable.stop();
-      //timer = 0;
-      //while (timer < TICK);
       // Take average of samples and compute error
-      if (delay_count >= DELAY) {
+      if (analysis_count > 0) {
         freq = freqSum/analysis_count;
         error = freq/noteToFreq(note);
-        if (error < 1) error = 1 - error;
-        else error -= 1;
+        error = error < 1 ? 1 - error : error - 1;
         Serial.printf("error=%3.5f\n", error);
         if (error < TOLERANCE) {
           Serial.println("Passed!\n");
           passed++;
-        }
-        else Serial.println("Failed...\n");
-        analysis_count = 0;
-        freqSum = 0;
-        delay_count = 0;
+        } else Serial.println("Failed...\n");
+        analysis_count = freqSum = delay_count = 0;
       }
       
       if (count == LOWER_BOUND) {
