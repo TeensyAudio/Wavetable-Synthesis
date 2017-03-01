@@ -63,7 +63,7 @@ void AudioSynthWavetable::stop(void) {
 void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 	total_parseSample -= micros();
 	sample_data data = samples[sample_num];
-	
+	 
 	tone_phase = 0;
 	playing = 0;
 	 
@@ -253,7 +253,9 @@ void AudioSynthWavetable::update(void) {
 		v2 = s2 * scale;
 		v3 = (v1 + v2) >> 16;
 		*out++ = (int16_t)((v3 * tone_amp) >> 16);
-		tone_phase += tone_incr;
+		tone_phase += tone_incr; 
+		//tone phase 32 bit int
+		//tone increment is 
 	}
 	interpolation_update += micros();
 
