@@ -20,7 +20,7 @@ class Application(Frame):
         self.currInst = None
         self.out_dir = StringVar(value='Select Directory...')
         self.out_name = None
-        self.total_sample_size = IntVar(value=0)
+        self.total_sample_size = StringVar(value='0')
 
         # control variables
         self.i_names = StringVar()
@@ -190,7 +190,7 @@ class Application(Frame):
         if len(sampIdxs) > 0:
             for i in sampIdxs:
                 total += self.Instruments[self.currInst].Samples[i].size    
-        self.total_sample_size.set(total)
+        self.total_sample_size.set('{0} kb'.format('%.2f'%total))
 
     def update_samples(self, *args):
         idxs = self.instList.curselection()
