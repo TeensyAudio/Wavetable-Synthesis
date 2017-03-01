@@ -18,8 +18,7 @@
 #include <SD.h>
 //---------------------------------------------------------------------------------------
 #include <AudioSynthWavetable.h>
-//#include "PerfectSine_samples.h"
-#include "VoiceOohs_samples.h"
+#include "PerfeSine_samples.h"
 //---------------------------------------------------------------------------------------
 AudioAnalyzeNoteFrequency notefreq;
 AudioOutputI2S            i2s1;
@@ -48,11 +47,11 @@ bool flag_stop = false;
 const int TICK = 500;           // Timer period (ms)
 const int DELAY = 2;            // Spin count for analyzer
 const int LOWER_BOUND = 21;     // Note below lowest tested note
-const double TOLERANCE = 0.010; // Allowed error
+const double TOLERANCE = 0.005; // Allowed error
 const int NUM_TESTS = count - LOWER_BOUND;
 
 void setup() {
-  AudioMemory(30);
+  AudioMemory(40);
   /*
    *  Initialize the yin algorithm's absolute
    *  threshold, this is good number.
@@ -60,7 +59,7 @@ void setup() {
   notefreq.begin(.15);
   sgtl5000_1.enable();
   sgtl5000_1.volume(0.7);
-  wavetable.setSamples(VoiceOohs, sizeof(VoiceOohs)/sizeof(sample_data));
+  wavetable.setSamples(PerfeSine, sizeof(PerfeSine)/sizeof(sample_data));
   while (timer < 2000); // Spin for serial monitor
 }
 

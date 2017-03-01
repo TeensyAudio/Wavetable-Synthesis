@@ -132,7 +132,7 @@ void setup() {
   sgtl5000_1.enable();
   sgtl5000_1.volume(0.5);
   for (int i = 0; i < NUM_VOICES; i++)
-    wavetable[i].setSamples(SolarWind, sizeof(SolarWind)/sizeof(sample_data));
+    wavetable[i].setSamples(VoiceOohs, sizeof(VoiceOohs)/sizeof(sample_data));
   while (timer < 2000);   // Spin for serial monitor
 }
 

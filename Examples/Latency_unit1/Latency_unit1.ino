@@ -18,7 +18,7 @@
 #include <SD.h>
 //---------------------------------------------------------------------------------------
 #include <AudioSynthWavetable.h>
-#include "SF2_Decoded_Samples.h"
+#include "PerfeSine_samples.h"
 #include "AudioSampleCashregister.h"
 //---------------------------------------------------------------------------------------
 AudioOutputI2S            i2s1;
@@ -51,10 +51,10 @@ const int THRESHOLD = 10;       // Longest tolerated latency
 const int NUM_TESTS = count - LOWER_BOUND;
 
 void setup() {
-  AudioMemory(30);
+  AudioMemory(40);
   sgtl5000_1.enable();
   sgtl5000_1.volume(0.5);
-  wavetable.setSamples(samples, sizeof(samples)/sizeof(sample_data));
+  wavetable.setSamples(PerfeSine, sizeof(PerfeSine)/sizeof(sample_data));
   while (timer < 2000); // Spin for serial monitor
 }
 
@@ -89,9 +89,7 @@ void loop() {
       if (latency <= THRESHOLD) {
         Serial.println("Passed!\n");
         passed++;
-      } else {
-        Serial.println("Failed...\n");
-      }
+      } else Serial.println("Failed...\n");
       if (latency > longest) longest = latency;
       if (latency < shortest) shortest = latency;
       flag_test = true;
