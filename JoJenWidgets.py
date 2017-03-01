@@ -107,10 +107,10 @@ class JJStatusBar(JJFrame):
         super().__init__(parent)
 
         self.autoconfigure(1, 1, 1, 1)
-        self.config(borderwidth=1, relief=GROOVE)
+        self.config(borderwidth=0, relief=GROOVE)
         self.status_text = StringVar(value=_initVal)
         self.status_label = Label(self, textvariable=self.status_text, anchor=W, font=('default', 12))
-        self.status_label.grid(column=0, row=0, sticky=W, pady=1)
+        self.status_label.grid(column=0, row=0, sticky=W+E, pady=1)
 
     def setStatus(self, _new):
         self.status_text.set(_new)

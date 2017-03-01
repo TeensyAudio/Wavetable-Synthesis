@@ -22,7 +22,8 @@ class MyView(Frame):
         self.s_names = StringVar()
         self.version = IntVar(value=1)
         self.out_dir = StringVar(value='Select Directory...')
-        self.out_name = StringVar(value='Default is Instrument Name')
+        self.default_out_name = 'Default is Instrument Name'
+        self.out_name = StringVar(value=self.default_out_name)
         self.total_sample_size = IntVar(value=0)
         self.inFile = StringVar(value='Select a Soundfont File to Continue')
 
@@ -83,7 +84,7 @@ class MyView(Frame):
         self.name_entry.grid(row=1, column=1, columnspan=2, sticky=E + W)
 
         self.lower_frame = JJ.JJFrame(self, 1, 2, 1, 1)
-        self.lower_frame.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
+        self.lower_frame.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=1, pady=1)
 
         # Instruments
         self.inst_listbox = JJ.JJListBox(self.lower_frame, 'Instruments', self.i_names)
@@ -137,6 +138,8 @@ class MyView(Frame):
     def setOutName(self, _newName):
         self.out_name.set(_newName)
     def getOutName(self):
-        self.out_name.get()
+        return self.out_name.get()
     def setStatus(self, _new):
         self.status_bar.setStatus(_new)
+    def getDefaultOutName(self):
+        return self.default_out_name

@@ -40,9 +40,19 @@ class MyController():
         inFile = self.model.getInFile()
         gb_idx = self.model.Instruments[curr_inst].gb_idx
         selected_samples = _selection
+
+        # check for user supplied file name
+        # else default is instrument name
+        default_name_check = self.view.getDefaultOutName()
+        out_name = self.view.getOutName()
+        if out_name == default_name_check:
+            out_name = None
+        elif out_name != default_name_check:
+            pass
+
         for samp in selected_samples:
             selected_bags.append(self.model.Instruments[curr_inst].Samples[int(samp)].bag_idx)
-        if decoder.decode_selected(inFile, curr_inst, selected_bags, gb_idx):
+        if decoder.decode_selected(inFile, curr_inst, selected_bags, gb_idx, out_name):
             self.view.setStatus('Decode Successful!')
         else:
             self.view.setStatus('ERROR! Failed to Decode!')
