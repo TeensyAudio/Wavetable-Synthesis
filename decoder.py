@@ -166,7 +166,7 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
             if selected_bags:
                 print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(bag.sample.name))
 
-        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index >= 0 else None
+        global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index is not None and global_bag_index >= 0 else None
         file_title = user_title if user_title else sf2.instruments[inst_index].name
 
         file_title = re.sub(r'[\W]+', '', file_title)
@@ -303,29 +303,6 @@ def note_to_freq(note):
 
 def error(message):
     print("ERROR: " + message)
-
-
-# Copying functionality from wav2sketch.c
-# Currently unused
-def ulaw_encode(audio):
-    if audio >= 0:
-        mag = audio
-        neg = 0
-    else:
-        mag = audio * -1
-        neg = 0x80
-
-    mag += 128
-    if mag > 0x7FFF: mag = 0x7FFF
-    if mag >= 0x4000: return neg | 0x70 | ((mag >> 10) & 0x0F)  # 01wx yz00 0000 0000
-    if mag >= 0x2000: return neg | 0x60 | ((mag >> 9) & 0x0F)   # 001w xyz0 0000 0000
-    if mag >= 0x1000: return neg | 0x50 | ((mag >> 8) & 0x0F)   # 0001 wxyz 0000 0000
-    if mag >= 0x0800: return neg | 0x40 | ((mag >> 7) & 0x0F)   # 0000 1wxy z000 0000
-    if mag >= 0x0400: return neg | 0x30 | ((mag >> 6) & 0x0F)   # 0000 01wx yz00 0000
-    if mag >= 0x0200: return neg | 0x20 | ((mag >> 5) & 0x0F)   # 0000 001w xyz0 0000
-    if mag >= 0x0100: return neg | 0x10 | ((mag >> 4) & 0x0F)   # 0000 0001 wxyz 0000
-    return neg | 0x00 | ((mag >> 3) & 0x0F)   # 0000 0000 1wxy z000
-
 
 if __name__ == "__main__":
     main(sys.argv[1:])
