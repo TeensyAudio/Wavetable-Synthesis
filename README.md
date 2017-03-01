@@ -1,7 +1,7 @@
 # Wavetable-Synthesis
 General repository for Wavetable Synthesis Capstone project at Portland State, Fall 2016 - Winter 2017
 
-The purpose of this project is to provide a C++ library and accompanying Python utility scripts allowing realistic instrumentation audio to be synthesized on the Teensy 3.2 Arduino Digital Analog Converter (DAC). 
+The purpose of this project is to provide a C++ library and accompanying Python utility scripts allowing realistic instrumentation audio to be synthesized on the Teensy 3.2/3.6 Arduino Digital Analog Converter (DAC). 
 
 The project consists of three main components:
 
