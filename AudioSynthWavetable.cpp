@@ -2,7 +2,7 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-#define TIME_TEST_ON
+//#define TIME_TEST_ON
 //#define ENVELOPE_DEBUG
 
 #ifdef TIME_TEST_ON
@@ -83,8 +83,8 @@ void AudioSynthWavetable::setFrequency(float freq) {
 void AudioSynthWavetable::update(void) {
 	cli();
 	if (envelopeState == STATE_IDLE) {
-		sei()
-			return;
+		sei();
+		return;
 	}
 	this->state_change = false;
 	const sample_data* s = (const sample_data*)current_sample;
@@ -100,8 +100,7 @@ void AudioSynthWavetable::update(void) {
 	audio_block_t* block;
 	int16_t* out;
 	uint32_t index, scale;
-	int32_t s1, s2, v1, v2, v3;
-	uint32_t* w12, * w34;
+	int32_t s1, s2;
 	uint32_t* p;
 	uint32_t* end;
 	uint32_t tmp1, tmp2;
@@ -109,44 +108,38 @@ void AudioSynthWavetable::update(void) {
 	block = allocate();
 	if (block == NULL) return;
 
-	out = block->data;
+	//out = block->data;
+
+	p = (uint32_t*)block->data;
+	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 	//assuming 16 bit PCM, 44100 Hz
 	TIME_TEST(10000,
-	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i+=2) {
-		//tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-		//index = tone_phase >> (32 - s->INDEX_BITS);
-		//scale = (tone_phase << s->INDEX_BITS) >> 16;
-		//s1 = waveform[index];
-		//s2 = waveform[index + 1];
-		//v1 = s1 * int32_t(0xFFFF - scale);
-		//v2 = s2 * int32_t(scale);
-		//v3 = (v1 + v2) >> 16;
-		//*out++ = v3; //(int16_t)((v3 * tone_amp) >> 16);
-		//			 //*out++ = v3;
-		//tone_phase += tone_incr;
-
-		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+	//for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i+=2) {
+	while(p < end) {
 		index = tone_phase >> (32 - s->INDEX_BITS);
+		tmp1 = *((uint32_t*)(s->sample + index));
 		scale = (tone_phase << s->INDEX_BITS) >> 16;
-		w12 = (uint32_t*)(s->sample + index);
-		s1 = signed_multiply_32x16t(scale, *w12);
-		s1 = signed_multiply_accumulate_32x16b(s1, (0xFFFF - scale), *w12);
-		tone_phase += tone_incr;
-		*out++ = s1;
+		s1 = signed_multiply_32x16t(scale, tmp1);
+		s1 = signed_multiply_accumulate_32x16b(s1, 0xFFFF - scale, tmp1);
 
+		tone_phase += tone_incr;
 		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-		index = tone_phase >> (32 - s->INDEX_BITS);
-		scale = (tone_phase << s->INDEX_BITS) >> 16;
-		w34 = (uint32_t*)(s->sample + index);
-		s2 = signed_multiply_32x16t(scale, *w12);
-		s2 = signed_multiply_accumulate_32x16b(s2, (0xFFFF - scale), *w34);
-		tone_phase += tone_incr;
-		*out++ = s2;
 
-		//*((uint32_t*)(out+i)) = pack_16b_16b(s2, s1);
+		index = tone_phase >> (32 - s->INDEX_BITS);
+		tmp1 = *((uint32_t*)(s->sample + index));
+		scale = (tone_phase << s->INDEX_BITS) >> 16;
+		s2 = signed_multiply_32x16t(scale, tmp1);
+		s2 = signed_multiply_accumulate_32x16b(s2, 0xFFFF - scale, tmp1);
+
+		*p++ = pack_16b_16b(s2, s1);
+		
+		tone_phase += tone_incr;
+		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+
 	}
 	); //end TIME_TEST
+
 
 
 	//*********************************************************************

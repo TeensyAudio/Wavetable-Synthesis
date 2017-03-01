@@ -1,62 +1,50 @@
 #include "nylonstrgtr_samples.h"
-
 const sample_data nylonstrgtr_samples[3] = {
 	{
-		12,
-		//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5;
-		(1048576.0*1.0269267887809788*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 466.1637615181 + 0.5,
-		//(sample_length-1) << (32 - sample_length_bits)
-		((uint32_t)3828 - 1) << (32 - 12),
-		//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
-		((uint32_t)3824 - 1) << (32 - 12),
-		//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
-		(((uint32_t)3824 - 1) << (32 - 12)) - (((uint32_t)3727 - 1) << (32 - 12)),
-		//DELAY_COUNT
-		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),
-		//ATTACK_COUNT
-		uint32_t(6*SAMPLES_PER_MSEC/8.0+0.5),
-		//HOLD_COUNT
-		uint32_t(20*SAMPLES_PER_MSEC/8.0+0.5),
-		//DECAY_COUNT
-		uint32_t(11993*SAMPLES_PER_MSEC/8.0+0.5),
-		//RELEASE_COUNT
-		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),
-		//SUSTAIN_MULT
-		int32_t(UNITY_GAIN),
-		//16-bit PCM encoded audio sample
-		(int16_t*)nylonstrgtr_sample_0_nguitrf2,
+		12,	//Number of bits needed to hold length
+		(1048576*1.0269267887809788*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 466.1637615181 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)3828-1) << (32 - 12),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)3824-1) << (32 - 12),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)3824-1) << (32 - 12)) - (((uint32_t)3727-1) << (32 - 12)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(6*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(20*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(11993*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(1*UNITY_GAIN),	//SUSTAIN_MULT
+		(int16_t*)sample_0_nylonstrgtr_nguitrf2,	//16-bit PCM encoded audio sample
 	},
 	{
-		13,
-		(524288.0*0.9994225441413808*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 698.4564628660 + 0.5,
-		((uint32_t)5192 - 1) << (32 - 13),
-		((uint32_t)5188 - 1) << (32 - 13),
-		(((uint32_t)5188 - 1) << (32 - 13)) - ((5125 - 1) << (32 - 13)),
-		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),
-		uint32_t(6*SAMPLES_PER_MSEC/8.0+0.5),
-		uint32_t(20*SAMPLES_PER_MSEC/8.0+0.5),
-		uint32_t(11993*SAMPLES_PER_MSEC/8.0+0.5),
-		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),
-		int32_t(UNITY_GAIN),
-		(int16_t*)nylonstrgtr_sample_1_nguitb2,
+		13,	//Number of bits needed to hold length
+		(524288*0.9994225441413808*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 698.4564628660 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)5192-1) << (32 - 13),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)5188-1) << (32 - 13),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)5188-1) << (32 - 13)) - (((uint32_t)5125-1) << (32 - 13)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(6*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(20*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(11993*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(1*UNITY_GAIN),	//SUSTAIN_MULT
+		(int16_t*)sample_1_nylonstrgtr_nguitb2,	//16-bit PCM encoded audio sample
 	},
 	{
-		13,
-		(524288.0*1.0186558099572924*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 659.2551138257 + 0.5,
-		((uint32_t)6240 - 1) << (32 - 13),
-		((uint32_t)6236 - 1) << (32 - 13),
-		(((uint32_t)6236 - 1) << (32 - 13)) - (((uint32_t)6168 - 1) << (32 - 13)),
-		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),
-		uint32_t(6*SAMPLES_PER_MSEC/8.0+0.5),
-		uint32_t(20*SAMPLES_PER_MSEC/8.0+0.5),
-		uint32_t(11993*SAMPLES_PER_MSEC/8.0+0.5),
-		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),
-		int32_t(UNITY_GAIN),
-		(int16_t*)nylonstrgtr_sample_2_acgtrb3,
+		13,	//Number of bits needed to hold length
+		(524288*1.0186558099572924*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 659.2551138257 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)6240-1) << (32 - 13),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)6236-1) << (32 - 13),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)6236-1) << (32 - 13)) - (((uint32_t)6168-1) << (32 - 13)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(6*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(20*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(11993*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(1*UNITY_GAIN),	//SUSTAIN_MULT
+		(int16_t*)sample_2_nylonstrgtr_acgtrb3,	//16-bit PCM encoded audio sample
 	},
 };
 
-const uint32_t nylonstrgtr_sample_0_nguitrf2[1920] = {
+const uint32_t sample_0_nylonstrgtr_nguitrf2[1920] = {
 0x00000000,0xff9dfef2,0xfebbff73,0x001bff86,0x00c00033,0x01c80171,0x016901a3,0x009c019d,
 0xffd1ffd9,0x008fffeb,0x011700b1,0x01020190,0x005f00c3,0xffec000c,0x00acfff0,0xffebff92,
 0x012301ba,0xfee90017,0x00a7ff2e,0x010d0156,0x019a00dd,0x02000263,0x01ad0208,0x014100e7,
@@ -299,7 +287,7 @@ const uint32_t nylonstrgtr_sample_0_nguitrf2[1920] = {
 0x064102a4,0x0000097b,0x00000000,0x00000000,
 };
 
-const uint32_t nylonstrgtr_sample_1_nguitb2[2688] = {
+const uint32_t sample_1_nylonstrgtr_nguitb2[2688] = {
 0x00000000,0x00e1005a,0x008801b8,0x00b4006c,0x009e0218,0xffefff5b,0x002fff75,0x01840199,
 0x003c002d,0x0128001b,0x0045016c,0xffb6ff89,0x00e6fffb,0x012f01b8,0xfff300c9,0xffe40092,
 0xff06fee1,0x0016ff05,0x0028ff8d,0xfed1fe94,0xff97ffe4,0xfe440027,0xfedbfe42,0xfe98ffd7,
@@ -630,7 +618,7 @@ const uint32_t nylonstrgtr_sample_1_nguitb2[2688] = {
 0x00000000,0x00000000,0x00000000,
 };
 
-const uint32_t nylonstrgtr_sample_2_acgtrb3[3200] = {
+const uint32_t sample_2_nylonstrgtr_acgtrb3[3200] = {
 0x00000000,0x008b009d,0x00f100b6,0x012a0118,0x01680141,0x0196018f,0x01c101a9,0x01fb01e2,
 0x01e301e2,0x01f501f5,0x01dc01e5,0x01d201e8,0x01ae01c1,0x0176018f,0x01620165,0x01030132,
 0x00bf00d3,0x007c009e,0x002d0045,0x00010006,0xffc3ffcd,0xff59ff90,0xff2cff3e,0xfefaff0c,
