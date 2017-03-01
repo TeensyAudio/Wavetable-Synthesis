@@ -60,6 +60,10 @@ class MyModel():
                 elif bag.sample is not None and bag.sample not in sf2Instruments[-1].Samples:
                     sf2Instruments[-1].Samples.append(sf2elements.Sample(bag.sample.name, bag_index))
                 bag_index += 1
+        # sorted ascending by ascii value of instrument names
+        # preserves case but sorts indifferent to it
+        # the result is upper and lower case being intermingled
+        sf2Instruments.sort(key=lambda x: str.lower(x.i_name))
         self.setInstrumentList(sf2Instruments)
 
     def update_samples(self):

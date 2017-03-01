@@ -50,6 +50,9 @@ class MyController():
         elif out_name != default_name_check:
             pass
 
+        # TODO user supplied filepath after updating decoder.py
+        # 2/28/2017
+
         for samp in selected_samples:
             selected_bags.append(self.model.Instruments[curr_inst].Samples[int(samp)].bag_idx)
         if decoder.decode_selected(inFile, curr_inst, selected_bags, gb_idx, out_name):
