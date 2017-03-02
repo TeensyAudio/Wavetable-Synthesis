@@ -25,6 +25,8 @@ class MyView(Frame):
         self.default_out_name = 'Default is Instrument Name'
         self.out_name = StringVar(value=self.default_out_name)
         self.total_sample_size = IntVar(value=0)
+        self.num_samples_selected = IntVar(value=0)
+        self.teensy_percent_used = IntVar(value=0)
         self.inFile = StringVar(value='Select a Soundfont File to Continue')
 
         #formating variables
@@ -63,9 +65,11 @@ class MyView(Frame):
         self.box_1.grid(column=0, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
         self.version_frame = JJ.JJFrame(self.box_1, 2, 1, 1, 1)
         self.version_frame.grid(row=1, padx=def_pad, sticky=N + E + W)
-        self.ver_32 = Radiobutton(self.version_frame, text='Teensy 3.2 (default)', variable=self.version, value=1)
+        self.ver_32 = Radiobutton(self.version_frame, text='Teensy 3.2 (default)', 
+                variable=self.version, command=lambda: self.teensyButtonSelect(1), value=1)
         self.ver_32.grid(row=0, column=0, sticky=N + S + E + W, padx=def_pad)
-        self.ver_36 = Radiobutton(self.version_frame, text='Teensy 3.6', variable=self.version, value=2)
+        self.ver_36 = Radiobutton(self.version_frame, text='Teensy 3.6', 
+                variable=self.version, command=lambda: self.teensyButtonSelect(2), value=2)
         self.ver_36.grid(row=1, column=0, sticky=N + S + E + W, padx=def_pad)
 
         self.box_2 = JJ.JJLabelFrame(self.upper_frame, 2, 1, 1, 1, text='Load a Soundfont')
@@ -107,10 +111,21 @@ class MyView(Frame):
         self.samp_listbox.under_frame = JJ.JJFrame(self.samp_listbox, 1, 2, 1, 1)
         self.samp_listbox.under_frame.grid(column=0, row=3)
         self.samp_listbox.decode_button = Button(self.samp_listbox.under_frame, text='Decode', command=self.samplesSelected)
-        self.samp_listbox.decode_button.grid(row=0, column=1, padx=5, pady=5, sticky=N + S + E + W)
-        # this is for showing total sample size
-        self.samp_listbox.samp_size_label = Label(self.samp_listbox.under_frame, textvariable=self.total_sample_size, anchor=W)
-        self.samp_listbox.samp_size_label.grid(row=0, column=0, padx=2, pady=2, sticky=N + S + W)
+        self.samp_listbox.decode_button.grid(row=0, column=2, padx=2, pady=2, sticky=N + S + E + W)
+        
+        # Displays sample size, num selected and memory usage percentage for teensy
+        self.samp_listbox.num_selected_text_label = Label(self.samp_listbox.under_frame, text='Num Samples Selected:', anchor=E)
+        self.samp_listbox.num_selected_text_label.grid(row=0, column=0, padx=2, pady=2, sticky=N + S + E)
+        self.samp_listbox.num_selected_label = Label(self.samp_listbox.under_frame, textvariable=self.num_samples_selected, anchor=W, width=8)
+        self.samp_listbox.num_selected_label.grid(row=0, column=1, padx=2, pady=2, sticky=N + S + W)
+        self.samp_listbox.samp_size_text_label = Label(self.samp_listbox.under_frame, text='Size Selected (kb):', anchor=E)
+        self.samp_listbox.samp_size_text_label.grid(row=1, column=0, padx=2, pady=2, sticky=N + S + E)
+        self.samp_listbox.samp_size_label = Label(self.samp_listbox.under_frame, textvariable=self.total_sample_size, anchor=W, width=8)
+        self.samp_listbox.samp_size_label.grid(row=1, column=1, padx=2, pady=2, sticky=N + S + W)
+        self.samp_listbox.teensy_percent_text_label = Label(self.samp_listbox.under_frame, text='Est. Teensy Usage (%):', anchor=E)
+        self.samp_listbox.teensy_percent_text_label.grid(row=2, column=0, padx=2, pady=2, sticky=N + S + E)
+        self.samp_listbox.teensy_percent_label = Label(self.samp_listbox.under_frame, textvariable=self.teensy_percent_used, anchor=W, width=8)
+        self.samp_listbox.teensy_percent_label.grid(row=2, column=1, padx=2, pady=2, sticky=N + S + W)
 
         # Status bar at bottom
         self.status_bar = JJ.JJStatusBar(self, 'Load a Soundfont')
@@ -128,6 +143,11 @@ class MyView(Frame):
         self.controller.decode(self.samp_listbox.getCurrSelection())
     def sampleSelected(self, *args):
         self.controller.sampleSelected(self.samp_listbox.getCurrSelection())
+    def teensyButtonSelect(self, value):
+        if value == 1:
+            self.controller.setTeensyMemSize(250) #teensy 3.2 size in kb
+        if value == 2:
+            self.controller.setTeensyMemSize(500) #TODO: what is the correct number?
 
     #Getters and setters for the control variables.
     def setInstrumentList(self, _newInstruments):
@@ -158,3 +178,11 @@ class MyView(Frame):
         self.total_sample_size.set(_new)
     def getTotalSampleSize(self):
         return self.total_sample_size.get()
+    def setNumSelected(self, _new):
+        self.num_samples_selected.set(_new)
+    def getNumSelected(self):
+        return self.num_samples_selected.get()
+    def setTeensyPercent(self, _new):
+        self.teensy_percent_used.set(_new)
+    def getTeensyPercent(self):
+        return self.teensy_percent_used.get()

@@ -16,11 +16,12 @@ class MyModel():
         self.curr_instrument = None
         self.out_dir = None
         self.out_name = None
-        self.total_sample_size = None
         self.curr_samples = list()
-
         self.samples = list()
         self.Instruments = list()
+
+        self.total_sample_size = 0
+        self.teensy_mem_size = 250 #default 250kb Teensy 3.2
 
 #Model would call this on internal change
     def modelChange(self):
@@ -44,6 +45,22 @@ class MyModel():
         self.curr_samples = _new
     def getCurrSamples(self):
         return self.curr_samples
+    def setTotalSampleSize(self, idxs):
+        total = 0
+        instList = self.getInstrumentList()
+        instIdx = self.getCurrInstrument()
+        if len(idxs) > 0:
+            for i in idxs:
+                total += instList[instIdx].Samples[i].size
+        self.total_sample_size = total
+    def getTotalSampleSize(self):
+        return '%.2f'%self.total_sample_size
+    def setTeensyMemSize(self, _new):
+        self.teensy_mem_size = _new
+    def getTeensyMemSize(self):
+        return self.teensy_mem_size
+    def getTeensyPercentUsage(self):
+        return '%.2f'%((self.total_sample_size/self.teensy_mem_size)*100)
 # Internal processing for the model
     def loadSoundfont(self):
         with open(self.inFile, 'rb') as sf2_file:
@@ -58,7 +75,7 @@ class MyModel():
                 if bag.sample is None:
                     sf2Instruments[-1].set_gb_idx(bag_index)
                 elif bag.sample is not None and bag.sample not in sf2Instruments[-1].Samples:
-                    sf2Instruments[-1].Samples.append(sf2elements.Sample(bag.sample.name, bag_index, bag.key_range))
+                    sf2Instruments[-1].Samples.append(sf2elements.Sample(bag.sample.name, bag_index, bag.key_range, bag.sample.duration))
                 bag_index += 1
         # sorted ascending by ascii value of instrument names
         # preserves case but sorts indifferent to it

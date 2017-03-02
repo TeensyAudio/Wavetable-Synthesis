@@ -18,7 +18,7 @@ class MyController():
         self.model.setInFile(temp)
         self.view.setInFile(temp)
         self.model.loadSoundfont()
-        self.view.setInstrumentList(list(map(lambda x: x.i_name, self.model.Instruments)))
+        self.view.setInstrumentList(list(map(lambda x: x.i_name, self.model.Instruments))) 
     def outBrowseSelected(self):
         self.model.setOutDir(filedialog.askdirectory())
         self.view.setOutDirectory(self.model.out_dir)
@@ -29,11 +29,24 @@ class MyController():
             self.model.update_samples()
             #TODO set curr in view
             self.view.setSampleList(self.model.samples)
+        #reset size labels
+        self.view.setTotalSampleSize(0)
+        self.view.setNumSelected(0)
+        self.view.setTeensyPercent(0)
     def sampleSelected(self, _selection):
         idxs = _selection
-        #TODO add samples size to total
-        self.view.setTotalSampleSize(len(idxs))
-        self.model.setCurrSamples(idxs)
+        if(len(idxs) > 0):
+            self.model.setCurrSamples(idxs)  
+            #sample count
+            self.view.setNumSelected(len(idxs))
+            #total sample size
+            self.model.setTotalSampleSize(idxs)
+            self.view.setTotalSampleSize(self.model.getTotalSampleSize())
+            #percent teensy usage
+            self.view.setTeensyPercent(self.model.getTeensyPercentUsage())
+    def setTeensyMemSize(self, size):
+        self.model.setTeensyMemSize(size)
+        self.view.setTeensyPercent(self.model.getTeensyPercentUsage())
     def decode(self, _selection):
         self.sampleSelected(_selection)
         selected_bags = list()
