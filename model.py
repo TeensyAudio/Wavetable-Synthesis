@@ -58,7 +58,7 @@ class MyModel():
                 if bag.sample is None:
                     sf2Instruments[-1].set_gb_idx(bag_index)
                 elif bag.sample is not None and bag.sample not in sf2Instruments[-1].Samples:
-                    sf2Instruments[-1].Samples.append(sf2elements.Sample(bag.sample.name, bag_index))
+                    sf2Instruments[-1].Samples.append(sf2elements.Sample(bag.sample.name, bag_index, bag.key_range))
                 bag_index += 1
         # sorted ascending by ascii value of instrument names
         # preserves case but sorts indifferent to it
@@ -67,6 +67,7 @@ class MyModel():
         self.setInstrumentList(sf2Instruments)
 
     def update_samples(self):
+    # call this whenever an instrument is selected
         idx = self.curr_instrument
         temp_list = list(map(lambda x: x.s_name, self.Instruments[idx].Samples))
         self.samples = temp_list

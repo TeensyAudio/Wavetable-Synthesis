@@ -28,9 +28,17 @@ class MyView(Frame):
         self.inFile = StringVar(value='Select a Soundfont File to Continue')
 
         #formating variables
+        self.lrg_font = 14
+        self.med_font = 12
+        self.sml_font = 10
         self.box_relief = RIDGE
         self.box_pad = 1
         def_pad = 3
+        s = Style()
+        s.theme_use('default')
+        s.configure('.', font=('default', self.sml_font))
+        s.configure('TRadiobutton', font=('default', self.med_font))
+        s.configure('TLabelframe.Label', font=('default', self.med_font))
 
         #set up the widgets/layout
         self.parent.columnconfigure(0, weight=1)
@@ -51,7 +59,7 @@ class MyView(Frame):
         self.upper_frame.rcconfigure(_rows=[(0,1)], _columns=[(0,1),(1,2),(2,3)])
         self.upper_frame.grid(column=0, row=0, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
 
-        self.box_1 = JJ.JJLabelFrame(self.upper_frame, 2, 1, 1, 1, text='Select Teensy Version')
+        self.box_1 = JJ.JJLabelFrame(self.upper_frame, 3, 1, 1, 1, text='Select Teensy Version')
         self.box_1.grid(column=0, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
         self.version_frame = JJ.JJFrame(self.box_1, 2, 1, 1, 1)
         self.version_frame.grid(row=1, padx=def_pad, sticky=N + E + W)
@@ -73,15 +81,15 @@ class MyView(Frame):
         self.dir_line = Frame(self.box_3)
         self.dir_line.grid(row=0, column=0)
         self.folder_label = Label(self.dir_line, text='Folder')
-        self.folder_label.grid(row=0, column=0)
+        self.folder_label.grid(row=1, column=0)
         self.folder_entry = Entry(self.dir_line, textvariable=self.out_dir)
-        self.folder_entry.grid(row=0, column=1)
+        self.folder_entry.grid(row=1, column=1)
         self.folder_button = Button(self.dir_line, text='Browse', command=self.controller.outBrowseSelected)
-        self.folder_button.grid(row=0, column=2)
+        self.folder_button.grid(row=1, column=2)
         self.name_label = Label(self.dir_line, text = 'Name')
-        self.name_label.grid(row=1, column=0)
+        self.name_label.grid(row=0, column=0)
         self.name_entry = Entry(self.dir_line, textvariable=self.out_name)
-        self.name_entry.grid(row=1, column=1, columnspan=2, sticky=E + W)
+        self.name_entry.grid(row=0, column=1, columnspan=2, sticky=E + W)
 
         self.lower_frame = JJ.JJFrame(self, 1, 2, 1, 1)
         self.lower_frame.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=1, pady=1)
@@ -91,6 +99,7 @@ class MyView(Frame):
         self.inst_listbox.grid(column=0, row=0, sticky=N + S + E + W, padx=5)
 
         # Samples
+        # TODO combine listboxes to simulate separate columns for key range
         self.samp_listbox = JJ.JJListBox(self.lower_frame, 'Samples', self.s_names)
         self.samp_listbox.grid(column=1, row=0, sticky=N + S + E + W, padx=5)
         self.samp_listbox.rcconfigure([(0, 1), (1, 16), (2, 1)], [(0, 1)])
@@ -112,12 +121,14 @@ class MyView(Frame):
         self.samp_listbox.list_box.bind('<<ListboxSelect>>', self.sampleSelected)
         self.samp_listbox.list_box.bind('<Double-1>', self.samplesSelected)
 
+    # controller callback helpers
     def instSelected(self, *args):
         self.controller.instrumentSelected(self.inst_listbox.getCurrSelection())
     def samplesSelected(self, *args):
         self.controller.decode(self.samp_listbox.getCurrSelection())
     def sampleSelected(self, *args):
         self.controller.sampleSelected(self.samp_listbox.getCurrSelection())
+
     #Getters and setters for the control variables.
     def setInstrumentList(self, _newInstruments):
         self.i_names.set(_newInstruments)
@@ -143,3 +154,7 @@ class MyView(Frame):
         self.status_bar.setStatus(_new)
     def getDefaultOutName(self):
         return self.default_out_name
+    def setTotalSampleSize(self, _new):
+        self.total_sample_size.set(_new)
+    def getTotalSampleSize(self):
+        return self.total_sample_size.get()

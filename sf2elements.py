@@ -8,6 +8,7 @@ class Instrument:
         self.gb_idx = index
 
 class Sample:
-    def __init__(self, s_name, bag_idx):
+    def __init__(self, s_name, bag_idx, key_range):
         self.s_name = s_name
         self.bag_idx = bag_idx
+        self.key_range = key_range

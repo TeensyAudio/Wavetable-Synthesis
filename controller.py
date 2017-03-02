@@ -32,6 +32,7 @@ class MyController():
     def sampleSelected(self, _selection):
         idxs = _selection
         #TODO add samples size to total
+        self.view.setTotalSampleSize(len(idxs))
         self.model.setCurrSamples(idxs)
     def decode(self, _selection):
         self.sampleSelected(_selection)
@@ -57,8 +58,16 @@ class MyController():
             selected_bags.append(self.model.Instruments[curr_inst].Samples[int(samp)].bag_idx)
         if decoder.decode_selected(inFile, curr_inst, selected_bags, gb_idx, out_name):
             self.view.setStatus('Decode Successful!')
+            self.decodeConfirmation()
         else:
             self.view.setStatus('ERROR! Failed to Decode!')
+
+    def decodeConfirmation(self):
+        decoded_samples = ['Decoded sample(s):']
+        samples = self.model.samples
+        for idx in self.model.getCurrSamples():
+            decoded_samples.append(samples[int(idx)])
+        self.view.setSampleList(decoded_samples)
 
 # Model update responses
 
