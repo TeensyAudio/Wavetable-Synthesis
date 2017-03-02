@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
+#include <dspinst.h>
 
 //#define DEBUG_ALLOC
 
@@ -44,11 +45,14 @@ AudioConnection patchCord[] = {
 Bounce buttons[] = { {0, 15}, {1, 15}, {2, 15}, };
 const int TOTAL_BUTTONS = sizeof(buttons) / sizeof(Bounce);
 
+void OnNoteOn(byte channel, byte note, byte velocity);
+void OnNoteOff(byte channel, byte note, byte velocity);
 void guitarHeroMode();
 void printVoices();
 void setVolume() {
 	sgtl5000_1.volume(0.8*(analogRead(PIN_A2)-1)/1022.0);
 }
+void codeTest();
 
 struct voice_t {
 	int wavetable_id;
@@ -72,7 +76,11 @@ void setup() {
 	AudioMemory(120);
 
 	sgtl5000_1.enable();
-	sgtl5000_1.volume(0.8);
+	sgtl5000_1.volume(1.0);
+
+	Serial.println("HELLO");
+
+	//codeTest();
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		wavetable[i].setInstrument(nylonstrgtr);
@@ -90,7 +98,7 @@ void setup() {
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
 	//volumeTimer.begin(setVolume, 100000);
-	guitarHeroTimer.begin(guitarHeroMode, 1000000/120);
+	//guitarHeroTimer.begin(guitarHeroMode, 1000000/120);
 	//midiMapTimer.begin(printVoices, 5000);
 }
 
@@ -239,4 +247,42 @@ void printVoices() {
 	for (int i = 0; i < used_voices; ++i)
 		Serial.printf(" %02hhu %-2s", voices[i].channel, note_map[voices[i].note%12]);
 
+}
+
+void codeTest() {
+	for (int i = 0; i < 1000000; ++i) {
+		static float MICROS_AVG = 0.0;
+		static int TEST_CUR_CNT = 0;
+		static int TEST_LST_CNT = 0;
+		static int NEXT_DISPLAY = 0;
+		static int TEST_TIME_ACC = 0;
+		int micros_start = micros();
+
+		////////////////////////////////////////////////////////////////////////////////////
+		uint32_t phase;
+		int16_t scale;
+		for (int j = 0; j < 128; ++j) {
+
+			phase = ((phase - 0x40000000) & 0x80000000) ? phase : 0x7FFFFFFF - phase;
+			scale = phase >> 15;
+			//switch (phase & 0xC0000000) {
+			//case 0x00000000: case 0xC0000000: scale = phase >> 15; break;
+			//case 0x40000000: case 0x80000000: scale = (0x7FFFFFFF - phase) >> 15; break;
+			//}
+		}
+		////////////////////////////////////////////////////////////////////////////////////
+
+		int micros_end = micros();
+		TEST_TIME_ACC += micros_end - micros_start;
+		++TEST_CUR_CNT;
+		if (NEXT_DISPLAY < micros_end) {
+			MICROS_AVG += (TEST_TIME_ACC - TEST_CUR_CNT * MICROS_AVG) / (TEST_LST_CNT + TEST_CUR_CNT);
+			NEXT_DISPLAY = micros_end + 500 * 1000;
+			TEST_LST_CNT += TEST_CUR_CNT;
+			TEST_TIME_ACC = TEST_CUR_CNT = 0;
+			Serial.printf("avg: %f, n: %i, %i, %i\n", MICROS_AVG, TEST_LST_CNT, phase, scale);
+		}
+	}
+
+	Serial.println("DONE");
 }

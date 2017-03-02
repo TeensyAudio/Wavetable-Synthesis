@@ -2,7 +2,7 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-//#define TIME_TEST_ON
+#define TIME_TEST_ON
 //#define ENVELOPE_DEBUG
 
 #ifdef TIME_TEST_ON
@@ -40,7 +40,7 @@ void AudioSynthWavetable::stop(void) {
 	cli();
 	envelopeState = STATE_RELEASE;
 	count = current_sample->RELEASE_COUNT;
-	inc = -(mult + 4) / (count * 8);
+	inc = -(mult) / (count * 8);
 	PRINT_ENV(STATE_RELEASE)
 	sei();
 }
@@ -61,7 +61,7 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	current_sample = &instrument->samples[i];
 	if (current_sample == NULL) return;
 	setFrequency(freq);
-	tone_phase = inc = mult = 0;
+	vphase = tone_phase = inc = mult = 0;
 	count = current_sample->DELAY_COUNT;
 	//amplitude(midi_volume_transform(amp));
 	tone_amp = 2855;
@@ -105,6 +105,9 @@ void AudioSynthWavetable::update(void) {
 	uint32_t* end;
 	uint32_t tmp1, tmp2;
 
+	int16_t vscale = 0;
+	int32_t vtone_incr = 0;
+
 	block = allocate();
 	if (block == NULL) return;
 
@@ -113,9 +116,12 @@ void AudioSynthWavetable::update(void) {
 	p = (uint32_t*)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
+	int32_t voffset_high = voffset_high_coef*tone_incr;
+	int32_t voffset_low = voffset_low_coef*tone_incr;
+
+	//static int display_vib = 64;  test vibrato
 	//assuming 16 bit PCM, 44100 Hz
 	TIME_TEST(10000,
-	//for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i+=2) {
 	while(p < end) {
 		index = tone_phase >> (32 - s->INDEX_BITS);
 		tmp1 = *((uint32_t*)(s->sample + index));
@@ -123,7 +129,7 @@ void AudioSynthWavetable::update(void) {
 		s1 = signed_multiply_32x16t(scale, tmp1);
 		s1 = signed_multiply_accumulate_32x16b(s1, 0xFFFF - scale, tmp1);
 
-		tone_phase += tone_incr;
+		tone_phase += tone_incr + vtone_incr;
 		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 
 		index = tone_phase >> (32 - s->INDEX_BITS);
@@ -134,9 +140,16 @@ void AudioSynthWavetable::update(void) {
 
 		*p++ = pack_16b_16b(s2, s1);
 		
-		tone_phase += tone_incr;
+		tone_phase += tone_incr + vtone_incr;
 		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 
+		vphase += vincr;
+		vscale = (((vphase - 0x40000000) & 0x80000000) ? vphase : (0x7FFFFFFF - vphase)) >> 15;
+		vtone_incr = (int32_t(vscale) * (vscale < 0 ? voffset_low : voffset_high)) >> 16;
+		//if (!--display_vib) { test vibrato
+		//	display_vib = 64;
+		//	Serial.printf("vscale:%hi vtone_incr:%i\n", vscale, vtone_incr);
+		//}
 	}
 	); //end TIME_TEST
 
