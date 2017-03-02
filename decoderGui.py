@@ -5,15 +5,14 @@ from tkinter import N, S, E, W
 from tkinter.ttk import *
 import decoder
 import sf2elements
-
+import JoJenWidgets as JJ
 
 class Application(Frame):
     def __init__(self, parent, **kw):
-        Frame.__init__(self, parent)
+        super().__init__(parent)
 
-        super().__init__(**kw)
         self.parent = parent
-        parent.title("Teensy Soundfont Decoder")
+        self.parent.title("Teensy Soundfont Decoder")
         # vital variables
         self.inFile = None
         # currInst logic needs to be changed if implementing ordering
@@ -33,6 +32,9 @@ class Application(Frame):
         self.lrg_font = 14
         self.med_font = 12
         self.sml_font = 10
+        self.box_pad = 1
+        self.box_relief = RIDGE
+
         s = Style()
         s.theme_use('default')
         s.configure('.', font=('default', self.sml_font))
@@ -40,29 +42,30 @@ class Application(Frame):
         s.configure('TLabelframe.Label', font=('default', self.med_font))
         def_pad = 3
 
-        parent.columnconfigure(0, weight=1)
-        parent.rowconfigure(0, weight=1)
+        self.parent.columnconfigure(0, weight=1)
+        self.parent.rowconfigure(0, weight=1)
         self.grid(column=0, row=0, sticky=N + S + E + W)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=6)
         # self.config(relief=SUNKEN)
     # upper frame
-        self.frame_1 = Frame(self)
+        self.frame_1 = JJ.JJFrame(self)
+        # self.frame_1 = Frame(self)
         self.frame_1.grid(column=0, row=0, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
-        self.frame_1.columnconfigure(0, weight=1)
-        self.frame_1.columnconfigure(1, weight=2)
-        self.frame_1.columnconfigure(2, weight=3)
-        self.frame_1.rowconfigure(0, weight=1)
-        self.box_pad = 1
-        self.box_relief = RIDGE
+        self.frame_1.rcconfigure(_rows=[(0, 1)], _columns=[(0, 1), (1, 2), (2, 3)])
+        # self.frame_1.columnconfigure(0, weight=1)
+        # self.frame_1.columnconfigure(1, weight=2)
+        # self.frame_1.columnconfigure(2, weight=3)
+        # self.frame_1.rowconfigure(0, weight=1)
 
         # Box 1
-        self.box_1 = LabelFrame(self.frame_1, text='Select Teensy Version', relief=self.box_relief)
+        # self.box_1 = LabelFrame(self.frame_1, text='Select Teensy Version', relief=self.box_relief)
+        self.box_1 = JJ.JJLabelFrame(self.frame_1, 2, 1, 1, 1, text='Select Teensy Version')
         self.box_1.grid(column=0, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
-        self.box_1.columnconfigure(0, weight=1)
-        self.box_1.rowconfigure(0, weight=1)
-        self.box_1.rowconfigure(1, weight=2)
+        # self.box_1.columnconfigure(0, weight=1)
+        # self.box_1.rowconfigure(0, weight=1)
+        # self.box_1.rowconfigure(1, weight=2)
         # self.box_1_label = Label(self.box_1, text='Select Teensy Version',relief=RAISED, font=('default', self.med_font))
         # self.box_1_label.grid(row=0, padx=def_pad, pady=(def_pad+5), sticky=N)
         self.rb_frame = Frame(self.box_1)
@@ -160,8 +163,8 @@ class Application(Frame):
         # Status Bar (at bottom)
         self.status_text = StringVar()
         self.status_text.set('Load a Soundfont File')
-        parent.status = Label(parent, textvariable=self.status_text, border=1, anchor=W, relief=RIDGE, font=('default', self.sml_font))
-        parent.status.grid(column=0, row=3, sticky=W + E)
+        self.status = Label(self, textvariable=self.status_text, border=1, anchor=W, relief=RIDGE, font=('default', self.sml_font))
+        self.status.grid(column=0, row=2, sticky=W + E)
 
         # Set Bindings
         self.instList.bind('<<ListboxSelect>>', self.update_samples)
