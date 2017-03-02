@@ -124,10 +124,12 @@ class MyView(Frame):
     # controller callback helpers
     def instSelected(self, *args):
         self.controller.instrumentSelected(self.inst_listbox.getCurrSelection())
-    def samplesSelected(self, *args):
-        self.controller.decode(self.samp_listbox.getCurrSelection())
     def sampleSelected(self, *args):
         self.controller.sampleSelected(self.samp_listbox.getCurrSelection())
+
+    def samplesSelected(self, *args):
+        self.controller.decode(self.samp_listbox.getCurrSelection())
+
 
     #Getters and setters for the control variables.
     def setInstrumentList(self, _newInstruments):
@@ -158,3 +160,7 @@ class MyView(Frame):
         self.total_sample_size.set(_new)
     def getTotalSampleSize(self):
         return self.total_sample_size.get()
+    def setVersion(self, _new):
+        self.version.set(_new)
+    def getVersion(self):
+        return self.version.get()

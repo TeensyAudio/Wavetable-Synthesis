@@ -18,7 +18,8 @@ class MyController():
         self.model.setInFile(temp)
         self.view.setInFile(temp)
         self.model.loadSoundfont()
-        self.view.setInstrumentList(list(map(lambda x: x.i_name, self.model.Instruments)))
+        self.view.setInstrumentList(list(map(lambda x: x.i_name, self.model.getInstrumentList())))
+        self.view.setSampleList([])
     def outBrowseSelected(self):
         self.model.setOutDir(filedialog.askdirectory())
         self.view.setOutDirectory(self.model.out_dir)
@@ -26,21 +27,21 @@ class MyController():
         idxs = _selection
         if len(idxs) == 1:
             self.model.setCurrInstrument(int(idxs[0]))
-            self.model.update_samples()
+            # self.model.update_samples()
             #TODO set curr in view
-            self.view.setSampleList(self.model.samples)
+            curr_inst = self.model.getCurrInstrument()
+            self.view.setSampleList(curr_inst.samplesForDisplay())
     def sampleSelected(self, _selection):
         idxs = _selection
         #TODO add samples size to total
         self.view.setTotalSampleSize(len(idxs))
         self.model.setCurrSamples(idxs)
     def decode(self, _selection):
+        print('decode')
         self.sampleSelected(_selection)
         selected_bags = list()
         curr_inst = self.model.getCurrInstrument()
         inFile = self.model.getInFile()
-        gb_idx = self.model.Instruments[curr_inst].gb_idx
-        selected_samples = _selection
 
         # check for user supplied file name
         # else default is instrument name
@@ -54,9 +55,10 @@ class MyController():
         # TODO user supplied filepath after updating decoder.py
         # 2/28/2017
 
-        for samp in selected_samples:
-            selected_bags.append(self.model.Instruments[curr_inst].Samples[int(samp)].bag_idx)
-        if decoder.decode_selected(inFile, curr_inst, selected_bags, gb_idx, out_name):
+        for samp in self.model.getCurrSamples():
+            selected_bags.append(samp.bag_idx)
+        if decoder.decode_selected(inFile, curr_inst.getOriginalIndex(),
+                selected_bags, curr_inst.getGlobalBag(), out_name):
             self.view.setStatus('Decode Successful!')
             self.decodeConfirmation()
         else:
@@ -64,9 +66,8 @@ class MyController():
 
     def decodeConfirmation(self):
         decoded_samples = ['Decoded sample(s):']
-        samples = self.model.samples
-        for idx in self.model.getCurrSamples():
-            decoded_samples.append(samples[int(idx)])
+        for samp in self.model.getCurrSamples():
+            decoded_samples.append(str(samp.getName()) + str(samp.getKeyRange()))
         self.view.setSampleList(decoded_samples)
 
 # Model update responses
