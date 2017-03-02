@@ -75,5 +75,13 @@ private:
 	volatile int32_t mult = 0; // attenuation, 0=off, 0x10000=unity gain
 	volatile int32_t inc = 0; // amount to change mult on each sample
 	volatile bool state_change = false;
+
+	//vibrato members
+	int vcount = 0;
+	int vdelay = 0;  
+	uint32_t vphase = 0x80000000; //vibrato starts on downward slope
+	uint32_t vincr = 2.0 * 21.4 * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT);  //21.4 hz
+	float voffset_high_coef = 1.0046316744020537677145202322711 - 1.0; // +8 cents coef
+	float voffset_low_coef = 1.0 - (1.0/1.0046316744020537677145202322711); // -8 cents coef
 };
 
