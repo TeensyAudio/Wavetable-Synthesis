@@ -10,10 +10,10 @@ import JoJenWidgets as JJ
 class Application(Frame):
     def __init__(self, parent, **kw):
         super().__init__(parent)
-
         self.parent = parent
         self.parent.title("Teensy Soundfont Decoder")
         # vital variables
+
         self.inFile = None
         # currInst logic needs to be changed if implementing ordering
         self.currInst = None
@@ -21,10 +21,12 @@ class Application(Frame):
         self.out_name = None
         self.total_sample_size = StringVar(value='0')
 
+
         # control variables
         self.i_names = StringVar()
         self.s_names = StringVar()
         self.ver_var = IntVar(value=1)
+
 
         # List of instrument object instances
         self.Instruments = list()
@@ -44,6 +46,7 @@ class Application(Frame):
 
         self.parent.columnconfigure(0, weight=1)
         self.parent.rowconfigure(0, weight=1)
+
         self.grid(column=0, row=0, sticky=N + S + E + W)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -105,6 +108,7 @@ class Application(Frame):
         self.folder_button.grid(row=0, column=2)
         # self.box_3_label = Label(self.box_3, text='Output Settings', font=('default', self.med_font))
         # self.box_3_label.grid(row=0, padx=def_pad, pady=(def_pad+5), sticky=N)
+
     # lower frame
         self.frame_2 = Frame(self)
         self.frame_2.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
@@ -121,6 +125,7 @@ class Application(Frame):
         self.instList_label = Label(self.sub_frame_1, text='Instruments', font=('default', self.lrg_font))
         self.instList_label.grid(row=0, column=0, padx=1, pady=1)
         self.instList = Listbox(self.sub_frame_1, listvariable=self.i_names, font=('default', self.med_font))
+
         self.instList.grid(row=1, column=0, rowspan=2, sticky=N + S + E + W)
         self.scrollbar_1 = Scrollbar(self.sub_frame_1, command=self.instList.yview)
         self.scrollbar_1.grid(row=1, column=1, rowspan=2, sticky=N + S + E + W)
@@ -138,6 +143,7 @@ class Application(Frame):
         self.sampList_label = Label(self.sub_frame_2, text='Samples', font=('default', self.lrg_font))
         self.sampList_label.grid(row=0, column=0, columnspan=3, padx=1, pady=1)
         self.sampList = Listbox(self.sub_frame_2, listvariable=self.s_names, selectmode=EXTENDED, font=('default', self.med_font))
+
         self.sampList.grid(row=1, column=0, columnspan=3, sticky=N + S + E + W)
         self.scrollbar_2 = Scrollbar(self.sub_frame_2, command=self.sampList.yview)
         self.scrollbar_2.grid(row=1, column=4, rowspan=1, sticky=N + S + E + W)
