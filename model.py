@@ -50,10 +50,8 @@ class MyModel():
         return self.curr_samples
     def setTotalSampleSize(self, idxs):
         total = 0
-        #instList = self.getInstrumentList()
-        #instIdx = self.getCurrInstrument()
-        inst = self.getCurrInstrument()
         if len(idxs) > 0:
+            inst = self.getCurrInstrument()
             for i in idxs:
                 total += inst.Samples[i].size
         self.total_sample_size = total
