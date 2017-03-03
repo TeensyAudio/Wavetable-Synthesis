@@ -5,6 +5,7 @@ import sys
 import getopt
 import inspect
 import re
+import math
 
 DEBUG_FLAG = False
 logging.disable(logging.WARNING)
@@ -208,7 +209,7 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
             raw_wav_data = bags[i].sample.raw_sample_data
             length_16 = bags[i].sample.duration
             length_8 = length_16 * 2
-            length_32 = length_16 // 2
+            length_32 = math.ceil(length_16 / 2)
             pad_length = 0 if length_32 % 128 == 0 else 128 - length_32 % 128
 
             ary_length = int(length_32 + pad_length)

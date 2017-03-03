@@ -1,13 +1,3 @@
-//
-//  AudioAllocWavetable.h
-//  
-//
-//  Created by Connor Delaplane on 1/19/17.
-//
-//
-
-#pragma once
-
 #include <AudioSynthWavetable.h>
 #include <sample_data.h>
 

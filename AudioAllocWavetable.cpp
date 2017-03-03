@@ -1,13 +1,4 @@
-
-//  AudioAllocWavetable.cpp
-//  
-//
-//  Created by Connor Delaplane on 1/19/17.
-//
-//
-
 #include "AudioAllocWavetable.h"
-#include <SerialFlash.h>
 
 void AudioAllocWavetable::init(AudioSynthWavetable* voices, uint8_t numVoices, const instrument_data instrument, float amp)
 {
@@ -50,7 +41,7 @@ void AudioAllocWavetable::playFreq(float freq)
             return;
         }
     }
-    
+
     // If none, find one to play it.
     for (int i=0; i<numVoices; i++) {
         if (!voices[i].isPlaying()) {
