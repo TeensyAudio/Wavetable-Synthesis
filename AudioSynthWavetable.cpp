@@ -61,7 +61,7 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	current_sample = &instrument->samples[i];
 	if (current_sample == NULL) return;
 	setFrequency(freq);
-	vphase = tone_phase = inc = mult = 0;
+	vcount = vphase = tone_phase = inc = mult = 0;
 	count = current_sample->DELAY_COUNT;
 	//amplitude(midi_volume_transform(amp));
 	tone_amp = 2855;
@@ -116,40 +116,41 @@ void AudioSynthWavetable::update(void) {
 	p = (uint32_t*)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
+	TIME_TEST(10000,
 	int32_t voffset_high = voffset_high_coef*tone_incr;
 	int32_t voffset_low = voffset_low_coef*tone_incr;
 
 	//static int display_vib = 64;  test vibrato
 	//assuming 16 bit PCM, 44100 Hz
-	TIME_TEST(10000,
 	while(p < end) {
-		index = tone_phase >> (32 - s->INDEX_BITS);
-		tmp1 = *((uint32_t*)(s->sample + index));
-		scale = (tone_phase << s->INDEX_BITS) >> 16;
-		s1 = signed_multiply_32x16t(scale, tmp1);
-		s1 = signed_multiply_accumulate_32x16b(s1, 0xFFFF - scale, tmp1);
+		for (int i = VIBRATO_PERIOD/2; i; --i) {
+			index = tone_phase >> (32 - s->INDEX_BITS);
+			tmp1 = *((uint32_t*)(s->sample + index));
+			scale = (tone_phase << s->INDEX_BITS) >> 16;
+			s1 = signed_multiply_32x16t(scale, tmp1);
+			s1 = signed_multiply_accumulate_32x16b(s1, 0xFFFF - scale, tmp1);
 
-		tone_phase += tone_incr + vtone_incr;
-		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			tone_phase += tone_incr + vtone_incr;
+			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 
-		index = tone_phase >> (32 - s->INDEX_BITS);
-		tmp1 = *((uint32_t*)(s->sample + index));
-		scale = (tone_phase << s->INDEX_BITS) >> 16;
-		s2 = signed_multiply_32x16t(scale, tmp1);
-		s2 = signed_multiply_accumulate_32x16b(s2, 0xFFFF - scale, tmp1);
+			index = tone_phase >> (32 - s->INDEX_BITS);
+			tmp1 = *((uint32_t*)(s->sample + index));
+			scale = (tone_phase << s->INDEX_BITS) >> 16;
+			s2 = signed_multiply_32x16t(scale, tmp1);
+			s2 = signed_multiply_accumulate_32x16b(s2, 0xFFFF - scale, tmp1);
 
-		*p++ = pack_16b_16b(s2, s1);
+			*p++ = pack_16b_16b(s2, s1);
+
+			tone_phase += tone_incr + vtone_incr;
+			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+		}
 		
-		tone_phase += tone_incr + vtone_incr;
-		tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-
-		vphase += vincr;
-		vscale = (((vphase - 0x40000000) & 0x80000000) ? vphase : (0x7FFFFFFF - vphase)) >> 15;
-		vtone_incr = (int32_t(vscale) * (vscale < 0 ? voffset_low : voffset_high)) >> 16;
-		//if (!--display_vib) { test vibrato
-		//	display_vib = 64;
-		//	Serial.printf("vscale:%hi vtone_incr:%i\n", vscale, vtone_incr);
-		//}
+		if (++vcount > vdelay) {
+			vphase += vincr;
+			vscale = (((vphase - 0x40000000) & 0x80000000) ? vphase : (0x7FFFFFFF - vphase)) >> 15;
+			//vtone_incr = signed_multiply_32x16b()
+			vtone_incr = (int32_t(vscale) * (vscale < 0 ? voffset_low : voffset_high)) >> 15;
+		}
 	}
 	); //end TIME_TEST
 
