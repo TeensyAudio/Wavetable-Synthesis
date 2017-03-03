@@ -48,6 +48,8 @@ class MyController():
         self.model.setTeensyMemSize(size)
         self.view.setTeensyPercent(self.model.getTeensyPercentUsage())
     def decode(self, _selection):
+        if(len(_selection) == 0):
+            return
         self.sampleSelected(_selection)
         selected_bags = list()
         curr_inst = self.model.getCurrInstrument()

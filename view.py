@@ -111,21 +111,23 @@ class MyView(Frame):
         self.samp_listbox.under_frame = JJ.JJFrame(self.samp_listbox, 1, 2, 1, 1)
         self.samp_listbox.under_frame.grid(column=0, row=3)
         self.samp_listbox.decode_button = Button(self.samp_listbox.under_frame, text='Decode', command=self.samplesSelected)
-        self.samp_listbox.decode_button.grid(row=0, column=2, padx=2, pady=2, sticky=N + S + E + W)
+        self.samp_listbox.decode_button.grid(row=0, column=0, padx=2, pady=2, sticky=N + E + W)
         
         # Displays sample size, num selected and memory usage percentage for teensy
-        self.samp_listbox.num_selected_text_label = Label(self.samp_listbox.under_frame, text='Num Samples Selected:', anchor=E)
-        self.samp_listbox.num_selected_text_label.grid(row=0, column=0, padx=2, pady=2, sticky=N + S + E)
-        self.samp_listbox.num_selected_label = Label(self.samp_listbox.under_frame, textvariable=self.num_samples_selected, anchor=W, width=8)
-        self.samp_listbox.num_selected_label.grid(row=0, column=1, padx=2, pady=2, sticky=N + S + W)
-        self.samp_listbox.samp_size_text_label = Label(self.samp_listbox.under_frame, text='Size Selected (kb):', anchor=E)
-        self.samp_listbox.samp_size_text_label.grid(row=1, column=0, padx=2, pady=2, sticky=N + S + E)
-        self.samp_listbox.samp_size_label = Label(self.samp_listbox.under_frame, textvariable=self.total_sample_size, anchor=W, width=8)
-        self.samp_listbox.samp_size_label.grid(row=1, column=1, padx=2, pady=2, sticky=N + S + W)
-        self.samp_listbox.teensy_percent_text_label = Label(self.samp_listbox.under_frame, text='Est. Teensy Usage (%):', anchor=E)
-        self.samp_listbox.teensy_percent_text_label.grid(row=2, column=0, padx=2, pady=2, sticky=N + S + E)
-        self.samp_listbox.teensy_percent_label = Label(self.samp_listbox.under_frame, textvariable=self.teensy_percent_used, anchor=W, width=8)
-        self.samp_listbox.teensy_percent_label.grid(row=2, column=1, padx=2, pady=2, sticky=N + S + W)
+        self.stats_frame = JJ.JJLabelFrame(self.samp_listbox.under_frame, 3, 2, 1, 1, text='Sample Stats')
+        self.stats_frame.grid(row=0, column=1, sticky=N + W + E, padx=2, pady=2)
+        self.stats_frame.num_selected_text_label = Label(self.stats_frame, text='Num Samples Selected:', anchor=E)
+        self.stats_frame.num_selected_text_label.grid(row=0, column=0, padx=2, pady=2, sticky=N + S + E)
+        self.stats_frame.num_selected_label = Label(self.stats_frame, textvariable=self.num_samples_selected, anchor=W, width=8)
+        self.stats_frame.num_selected_label.grid(row=0, column=1, padx=2, pady=2, sticky=N + S + W)
+        self.stats_frame.samp_size_text_label = Label(self.stats_frame, text='Size Selected (kb):', anchor=E)
+        self.stats_frame.samp_size_text_label.grid(row=1, column=0, padx=2, pady=2, sticky=N + S + E)
+        self.stats_frame.samp_size_label = Label(self.stats_frame, textvariable=self.total_sample_size, anchor=W, width=8)
+        self.stats_frame.samp_size_label.grid(row=1, column=1, padx=2, pady=2, sticky=N + S + W)
+        self.stats_frame.teensy_percent_text_label = Label(self.stats_frame, text='Est. Teensy Usage (%):', anchor=E)
+        self.stats_frame.teensy_percent_text_label.grid(row=2, column=0, padx=2, pady=2, sticky=N + S + E)
+        self.stats_frame.teensy_percent_label = Label(self.stats_frame, textvariable=self.teensy_percent_used, anchor=W, width=8)
+        self.stats_frame.teensy_percent_label.grid(row=2, column=1, padx=2, pady=2, sticky=N + S + W)
 
         # Status bar at bottom
         self.status_bar = JJ.JJStatusBar(self, 'Load a Soundfont')
@@ -147,7 +149,7 @@ class MyView(Frame):
         if value == 1:
             self.controller.setTeensyMemSize(250) #teensy 3.2 size in kb
         if value == 2:
-            self.controller.setTeensyMemSize(500) #TODO: what is the correct number?
+            self.controller.setTeensyMemSize(1048) #teensy 3.6 size in kb
 
     #Getters and setters for the control variables.
     def setInstrumentList(self, _newInstruments):
