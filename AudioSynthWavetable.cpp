@@ -40,6 +40,7 @@ void AudioSynthWavetable::stop(void) {
 	cli();
 	envelopeState = STATE_RELEASE;
 	count = current_sample->RELEASE_COUNT;
+	if (count == 0) count = 1;
 	inc = -(mult) / (count * 8);
 	PRINT_ENV(STATE_RELEASE)
 	sei();
@@ -63,7 +64,7 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	setFrequency(freq);
 	vcount = vphase = tone_phase = inc = mult = 0;
 	count = current_sample->DELAY_COUNT;
-	//amplitude(midi_volume_transform(amp));
+	amplitude(midi_volume_transform(amp));
 	tone_amp = 2855;
 	envelopeState = STATE_DELAY;
 	PRINT_ENV(STATE_DELAY)
@@ -155,16 +156,13 @@ void AudioSynthWavetable::update(void) {
 	); //end TIME_TEST
 
 
-
 	//*********************************************************************
 	//Envelope code
 	//*********************************************************************
 
-
 	p = (uint32_t *)block->data;
 	// p increments by 1 for every 2 samples processed.
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
-
 
 	while (p < end) {
 		// we only care about the state when completing a region
