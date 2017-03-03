@@ -62,7 +62,7 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	current_sample = &instrument->samples[i];
 	if (current_sample == NULL) return;
 	setFrequency(freq);
-	vcount = vphase = tone_phase = inc = mult = 0;
+	vib_count = vib_phase = tone_phase = inc = mult = 0;
 	count = current_sample->DELAY_COUNT;
 	amplitude(midi_volume_transform(amp));
 	envelopeState = STATE_DELAY;
@@ -151,9 +151,9 @@ void AudioSynthWavetable::update(void) {
 			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		}
 		
-		if (++vcount > vdelay) {
-			vphase += vincr;
-			vscale = (((vphase - 0x40000000) & 0x80000000) ? vphase : (0x7FFFFFFF - vphase)) >> 15;
+		if (++vib_count > vib_delay) {
+			vib_phase += vincr;
+			vscale = (((vib_phase - 0x40000000) & 0x80000000) ? vib_phase : (0x7FFFFFFF - vib_phase)) >> 15;
 			vtone_incr = signed_multiply_32x16b((vscale < 0 ? voffset_low : voffset_high), int32_t(vscale));
 			//vtone_incr = (int32_t(vscale) * (vscale < 0 ? voffset_low : voffset_high)) >> 15;
 		}
