@@ -12,7 +12,7 @@
 
 // int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-1 (1..7 for AUDIO_BLOCK_SAMPLES == 128)
 // where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
-#define VIBRATO_SMOOTHNESS 7
+#define VIBRATO_SMOOTHNESS 4
 #define VIBRATO_PERIOD AUDIO_BLOCK_SAMPLES/(1 << (VIBRATO_SMOOTHNESS-1))
 
 class AudioSynthWavetable : public AudioStream
@@ -82,10 +82,10 @@ private:
 	volatile bool state_change = false;
 
 	//vibrato members
-	uint32_t vcount = 0;
-	uint32_t vphase = 0x80000000; //vibrato starts on downward slope
+	uint32_t vib_count = 0;
+	uint32_t vib_phase = 0;
 
-	const uint32_t vdelay = 0.0 * SAMPLES_PER_MSEC/(2*VIBRATO_PERIOD);  
+	const uint32_t vib_delay = 0.0 * SAMPLES_PER_MSEC/(2*VIBRATO_PERIOD);  
 	const uint32_t vincr = 21.4 * VIBRATO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT);  //21.4 hz
 	const float voffset_high_coef = 0.00463167440; // +8 cents coef
 	const float voffset_low_coef = 0.00461032089; // -8 cents coef

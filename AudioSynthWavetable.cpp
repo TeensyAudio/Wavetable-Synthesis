@@ -117,7 +117,7 @@ void AudioSynthWavetable::update(void) {
 	p = (uint32_t*)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
-	TIME_TEST(10000,
+	TIME_TEST(5000,
 	int32_t voffset_high = voffset_high_coef*tone_incr;
 	int32_t voffset_low = voffset_low_coef*tone_incr;
 
@@ -149,8 +149,8 @@ void AudioSynthWavetable::update(void) {
 		if (++vcount > vdelay) {
 			vphase += vincr;
 			vscale = (((vphase - 0x40000000) & 0x80000000) ? vphase : (0x7FFFFFFF - vphase)) >> 15;
-			//vtone_incr = signed_multiply_32x16b()
-			vtone_incr = (int32_t(vscale) * (vscale < 0 ? voffset_low : voffset_high)) >> 15;
+			vtone_incr = signed_multiply_32x16b((vscale < 0 ? voffset_low : voffset_high), int32_t(vscale));
+			//vtone_incr = (int32_t(vscale) * (vscale < 0 ? voffset_low : voffset_high)) >> 15;
 		}
 	}
 	); //end TIME_TEST
