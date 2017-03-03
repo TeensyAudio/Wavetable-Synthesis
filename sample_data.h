@@ -3,11 +3,8 @@
 
 
 struct sample_data {
-<<<<<<< HEAD
 	//SAMPLE
-=======
 	const bool LOOP;
->>>>>>> 52a2d62a4f72aa0ef0c0ab6cedc38845c1ce5b6b
 	const int INDEX_BITS;
 	const float PER_HERTZ_PHASE_INCREMENT;
 	const uint32_t MAX_PHASE;
