@@ -141,8 +141,6 @@ class MyView(Frame):
     # controller callback helpers
     def instSelected(self, *args):
         self.controller.instrumentSelected(self.inst_listbox.getCurrSelection())
-    def samplesSelected(self, *args):
-        self.controller.decode(self.samp_listbox.getCurrSelection())
     def sampleSelected(self, *args):
         self.controller.sampleSelected(self.samp_listbox.getCurrSelection())
     def teensyButtonSelect(self, value):
@@ -150,6 +148,10 @@ class MyView(Frame):
             self.controller.setTeensyMemSize(250) #teensy 3.2 size in kb
         if value == 2:
             self.controller.setTeensyMemSize(1048) #teensy 3.6 size in kb
+
+    def samplesSelected(self, *args):
+        self.controller.decode(self.samp_listbox.getCurrSelection())
+
 
     #Getters and setters for the control variables.
     def setInstrumentList(self, _newInstruments):
@@ -188,3 +190,7 @@ class MyView(Frame):
         self.teensy_percent_used.set(_new)
     def getTeensyPercent(self):
         return self.teensy_percent_used.get()
+    def setVersion(self, _new):
+        self.version.set(_new)
+    def getVersion(self):
+        return self.version.get()
