@@ -109,9 +109,12 @@ void AudioSynthWavetable::update(void) {
 	int16_t vscale = 0;
 	int32_t vtone_incr = 0;
 
+	if (s->LOOP == false && tone_phase >= s->MAX_PHASE)
+		return;
+	
 	block = allocate();
 	if (block == NULL) return;
-
+	
 	//out = block->data;
 
 	p = (uint32_t*)block->data;
@@ -132,7 +135,7 @@ void AudioSynthWavetable::update(void) {
 			s1 = signed_multiply_accumulate_32x16b(s1, 0xFFFF - scale, tmp1);
 
 			tone_phase += tone_incr + vtone_incr;
-			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
@@ -143,7 +146,7 @@ void AudioSynthWavetable::update(void) {
 			*p++ = pack_16b_16b(s2, s1);
 
 			tone_phase += tone_incr + vtone_incr;
-			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		}
 		
 		if (++vcount > vdelay) {

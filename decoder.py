@@ -248,6 +248,7 @@ def export_samples(bags, global_bag, num_samples, file_title="samples"):
 def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, keyRange):
     out_fmt_str = \
         "\t{{\n" \
+		"\t\t{LOOP},\t//Whether or not to loop this sample\n" \
         "\t\t{LENGTH_BITS},\t//Number of bits needed to hold length\n" \
         "\t\t({PHASE_MULT}*{CENTS_OFFSET}*({SAMPLE_RATE} / AUDIO_SAMPLE_RATE_EXACT)) / {SAMPLE_FREQ} + 0.5,\t//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5\n" \
         "\t\t((uint32_t){LENGTH}-1) << (32 - {LENGTH_BITS}),\t//(sample_length-1) << (32 - sample_length_bits)\n" \
@@ -274,6 +275,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
     phase_mult = (0x80000000 >> (length_bits - 1))
     
     out_vals = {
+        "LOOP": "true" if bag.sample_loop == 1 else "false",
         "ORIGINAL_PITCH": base_note,
         "CENTS_OFFSET": cents_offset,
         "PHASE_MULT": phase_mult,
