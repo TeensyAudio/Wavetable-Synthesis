@@ -62,7 +62,7 @@ class MyModel():
     def getTeensyMemSize(self):
         return self.teensy_mem_size
     def getTeensyPercentUsage(self):
-        return '%.2f'%((self.total_sample_size/self.teensy_mem_size)*100)
+        return '%.1f'%((self.total_sample_size/self.teensy_mem_size)*100)
 # Internal processing for the model
     def loadSoundfont(self):
         """

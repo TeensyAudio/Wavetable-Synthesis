@@ -34,7 +34,7 @@ class MyController():
         #reset size labels
         self.view.setTotalSampleSize(0)
         self.view.setNumSelected(0)
-        self.view.setTeensyPercent(0)
+        self.view.setTeensyPercent(0.0)
         self.model.setTotalSampleSize([])
 
     def sampleSelected(self, _selection):

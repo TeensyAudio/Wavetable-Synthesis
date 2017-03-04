@@ -26,7 +26,7 @@ class MyView(Frame):
         self.out_name = StringVar(value=self.default_out_name)
         self.total_sample_size = IntVar(value=0)
         self.num_samples_selected = IntVar(value=0)
-        self.teensy_percent_used = IntVar(value=0)
+        self.teensy_percent_used = IntVar(value=0.0)
         self.inFile = StringVar(value='Select a Soundfont File to Continue')
 
         #formating variables
