@@ -72,7 +72,7 @@ class MyView(Frame):
                 variable=self.version, command=lambda: self.teensyButtonSelect(2), value=2)
         self.ver_36.grid(row=1, column=0, sticky=N + S + E + W, padx=def_pad)
 
-        self.box_2 = JJ.JJLabelFrame(self.upper_frame, 2, 1, 1, 1, text='Load a Soundfont')
+        self.box_2 = JJ.JJLabelFrame(self.upper_frame, 2, 1, 1, 1, text='Load a SoundFont')
         self.box_2.grid(column=1, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
         # TODO make this text wrap better
         self.infile_label = Message(self.box_2, textvariable=self.inFile, anchor=W, justify=LEFT, aspect=400)
