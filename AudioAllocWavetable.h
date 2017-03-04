@@ -22,7 +22,7 @@ public:
 		, num_voices(0)
 		, amplitude(1.0)
 	{}
-    /**
+	/**
 	 * @brief Initialize the allocator.
 	 * Each voice is initialized to the same sample data set and amplitude.
 	 * The allocator is meant to be used as an interface to an array of "homogenic" voices.
