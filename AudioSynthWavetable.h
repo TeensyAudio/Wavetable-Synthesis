@@ -55,7 +55,7 @@ public:
 	 *
 	 * You can use this to set the frequency and amplitude
 	 * before calling play().
-	 * @param freq frequency of the generated output (range?)
+	 * @param freq frequency of the generated output (between 0 and the board-specific sample rate)
 	 * @param amp amplitude of generated output
 	 */
 	void setFreqAmp(float freq, float amp) {

@@ -132,7 +132,7 @@ void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
 /**
  * @brief Play waveform at defined frequency.
  *
- * @param freq freqency of the generated output (range?)
+ * @param freq freqency of the generated output (between 0 and the board-specific sample rate)
  * @param custom_env a value of 1 means a custom envelope
  * is set; the default value is 0 (no custom envelope)
  */
@@ -237,7 +237,7 @@ void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
  * @brief Change the frequency of the waveform to the defined freq.
  *
  * If the frequency is zero sample generation is stopped.
- * @param freq frequency of the generated output (range?)
+ * @param freq frequency of the generated output (between 0 and the board-specific sample rate)
  */
 void AudioSynthWavetable::frequency(float freq) {
 	total_frequency -= micros();
