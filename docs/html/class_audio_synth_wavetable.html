@@ -410,7 +410,7 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
 <p>Change the frequency of the waveform to the defined freq. </p>
 <p>If the frequency is zero sample generation is stopped. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">freq</td><td>frequency of the generated output (range?) </td></tr>
+    <tr><td class="paramname">freq</td><td>frequency of the generated output (between 0 and the board-specific sample rate) </td></tr>
   </table>
   </dd>
 </dl>
@@ -580,7 +580,7 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
 <p>Play waveform at defined frequency. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">freq</td><td>freqency of the generated output (range?) </td></tr>
+    <tr><td class="paramname">freq</td><td>freqency of the generated output (between 0 and the board-specific sample rate) </td></tr>
     <tr><td class="paramname">custom_env</td><td>a value of 1 means a custom envelope is set; the default value is 0 (no custom envelope) </td></tr>
   </table>
   </dd>
@@ -669,7 +669,7 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
 <p>Set the frequency and amplitude of the Wavetable. </p>
 <p>You can use this to set the frequency and amplitude before calling <a class="el" href="class_audio_synth_wavetable.html#a394a93a1f34c956ca47c297936ada42a" title="Begin playing a waveform. ">play()</a>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">freq</td><td>frequency of the generated output (range?) </td></tr>
+    <tr><td class="paramname">freq</td><td>frequency of the generated output (between 0 and the board-specific sample rate) </td></tr>
     <tr><td class="paramname">amp</td><td>amplitude of generated output </td></tr>
   </table>
   </dd>

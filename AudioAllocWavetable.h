@@ -30,7 +30,7 @@ public:
 	 * 
 	 * @param voices an array of AudioSynthWavetable objects to manage.
 	 * @param num_voices the length of 'voices'.
-	 * @param samples an array of samples from a decoded SoundFont file.
+	 * @param wavetable an array of samples from a decoded SoundFont file.
 	 * @param num_samples the length of 'samples'.
 	 * @param amp the amplitude for each voice (between 0.0 and 1.0).
 	 */
