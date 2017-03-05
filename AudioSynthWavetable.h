@@ -9,6 +9,16 @@
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define AMP_DEF 69
 
+enum envelopeStateEnum {
+	STATE_IDLE,
+	STATE_DELAY,
+	STATE_ATTACK,
+	STATE_HOLD,
+	STATE_DECAY,
+	STATE_SUSTAIN,
+	STATE_RELEASE
+};
+
 class AudioSynthWavetable : public AudioStream
 {
 public:
@@ -189,18 +199,9 @@ public:
 	void frequency(float freq);
 	virtual void update(void);
 	static void print_performance(void);
+	envelopeStateEnum getEnvState(void) { return envelopeState; }
 
 private:
-
-	enum envelopeStateEnum { 
-		STATE_IDLE,
-		STATE_DELAY,
-		STATE_ATTACK,
-		STATE_HOLD,
-		STATE_DECAY,
-		STATE_SUSTAIN,
-		STATE_RELEASE
-	};
 
 	uint32_t milliseconds2count(float milliseconds) {
 		if (milliseconds < 1.0) milliseconds = 1.0;

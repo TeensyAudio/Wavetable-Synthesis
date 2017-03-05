@@ -28,14 +28,6 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-//#define STATE_IDLE	0
-//#define STATE_DELAY	1
-//#define STATE_ATTACK	2
-//#define STATE_HOLD	3
-//#define STATE_DECAY	4
-//#define STATE_SUSTAIN	5
-//#define STATE_RELEASE	6
-
 uint32_t
 	AudioSynthWavetable::interpolation_update,
 	AudioSynthWavetable::envelope_update,
@@ -68,7 +60,7 @@ void AudioSynthWavetable::stop(void) {
 	envelopeState = STATE_RELEASE;
 	count = release_count;
 	inc = (-(float)mult / (count << 3));
-	Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
+	//Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
 }
 
 /**
