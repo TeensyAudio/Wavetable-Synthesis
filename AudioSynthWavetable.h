@@ -7,13 +7,14 @@
 #include <stdint.h>
 
 #define UNITY_GAIN INT32_MAX // Max amplitude
+#define DEFAULT_AMPLITUDE 127
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
-#define AMP_DEF 69
+#define SAMPLES_PER_ENV_LOOP 8.0
 
 // int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-1 (1..7 for AUDIO_BLOCK_SAMPLES == 128)
 // where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
-#define VIBRATO_SMOOTHNESS 4
-#define VIBRATO_PERIOD AUDIO_BLOCK_SAMPLES/(1 << (VIBRATO_SMOOTHNESS-1))
+#define LFO_SMOOTHNESS 3
+#define LFO_PERIOD AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1))
 
 class AudioSynthWavetable : public AudioStream
 {
@@ -24,14 +25,14 @@ public:
 		cli();
 		this->instrument = &instrument;
 		current_sample = NULL;
-		envelopeState = STATE_IDLE;
+		env_state = STATE_IDLE;
 		state_change = true;
 		sei();
 	}
 
 	void amplitude(float v) {
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
-		tone_amp = (uint16_t)(32767.0*v);
+		tone_amp = (uint16_t)(UINT16_MAX*v);
 	}
 
 	static float midi_volume_transform(int midi_amp) {
@@ -52,9 +53,9 @@ public:
 
 	// Defined in AudioSynthWavetable.cpp
 	void stop(void);
-	void playFrequency(float freq, int amp = AMP_DEF);
-	void playNote(int note, int amp = AMP_DEF);
-	bool isPlaying(void) { return envelopeState != STATE_IDLE; }
+	void playFrequency(float freq, int amp = DEFAULT_AMPLITUDE);
+	void playNote(int note, int amp = DEFAULT_AMPLITUDE);
+	bool isPlaying(void) { return env_state != STATE_IDLE; }
 	virtual void update(void);
 
 private:
@@ -70,24 +71,32 @@ private:
 		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC) + 7) >> 3;
 	}
 
+	volatile bool state_change = false;
+
 	volatile const instrument_data* instrument = NULL;
 	volatile const sample_data* current_sample = NULL;
+
+	//sample output state
 	volatile uint32_t tone_phase = 0;
 	volatile uint32_t tone_incr = 0;
 	volatile uint16_t tone_amp = 0;
-	volatile envelopeStateEnum  envelopeState = STATE_IDLE; // idle, delay, attack, hold, decay, sustain, release
-	volatile int32_t count = 0; // how much time remains in this state, in 8 sample units
-	volatile int32_t mult = 0; // attenuation, 0=off, 0x10000=unity gain
-	volatile int32_t inc = 0; // amount to change mult on each sample
-	volatile bool state_change = false;
 
-	//vibrato members
-	uint32_t vib_count = 0;
-	uint32_t vib_phase = 0;
+	//volume environment state
+	volatile envelopeStateEnum  env_state = STATE_IDLE;
+	volatile int32_t env_count = 0;
+	volatile int32_t env_mult = 0;
+	volatile int32_t env_incr = 0;
 
-	const uint32_t vib_delay = 0.0 * SAMPLES_PER_MSEC/(2*VIBRATO_PERIOD);  
-	const uint32_t vincr = 21.4 * VIBRATO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT);  //21.4 hz
-	const float voffset_high_coef = 0.00463167440; // +8 cents coef
-	const float voffset_low_coef = 0.00461032089; // -8 cents coef
+	//vibrato LFO state
+	volatile uint32_t vib_count = 0;
+	volatile uint32_t vib_phase = 0;
+	volatile int32_t vib_pitch_offset_init = 0;
+	volatile int32_t vib_pitch_offset_scnd = 0;
+
+	//modulation LFO state
+	uint32_t mod_count = 0;
+	uint32_t mod_phase = 0;
+	int32_t mod_pitch_offset_init = 0;
+	int32_t mod_pitch_offset_scnd = 0;
 };
 
