@@ -3,13 +3,14 @@ General repository for Wavetable Synthesis Capstone project at Portland State, F
 
 The purpose of this project is to provide a C++ library and accompanying Python utility scripts allowing realistic instrumentation audio to be synthesized on the Teensy 3.2/3.6 Arduino Digital Analog Converter (DAC). 
 
-The project consists of three main components:
+The project consists of two main components:
 
 1. SoundFont Decoder
 2. Audio Synth Wavetable class
-3. Audio Alloc Wavetable class
 
-For documentation of the C++ class can be found at: https://connorreilly.github.io/Wavetable-Synthesis/html/index.html.
+The project documentation can be found at: https://connorreilly.github.io/Wavetable-Synthesis/html/index.html.
+
+The project's source is available on GitHub: https://github.com/ConnorReilly/Wavetable-Synthesis
 
 ## SoundFont Decoder
 
@@ -30,4 +31,3 @@ The `-i` flag precedes the input file
 
 C++ class implementing wavetable synthesis.
 
-## Audio Alloc Wavetable
