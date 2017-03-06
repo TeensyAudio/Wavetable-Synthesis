@@ -129,7 +129,7 @@ def main(argv):
             print('{} contains {} samples.'.format(sf2.instruments[instrument].name, len(sample_names)))
             method = menu(('Export All Samples', 'Select Samples to Export'))
             if method == 1:
-                decodeAll(path, instrument, global_bag_index)
+                decode_all(path, instrument, global_bag_index)
                 sys.exit('All samples for instrument decoded successfully. Exiting Program.')
             else:
                 selected_bags = []
@@ -143,14 +143,14 @@ def main(argv):
                     if i_result == 1:
                         continue
                     elif i_result == 2:
-                        decodeSelected(path, instrument, selected_bags, global_bag_index)
+                        decode_selected(path, instrument, selected_bags, global_bag_index)
                         sys.exit('Selected samples for instrument decoded successfully. Exiting Program.')
         elif choice == 2:
             sys.exit('Program Terminated by User')
         else:   # shouldn't be reached
             input("Wrong option selection. Enter any key to try again..")
 
-def decodeSelected(path, inst_index, selected_bags, global_bag_index, user_title=None):
+def decode_selected(path, inst_index, selected_bags, global_bag_index, user_title=None):
     with open(path, 'rb') as file:
         sf2 = Sf2File(file)
 
@@ -174,8 +174,8 @@ def decodeSelected(path, inst_index, selected_bags, global_bag_index, user_title
         export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title)
 
 
-def decodeAll(path, inst_index, global_bag_index):
-    decodeSelected(path, inst_index, selected_bags=None, global_bag_index=global_bag_index)
+def decode_all(path, inst_index, global_bag_index):
+    decode_selected(path, inst_index, selected_bags=None, global_bag_index=global_bag_index)
 
 
 # Write a sample out to C++ style data files.
