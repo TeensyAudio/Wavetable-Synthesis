@@ -264,12 +264,12 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "\t\tint32_t({SUSTAIN_FRAC}*UNITY_GAIN),\t//SUSTAIN_MULT\n" \
         "\t\tuint32_t({VIB_DELAY_ENV} * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), \t// VIBRATO_DELAY\n" \
         "\t\tuint32_t({VIB_INC_ENV} * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT\n" \
-        "\t\tCENTS_SHIFT(-8) - 1.0, // VIBRATO_PITCH_COEFFICIENT_INITIAL\n" \
-        "\t\t1.0 - CENTS_SHIFT(8), // VIBRATO_COEFFICIENT_SECONDARY\n" \
-        "\t\tuint32_t({{MOD_DELAY_ENV} * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY\n" \
+        "\t\t(CENTS_SHIFT(-8) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL\n" \
+        "\t\t(1.0 - CENTS_SHIFT(8))*4, // VIBRATO_COEFFICIENT_SECONDARY\n" \
+        "\t\tuint32_t({MOD_DELAY_ENV} * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY\n" \
         "\t\tuint32_t({MOD_INC_ENV} * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT\n" \
-        "\t\tCENTS_SHIFT(-8) - 1.0, // MODULATION_PITCH_COEFFICIENT_INITIAL\n" \
-        "\t\t1.0 - CENTS_SHIFT(8), // MODULATION_PITCH_COEFFICIENT_SECOND\n" \
+        "\t\t(CENTS_SHIFT(-8) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL\n" \
+        "\t\t(1.0 - CENTS_SHIFT(8))*4, // MODULATION_PITCH_COEFFICIENT_SECOND\n" \
         "\t\tint32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)), // MODULATION_AMPLITUDE_INITIAL_GAIN\n" \
         "\t\tint32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))), // MODULATION_AMPLITUDE_FINAL_GAIN\n" \
         "\t}},\n"
@@ -321,7 +321,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "SUSTAIN_FRAC": sustain_frac,
         "RELEASE_ENV": bag.volume_envelope_release if bag.volume_envelope_release else global_bag.volume_envelope_release,
         "VIB_DELAY_ENV": bag.gens[23].cents if 23 in bag.gens else global_bag.gens[23].cents if 23 in global_bag.gens else None,
-        "VIB_INC_ENV": bag.gens[24].cents if 24 in bag.gens else global_bag.gens[24].cents if 24 in global_bag.gens else None,
+        "VIB_INC_ENV": bag.gens[24].absolute_cents if 24 in bag.gens else global_bag.gens[24].absolute_cents if 24 in global_bag.gens else None,
         "MOD_DELAY_ENV": bag.gens[21].cents if 21 in bag.gens else global_bag.gens[21].cents if 21 in global_bag.gens else None,
         "MOD_INC_ENV": bag.gens[22].cents if 22 in bag.gens else global_bag.gens[22].cents if 22 in global_bag.gens else None,
     }
