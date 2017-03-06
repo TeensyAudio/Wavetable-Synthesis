@@ -9,12 +9,14 @@
 #define UNITY_GAIN INT32_MAX // Max amplitude
 #define DEFAULT_AMPLITUDE 127
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
-#define SAMPLES_PER_ENV_LOOP 8.0
+#define TRIANGLE_INITIAL_PHASE (-0x40000000)
 
 // int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-1 (1..7 for AUDIO_BLOCK_SAMPLES == 128)
 // where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
 #define LFO_SMOOTHNESS 3
-#define LFO_PERIOD AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1))
+#define LFO_PERIOD (AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1)))
+
+#define ENVELOPE_PERIOD 8
 
 class AudioSynthWavetable : public AudioStream
 {
@@ -64,13 +66,6 @@ private:
 
 	enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE };
 
-	uint32_t milliseconds2count(float milliseconds) {
-		if (milliseconds < 0.0) milliseconds = 0.0;
-		// # of 8-sample units to process
-		// Add 7 to round up
-		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC) + 7) >> 3;
-	}
-
 	volatile bool state_change = false;
 
 	volatile const instrument_data* instrument = NULL;
@@ -94,9 +89,9 @@ private:
 	volatile int32_t vib_pitch_offset_scnd = 0;
 
 	//modulation LFO state
-	uint32_t mod_count = 0;
-	uint32_t mod_phase = 0;
-	int32_t mod_pitch_offset_init = 0;
-	int32_t mod_pitch_offset_scnd = 0;
+	volatile uint32_t mod_count = 0;
+	volatile uint32_t mod_phase = TRIANGLE_INITIAL_PHASE;
+	volatile int32_t mod_pitch_offset_init = 0;
+	volatile int32_t mod_pitch_offset_scnd = 0;
 };
 

@@ -10,9 +10,9 @@
 
 //#define DEBUG_ALLOC
 
-const int TOTAL_VOICES = 32;
-const int TOTAL_MIXERS = 11;
-const int SECONDARY_MIXERS = 2;
+const int TOTAL_VOICES = 64;
+const int TOTAL_MIXERS = 21;
+const int SECONDARY_MIXERS = 5;
 
 AudioControlSGTL5000 sgtl5000_1;
 AudioSynthWavetable wavetable[TOTAL_VOICES];
@@ -27,18 +27,18 @@ AudioConnection patchCord[] = {
 	{wavetable[20], 0, mixer[ 5], 0}, {wavetable[21], 0, mixer[ 5], 1}, {wavetable[22], 0, mixer[5],  2}, {wavetable[23], 0, mixer[5],  3}, {mixer[ 5], 0, mixer[TOTAL_MIXERS-3], 1},
 	{wavetable[24], 0, mixer[ 6], 0}, {wavetable[25], 0, mixer[ 6], 1}, {wavetable[26], 0, mixer[6],  2}, {wavetable[27], 0, mixer[6],  3}, {mixer[ 6], 0, mixer[TOTAL_MIXERS-3], 2},
 	{wavetable[28], 0, mixer[ 7], 0}, {wavetable[29], 0, mixer[ 7], 1}, {wavetable[30], 0, mixer[7],  2}, {wavetable[31], 0, mixer[7],  3}, {mixer[ 7], 0, mixer[TOTAL_MIXERS-3], 3},
-	//{wavetable[32], 0, mixer[ 8], 0}, {wavetable[33], 0, mixer[ 8], 1}, {wavetable[34], 0, mixer[8],  2}, {wavetable[35], 0, mixer[8],  3}, {mixer[ 8], 0, mixer[TOTAL_MIXERS-4], 0},
-	//{wavetable[36], 0, mixer[ 9], 0}, {wavetable[37], 0, mixer[ 9], 1}, {wavetable[38], 0, mixer[9],  2}, {wavetable[39], 0, mixer[9],  3}, {mixer[ 9], 0, mixer[TOTAL_MIXERS-4], 1},
-	//{wavetable[40], 0, mixer[10], 0}, {wavetable[41], 0, mixer[10], 1}, {wavetable[42], 0, mixer[10], 2}, {wavetable[43], 0, mixer[10], 3}, {mixer[10], 0, mixer[TOTAL_MIXERS-4], 2},
-	//{wavetable[44], 0, mixer[11], 0}, {wavetable[45], 0, mixer[11], 1}, {wavetable[46], 0, mixer[11], 2}, {wavetable[47], 0, mixer[11], 3}, {mixer[11], 0, mixer[TOTAL_MIXERS-4], 3},
-	//{wavetable[48], 0, mixer[12], 0}, {wavetable[49], 0, mixer[12], 1}, {wavetable[50], 0, mixer[12], 2}, {wavetable[51], 0, mixer[12], 3}, {mixer[12], 0, mixer[TOTAL_MIXERS-5], 0},
-	//{wavetable[52], 0, mixer[13], 0}, {wavetable[53], 0, mixer[13], 1}, {wavetable[54], 0, mixer[13], 2}, {wavetable[55], 0, mixer[13], 3}, {mixer[13], 0, mixer[TOTAL_MIXERS-5], 1},
-	//{wavetable[56], 0, mixer[14], 0}, {wavetable[57], 0, mixer[14], 1}, {wavetable[58], 0, mixer[14], 2}, {wavetable[59], 0, mixer[14], 3}, {mixer[14], 0, mixer[TOTAL_MIXERS-5], 2},
-	//{wavetable[60], 0, mixer[15], 0}, {wavetable[61], 0, mixer[15], 1}, {wavetable[62], 0, mixer[15], 2}, {wavetable[63], 0, mixer[15], 3}, {mixer[15], 0, mixer[TOTAL_MIXERS-5], 3},
+	{wavetable[32], 0, mixer[ 8], 0}, {wavetable[33], 0, mixer[ 8], 1}, {wavetable[34], 0, mixer[8],  2}, {wavetable[35], 0, mixer[8],  3}, {mixer[ 8], 0, mixer[TOTAL_MIXERS-4], 0},
+	{wavetable[36], 0, mixer[ 9], 0}, {wavetable[37], 0, mixer[ 9], 1}, {wavetable[38], 0, mixer[9],  2}, {wavetable[39], 0, mixer[9],  3}, {mixer[ 9], 0, mixer[TOTAL_MIXERS-4], 1},
+	{wavetable[40], 0, mixer[10], 0}, {wavetable[41], 0, mixer[10], 1}, {wavetable[42], 0, mixer[10], 2}, {wavetable[43], 0, mixer[10], 3}, {mixer[10], 0, mixer[TOTAL_MIXERS-4], 2},
+	{wavetable[44], 0, mixer[11], 0}, {wavetable[45], 0, mixer[11], 1}, {wavetable[46], 0, mixer[11], 2}, {wavetable[47], 0, mixer[11], 3}, {mixer[11], 0, mixer[TOTAL_MIXERS-4], 3},
+	{wavetable[48], 0, mixer[12], 0}, {wavetable[49], 0, mixer[12], 1}, {wavetable[50], 0, mixer[12], 2}, {wavetable[51], 0, mixer[12], 3}, {mixer[12], 0, mixer[TOTAL_MIXERS-5], 0},
+	{wavetable[52], 0, mixer[13], 0}, {wavetable[53], 0, mixer[13], 1}, {wavetable[54], 0, mixer[13], 2}, {wavetable[55], 0, mixer[13], 3}, {mixer[13], 0, mixer[TOTAL_MIXERS-5], 1},
+	{wavetable[56], 0, mixer[14], 0}, {wavetable[57], 0, mixer[14], 1}, {wavetable[58], 0, mixer[14], 2}, {wavetable[59], 0, mixer[14], 3}, {mixer[14], 0, mixer[TOTAL_MIXERS-5], 2},
+	{wavetable[60], 0, mixer[15], 0}, {wavetable[61], 0, mixer[15], 1}, {wavetable[62], 0, mixer[15], 2}, {wavetable[63], 0, mixer[15], 3}, {mixer[15], 0, mixer[TOTAL_MIXERS-5], 3},
 	{mixer[TOTAL_MIXERS-2], 0, mixer[TOTAL_MIXERS-1], 0},
 	{mixer[TOTAL_MIXERS-3], 0, mixer[TOTAL_MIXERS-1], 1},
-	//{mixer[TOTAL_MIXERS-4], 0, mixer[TOTAL_MIXERS-1], 2},
-	//{mixer[TOTAL_MIXERS-5], 0, mixer[TOTAL_MIXERS-1], 3},
+	{mixer[TOTAL_MIXERS-4], 0, mixer[TOTAL_MIXERS-1], 2},
+	{mixer[TOTAL_MIXERS-5], 0, mixer[TOTAL_MIXERS-1], 3},
 	{mixer[TOTAL_MIXERS-1], 0, i2s1, 0},
 	{mixer[TOTAL_MIXERS-1], 0, i2s1, 1},
 };
@@ -91,9 +91,13 @@ void setup() {
 
 	for (int i = 0; i < TOTAL_MIXERS-1; ++i)
 		for (int j = 0; j < 4; ++j)
-			mixer[i].gain(j, 0.25);
-	for (int i = 0; i < 4; ++i)
-		mixer[TOTAL_MIXERS - 1].gain(i, i < SECONDARY_MIXERS ? 1.0 / SECONDARY_MIXERS : 0.0);
+			mixer[i].gain(j, 0.4);
+	//for (int i = 0; i < 4; ++i)
+	//	mixer[TOTAL_MIXERS - 1].gain(i, i < SECONDARY_MIXERS ? 1.0 / SECONDARY_MIXERS : 0.0);
+	mixer[TOTAL_MIXERS - 1].gain(0, .5);
+	mixer[TOTAL_MIXERS - 1].gain(1, .5);
+	mixer[TOTAL_MIXERS - 1].gain(2, .5);
+	mixer[TOTAL_MIXERS - 1].gain(3, .5);
 	
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);
