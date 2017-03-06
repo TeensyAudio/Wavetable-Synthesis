@@ -75,7 +75,7 @@ class MyController():
         for samp in self.model.getCurrSamples():
             selected_bags.append(samp.bag_idx)
         if decoder.decode_selected(inFile, curr_inst.getOriginalIndex(),
-                selected_bags, curr_inst.getGlobalBag(), out_name):
+                selected_bags, curr_inst.getGlobalBag(), out_name, self.model.getOutDir()):
             self.view.setStatus('Decode Successful!')
             self.decodeConfirmation()
         else:

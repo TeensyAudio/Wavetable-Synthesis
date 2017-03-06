@@ -32,6 +32,8 @@ class MyModel():
         return self.inFile
     def setOutDir(self, _new):
         self.out_dir = _new
+    def getOutDir(self):
+        return self.out_dir
     def setCurrInstrument(self, _index):
         self.curr_instrument = self.Instruments[_index]
     def getCurrInstrument(self):
