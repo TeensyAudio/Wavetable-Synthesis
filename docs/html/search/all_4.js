@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['have_20a_20note_20on_20me_2e',['Have a note on me.',['../md_additional_pages_notes.html',1,'']]]
+  ['isplaying',['isPlaying',['../class_audio_synth_wavetable.html#aa33de2bae93c9690001c88568fba9867',1,'AudioSynthWavetable']]]
 ];
