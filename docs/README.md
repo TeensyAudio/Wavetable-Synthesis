@@ -11,8 +11,14 @@ The Audio Synth Wavetable code is commented using the `JavaDoc` style: http://ww
 
 # Add a standalone page 
 
-Standalone pages are created from markdown-formatted files (with a `.md` extension). To create a new page, add a markdown file to the `docs/additional_pages` folder. If the document's first line is a header, it will be used for the name of the page on the Doxygen site. Otherwise, the name of the file will be used for this purpose. 
+Standalone pages are created from markdown-formatted files (with a `.md` extension). To create a new page, add a markdown file to the `docs/additional_pages` folder. If the document's first line is a header, it will be used for the name of the page on the Doxygen site. Otherwise, the name of the file will be used for this purpose.
+
 
 # Generating the documentation with Doxygen
 
 After adding or modifying any comments to the source code or any additional pages, update the web page by running `doxygen Doxyfile` from within the project's `docs` folder (please see the Doxygen documentation for information on installing Doxygen). Preview the changes by opening the `index.html` file within the `docs` folder. 
+
+
+# Removing pages
+
+To remove a page, delete the file in the `additional_pages` folder. Additionally, delete the CONTENTS of the `html` folder (`rm -r html/*`) and then regenerate the docs by running `doxygen Doxyfile` from within the project's `docs` folder. 
