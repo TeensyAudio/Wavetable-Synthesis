@@ -164,6 +164,7 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
             is_valid, error_msg = check_is_valid_sample(bag.sample)
             if not is_valid:
                 error(error_msg)
+                return False
             if selected_bags:
                 print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(bag.sample.name))
 
@@ -172,6 +173,7 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
 
         file_title = re.sub(r'[\W]+', '', file_title)
         export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title)
+        return True
 
 
 def decode_all(path, inst_index, global_bag_index):
