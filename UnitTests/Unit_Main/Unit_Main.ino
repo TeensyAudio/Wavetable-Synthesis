@@ -20,11 +20,7 @@
 #include <SD.h>
 //---------------------------------------------------------------------------------------
 #include <AudioSynthWavetable.h>
-#include "VoiceOohs_samples.h"
-//#include "GuitarHarmonics_samples.h"
-//#include "SolarWind_samples.h"
-#include "SteelGuitar_samples.h"
-//#include "PerfeSine_samples.h"
+#include "nylonstrgtr_samples.h"
 //---------------------------------------------------------------------------------------
 AudioOutputI2S            i2s1;
 AudioSynthWavetable       wavetable[NUM_VOICES];
@@ -142,9 +138,9 @@ bool flag_latency = false;
 bool flag_init = false;
 envelopeStateEnum current_section = STATE_IDLE;
 
-const sample_data* SAMPLES_LATENCY = VoiceOohs;
-const sample_data* SAMPLES_PROC = VoiceOohs;
-const sample_data* SAMPLES_ENV = SteelGuitar;
+const instrument_data* SAMPLES_LATENCY = &nylonstrgtr;
+const instrument_data* SAMPLES_PROC = &nylonstrgtr;
+const instrument_data* SAMPLES_ENV = &nylonstrgtr;
 
 const int TICK = 500;           // Timer period (ms)
 const int UPPER_BOUND = 127;    // Highest tested note
@@ -159,12 +155,12 @@ const int TOLERANCE_ENV = 2;
 
 const int ENV_EXPECTED[] = {
   -1,
-  SAMPLES_ENV[0].DELAY_ENV,
-  SAMPLES_ENV[0].ATTACK_ENV,
-  SAMPLES_ENV[0].HOLD_ENV,
-  SAMPLES_ENV[0].DECAY_ENV,
+  (SAMPLES_ENV[0].samples->DELAY_COUNT - 0.5) * ENVELOPE_PERIOD/SAMPLES_PER_MSEC,
+  (SAMPLES_ENV[0].samples->ATTACK_COUNT - 0.5) * ENVELOPE_PERIOD/SAMPLES_PER_MSEC,
+  (SAMPLES_ENV[0].samples->HOLD_COUNT - 0.5) * ENVELOPE_PERIOD/SAMPLES_PER_MSEC,
+  (SAMPLES_ENV[0].samples->DECAY_COUNT - 0.5) * ENVELOPE_PERIOD/SAMPLES_PER_MSEC,
   -1,
-  SAMPLES_ENV[0].RELEASE_ENV
+  (SAMPLES_ENV[0].samples->RELEASE_COUNT - 0.5) * ENVELOPE_PERIOD/SAMPLES_PER_MSEC
 };
 
 const String STATE_TO_STR[] = {
@@ -206,7 +202,7 @@ void loop() {
       timer_latency = 0;
       shortest_latency = sizeof(int);
       flag_latency = false;
-      wavetable[0].setSamples(SAMPLES_LATENCY, sizeof(SAMPLES_LATENCY)/sizeof(sample_data));
+      wavetable[0].setInstrument(*SAMPLES_LATENCY);
       flag_init = true;
     }
     
@@ -257,7 +253,7 @@ void loop() {
       Serial.println("\n");
       count = 0;
       passed_env = 0;
-      wavetable[0].setSamples(SAMPLES_ENV, sizeof(SAMPLES_ENV)/sizeof(sample_data));
+      wavetable[0].setInstrument(*SAMPLES_ENV);
       flag_init = true;
     }
     
@@ -327,7 +323,7 @@ void loop() {
       count = 0;
       note = START_NOTE_PROC;
       for (int i=0; i<NUM_VOICES; i++)
-        wavetable[i].setSamples(SAMPLES_PROC, sizeof(SAMPLES_PROC)/sizeof(sample_data));
+        wavetable[i].setInstrument(*SAMPLES_PROC);
       flag_init = true;
     }
     
