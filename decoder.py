@@ -172,7 +172,10 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
         file_title = user_title if user_title else sf2.instruments[inst_index].name
 
         file_title = re.sub(r'[\W]+', '', file_title)
-        export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title, file_dir=user_dir)
+        if user_dir is not None:
+            export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title, file_dir=user_dir)
+        else:
+            export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title)
         return True
 
 
@@ -181,11 +184,11 @@ def decode_all(path, inst_index, global_bag_index):
 
 
 # Write a sample out to C++ style data files.
-def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir=""):
+def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir="."):
     instrument_name = file_title
-    h_file_name = file_dir + "/{}_samples.h".format(instrument_name)
-    cpp_file_name = file_dir + "/{}_samples.cpp".format(instrument_name)
-    with open(cpp_file_name, "w") as cpp_file, open(h_file_name, "w") as h_file:
+    h_file_name = "{}_samples.h".format(instrument_name)
+    cpp_file_name = "{}_samples.cpp".format(instrument_name)
+    with open(file_dir + "/" + cpp_file_name, "w") as cpp_file, open(file_dir + "/" + h_file_name, "w") as h_file:
         h_file.write("#pragma once\n#include <AudioStream.h>\n#include <AudioSynthWavetable.h>\n\n")
         # Decode data to sample_data array in header file
         h_file.write("extern const sample_data {0}_samples[{1}];\n".format(instrument_name, num_samples))
@@ -194,7 +197,7 @@ def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir
         keyRanges = []
         getKeyRanges(bags, keyRanges)
 		
-        h_file.write("const int {0}_ranges[] = {{".format(instrument_name))
+        h_file.write("const uint8_t {0}_ranges[] = {{".format(instrument_name))
         for keyRange in keyRanges:
             h_file.write("{0}, ".format(keyRange[1]))
         h_file.write("};\n\n")
