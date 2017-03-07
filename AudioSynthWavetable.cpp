@@ -203,8 +203,8 @@ void AudioSynthWavetable::update(void) {
 
 			tone_phase += tone_incr + tone_incr_offset;
 			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
-			//tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			//tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
@@ -217,8 +217,8 @@ void AudioSynthWavetable::update(void) {
 
 			tone_phase += tone_incr + tone_incr_offset;
 			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
-			//tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			//tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		}
 	}
 	); //end TIME_TEST
