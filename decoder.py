@@ -292,7 +292,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
     phase_mult = (0x80000000 >> (length_bits - 1))
     
     out_vals = {
-        "LOOP": "true" if bag.sample_loop == 1 else "false",
+        "LOOP": "true" if bag.sample_loop == 1 or global_bag.sample_loop == 1 else "false",
         "ORIGINAL_PITCH": base_note,
         "CENTS_OFFSET": cents_offset,
         "PHASE_MULT": phase_mult,
