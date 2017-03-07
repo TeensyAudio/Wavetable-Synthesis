@@ -64,7 +64,7 @@ private:
 	void setState(int note, int amp, float freq);
 	void setFrequency(float freq);
 
-	enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE };
+	enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE, STATE_STOP };
 
 	volatile bool state_change = false;
 

@@ -76,7 +76,7 @@ void setup() {
 	AudioMemory(120);
 
 	sgtl5000_1.enable();
-	sgtl5000_1.volume(1.0);
+	sgtl5000_1.volume(0.8);
 
 	Serial.println("HELLO");
 
@@ -91,13 +91,13 @@ void setup() {
 
 	for (int i = 0; i < TOTAL_MIXERS-1; ++i)
 		for (int j = 0; j < 4; ++j)
-			mixer[i].gain(j, 0.4);
+			mixer[i].gain(j, 0.25);
 	//for (int i = 0; i < 4; ++i)
 	//	mixer[TOTAL_MIXERS - 1].gain(i, i < SECONDARY_MIXERS ? 1.0 / SECONDARY_MIXERS : 0.0);
-	mixer[TOTAL_MIXERS - 1].gain(0, .5);
-	mixer[TOTAL_MIXERS - 1].gain(1, .5);
-	mixer[TOTAL_MIXERS - 1].gain(2, .5);
-	mixer[TOTAL_MIXERS - 1].gain(3, .5);
+	mixer[TOTAL_MIXERS - 1].gain(0, .25);
+	mixer[TOTAL_MIXERS - 1].gain(1, .25);
+	mixer[TOTAL_MIXERS - 1].gain(2, .25);
+	mixer[TOTAL_MIXERS - 1].gain(3, .25);
 	
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);

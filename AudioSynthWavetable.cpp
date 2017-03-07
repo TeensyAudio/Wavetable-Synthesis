@@ -2,7 +2,7 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-#define TIME_TEST_ON
+//#define TIME_TEST_ON
 //#define ENVELOPE_DEBUG
 
 #ifdef TIME_TEST_ON
@@ -30,19 +30,21 @@ CODE_BLOCK_TO_TEST
 #endif
 
 #ifdef ENVELOPE_DEBUG
-#define PRINT_ENV(NAME) Serial.printf("%14s-- env_mult:%06.4f%% of UNITY_GAIN env_incr:%06.4f%% of UNITY_GAIN env_count:%i\n", #NAME, float(env_mult)/float(UNITY_GAIN), float(env_incr)/float(UNITY_GAIN), env_count);
+int last_check_time = millis();
+#define DEBUG_PRINT_ENV(NAME) \
+last_check_time = millis() - last_check_time; \
+Serial.printf("last state took: %5i ms ---%14s--- env_mult:%05.1f%% of UNITY_GAIN env_incr:%05.1f%% env_count:%i\n", \
+	last_check_time, #NAME, 100*(float(env_mult) / float(UNITY_GAIN)), 100*float(env_incr)/UNITY_GAIN, env_count); \
+last_check_time = millis();
 #else
-#define PRINT_ENV(NAME) do { } while(0);
+#define DEBUG_PRINT_ENV(NAME) do { } while(0);
 #endif
 
 
 void AudioSynthWavetable::stop(void) {
 	cli();
-	env_state = STATE_RELEASE;
-	env_count = current_sample->RELEASE_COUNT;
-	if (env_count == 0) env_count = 1;
-	env_incr = -(env_mult) / (env_count * ENVELOPE_PERIOD);
-	PRINT_ENV(STATE_RELEASE)
+	env_state = STATE_STOP;
+	DEBUG_PRINT_ENV(STATE_STOP)
 	sei();
 }
 
@@ -68,7 +70,11 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	tone_amp = amp * (UINT16_MAX / 127);
 	tone_amp = current_sample->INITIAL_ATTENUATION_SCALAR * tone_amp >> 16;
 	env_state = STATE_DELAY;
-	PRINT_ENV(STATE_DELAY);
+#ifdef ENVELOPE_DEBUG
+	Serial.println("");
+	last_check_time = millis();
+#endif
+	DEBUG_PRINT_ENV(STATE_DELAY);
 	state_change = true;
 	sei();
 }
@@ -189,67 +195,102 @@ void AudioSynthWavetable::update(void) {
 	p = (uint32_t *)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
+	float decibel_drop = 0;
+
 	while (p < end) {
 		if (env_count <= 0) switch (env_state) {
 		case STATE_DELAY:
 			env_state = STATE_ATTACK;
 			env_count = s->ATTACK_COUNT;
 			env_incr = UNITY_GAIN / (env_count * ENVELOPE_PERIOD);
-			PRINT_ENV(STATE_ATTACK);
+			DEBUG_PRINT_ENV(STATE_ATTACK);
 			continue;
 		case STATE_ATTACK:
 			env_mult = UNITY_GAIN;
 			env_state = STATE_HOLD;
 			env_count = s->HOLD_COUNT;
 			env_incr = 0;
-			PRINT_ENV(STATE_HOLD);
+			DEBUG_PRINT_ENV(STATE_HOLD);
 			continue;
 		case STATE_HOLD:
 			env_state = STATE_DECAY;
 			env_count = s->DECAY_COUNT;
-			env_incr = (-s->SUSTAIN_MULT) / (env_count * ENVELOPE_PERIOD);
-			PRINT_ENV(STATE_DECAY);
+			env_incr = DECIBEL_SHIFT(-100.0 / s->DECAY_COUNT) * UNITY_GAIN;
+			env_incr = env_incr < 0 ? UNITY_GAIN : env_incr;
+			//env_incr = (-s->SUSTAIN_MULT) / (env_count * ENVELOPE_PERIOD);
+			DEBUG_PRINT_ENV(STATE_DECAY);
 			continue;
 		case STATE_DECAY:
-			env_mult = UNITY_GAIN - s->SUSTAIN_MULT;
-			env_state = env_mult < UNITY_GAIN / UINT16_MAX ? STATE_RELEASE : STATE_SUSTAIN;
-			env_incr = 0;
+			//env_mult = UNITY_GAIN - s->SUSTAIN_MULT;
+			env_state = env_mult < UNITY_GAIN / (2*UINT16_MAX) ? STATE_RELEASE : STATE_SUSTAIN;
 			continue;
 		case STATE_SUSTAIN:
 			env_count = INT32_MAX;
-			PRINT_ENV(STATE_SUSTAIN);
+			env_incr = 0;
+			DEBUG_PRINT_ENV(STATE_SUSTAIN);
+			continue;
+		case STATE_STOP:
+			env_state = STATE_RELEASE;
+			decibel_drop = -20.0*log10(env_mult / UNITY_GAIN);
+			env_incr = DECIBEL_SHIFT(decibel_drop / s->RELEASE_COUNT) * UNITY_GAIN;
+			env_incr = env_incr < 0 ? UNITY_GAIN : env_incr;
 			continue;
 		case STATE_RELEASE:
 			env_state = STATE_IDLE;
 			for (; p < end; ++p) *p = 0;
-			PRINT_ENV(STATE_IDLE);
+			DEBUG_PRINT_ENV(STATE_IDLE);
 			continue;
 		default:
 			p = end;
-			PRINT_ENV(DEFAULT);
+			DEBUG_PRINT_ENV(DEFAULT);
 			continue;
 		}
-
-		env_mult += env_incr;
-		tmp1 = signed_multiply_32x16b(env_mult >> 15, p[0]);
-		env_mult += env_incr;
-		tmp2 = signed_multiply_32x16t(env_mult >> 15, p[0]);
-		p[0] = pack_16b_16b(tmp2, tmp1);
-		env_mult += env_incr;
-		tmp1 = signed_multiply_32x16b(env_mult >> 15, p[1]);
-		env_mult += env_incr;
-		tmp2 = signed_multiply_32x16t(env_mult >> 15, p[1]);
-		p[1] = pack_16b_16b(tmp2, tmp1);
-		env_mult += env_incr;
-		tmp1 = signed_multiply_32x16b(env_mult >> 15, p[2]);
-		env_mult += env_incr;
-		tmp2 = signed_multiply_32x16t(env_mult >> 15, p[2]);
-		p[2] = pack_16b_16b(tmp2, tmp1);
-		env_mult += env_incr;
-		tmp1 = signed_multiply_32x16b(env_mult >> 15, p[3]);
-		env_mult += env_incr;
-		tmp2 = signed_multiply_32x16t(env_mult >> 15, p[3]);
-		p[3] = pack_16b_16b(tmp2, tmp1);
+		if (env_state == STATE_DECAY || env_state == STATE_RELEASE) {
+			if (env_mult < UNITY_GAIN / (2 * UINT16_MAX)) {
+				env_state = STATE_IDLE;
+				for (; p < end; ++p) *p = 0;
+				env_count = 0;
+				DEBUG_PRINT_ENV(STATE_IDLE);
+				break;
+			}
+			env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
+			tmp1 = signed_multiply_32x16b(env_mult, p[0]) << 1;
+			tmp2 = signed_multiply_32x16t(env_mult, p[0]) << 1;
+			p[0] = pack_16t_16t(tmp2, tmp1);
+			//env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
+			tmp1 = signed_multiply_32x16b(env_mult, p[1]) << 1;
+			tmp2 = signed_multiply_32x16t(env_mult, p[1]) << 1;
+			p[1] = pack_16t_16t(tmp2, tmp1);
+			//env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
+			tmp1 = signed_multiply_32x16b(env_mult, p[2]) << 1;
+			tmp2 = signed_multiply_32x16t(env_mult, p[2]) << 1;
+			p[2] = pack_16t_16t(tmp2, tmp1);
+			//env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
+			tmp1 = signed_multiply_32x16b(env_mult, p[3]) << 1;
+			tmp2 = signed_multiply_32x16t(env_mult, p[3]) << 1;
+			p[3] = pack_16t_16t(tmp2, tmp1);
+		} else {
+			env_mult += env_incr;
+			tmp1 = signed_multiply_32x16b(env_mult, p[0]) << 1;
+			env_mult += env_incr;
+			tmp2 = signed_multiply_32x16t(env_mult, p[0]) << 1;
+			p[0] = pack_16t_16t(tmp2, tmp1);
+			env_mult += env_incr;
+			tmp1 = signed_multiply_32x16b(env_mult, p[1]) << 1;
+			env_mult += env_incr;
+			tmp2 = signed_multiply_32x16t(env_mult, p[1]) << 1;
+			p[1] = pack_16t_16t(tmp2, tmp1);
+			env_mult += env_incr;
+			tmp1 = signed_multiply_32x16b(env_mult, p[2]) << 1;
+			env_mult += env_incr;
+			tmp2 = signed_multiply_32x16t(env_mult, p[2]) << 1;
+			p[2] = pack_16t_16t(tmp2, tmp1);
+			env_mult += env_incr;
+			tmp1 = signed_multiply_32x16b(env_mult, p[3]) << 1;
+			env_mult += env_incr;
+			tmp2 = signed_multiply_32x16t(env_mult, p[3]) << 1;
+			p[3] = pack_16t_16t(tmp2, tmp1);
+		}
 
 		p += ENVELOPE_PERIOD / 2;
 		env_count--;
@@ -257,22 +298,16 @@ void AudioSynthWavetable::update(void) {
 
 	cli();
 	if (this->state_change == false) {
+		this->vib_count = vib_count;
+		this->vib_phase = vib_phase;
+		this->mod_count = mod_count;
+		this->mod_phase = mod_phase;
 		this->tone_phase = tone_phase;
-		this->env_state = env_state;
-		this->env_count = env_count;
+		this->env_state = this->env_state == STATE_STOP ? STATE_STOP : env_state;
+		this->env_count = this->env_state == STATE_STOP ? 0 : env_count;
 		this->env_mult = env_mult;
 		this->env_incr = env_incr;
-		if (this->env_state != STATE_IDLE) {
-			this->vib_count = vib_count;
-			this->vib_phase = vib_phase;
-			this->mod_count = mod_count;
-			this->mod_phase = mod_phase;
-		} else {
-			this->vib_count = this->mod_count = 0;
-			this->vib_phase = this->mod_phase = TRIANGLE_INITIAL_PHASE;
-		}
 	}
-
 	sei();
 
 	transmit(block);
