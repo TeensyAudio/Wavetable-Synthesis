@@ -36,6 +36,13 @@ CODE_BLOCK_TO_TEST
 #endif
 
 
+/**
+ * @brief Stop playing waveform.
+ *
+ * Waveform does not immediately stop,
+ * but fades out based on release time.
+ *
+ */
 void AudioSynthWavetable::stop(void) {
 	cli();
 	env_state = STATE_RELEASE;
@@ -46,14 +53,34 @@ void AudioSynthWavetable::stop(void) {
 	sei();
 }
 
+/**
+ * @brief Play waveform at defined frequency, amplitude.
+ *
+ * @param freq freqency of the generated output (between 0 and the board-specific sample rate)
+ * @param amp the amplitude level at which playback should occur
+ */
 void AudioSynthWavetable::playFrequency(float freq, int amp) {
 	setState(freqToNote(freq), amp, freq);
 }
 
+/**
+ * @brief Play sample at specified note, amplitude.
+ *
+ * @param note the midi note number (a value between 0 and 127)
+ * @param amp amplitude of generated output
+ */
 void AudioSynthWavetable::playNote(int note, int amp) {
 	setState(note, amp, noteToFreq(note));
 }
 
+/**
+ * @brief Set various state information for the wavetable object before playing.
+ * Selects the sample from within the instrument_data struct to be played.
+ *
+ * @param note the note that the wavetable object should play
+ * @param amp the amplitude level at which playback should occur
+ * @param freq exact frequency of the note to be played played
+ */
 void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	cli();
 	int i;
@@ -73,6 +100,11 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	sei();
 }
 
+/**
+ * @brief Change the frequency of the waveform to the defined freq.
+ *
+ * @param freq frequency of the generated output (between 0 and the board-specific sample rate)
+ */
 void AudioSynthWavetable::setFrequency(float freq) {
 	float tone_incr_temp = freq * current_sample->PER_HERTZ_PHASE_INCREMENT;
 	tone_incr = tone_incr_temp;
@@ -82,6 +114,11 @@ void AudioSynthWavetable::setFrequency(float freq) {
 	mod_pitch_offset_scnd = tone_incr_temp * current_sample->MODULATION_PITCH_COEFFICIENT_SECOND;
 }
 
+/**
+ * @brief Called by the AudioStream library to fill the audio output buffer.
+ * Performs interpolation and enveloping of output audio values.
+ *
+ */
 void AudioSynthWavetable::update(void) {
 	cli();
 	if (env_state == STATE_IDLE) {
