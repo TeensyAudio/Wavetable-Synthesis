@@ -251,13 +251,14 @@ def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir
 def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, keyRange):
     out_fmt_str = \
         "\t{{\n" \
-		"\t\t{LOOP},\t//Whether or not to loop this sample\n" \
+        "\t\t(int16_t*){SAMPLE_ARRAY_NAME},\t//16-bit PCM encoded audio sample\n" \
+        "\t\t{LOOP},\t//Whether or not to loop this sample\n" \
         "\t\t{LENGTH_BITS},\t//Number of bits needed to hold length\n" \
         "\t\t({PHASE_MULT}*{CENTS_OFFSET}*({SAMPLE_RATE} / AUDIO_SAMPLE_RATE_EXACT)) / {SAMPLE_FREQ} + 0.5,\t//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5\n" \
         "\t\t((uint32_t){LENGTH}-1) << (32 - {LENGTH_BITS}),\t//(sample_length-1) << (32 - sample_length_bits)\n" \
         "\t\t((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS}),\t//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END\n" \
         "\t\t(((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS})) - (((uint32_t){LOOP_START}-1) << (32 - {LENGTH_BITS})),\t//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH\n" \
-        "\t\t(int16_t*){SAMPLE_ARRAY_NAME},\t//16-bit PCM encoded audio sample\n" \
+		"\t\tuint16_t(UINT16_MAX * DECIBEL_SHIFT({INIT_ATTENUATION}/100.0)), //INITIAL_ATTENUATION_SCALAR\n" \
 		"\t\tuint32_t({DELAY_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//DELAY_COUNT\n" \
         "\t\tuint32_t({ATTACK_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//ATTACK_COUNT\n" \
         "\t\tuint32_t({HOLD_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//HOLD_COUNT\n" \
@@ -265,15 +266,15 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "\t\tuint32_t({RELEASE_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//RELEASE_COUNT\n" \
         "\t\tint32_t({SUSTAIN_FRAC}*UNITY_GAIN),\t//SUSTAIN_MULT\n" \
         "\t\tuint32_t({VIB_DELAY_ENV} * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), \t// VIBRATO_DELAY\n" \
-        "\t\tuint32_t({VIB_INC_ENV}/1000 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT\n" \
-        "\t\t(CENTS_SHIFT(-{VIB_PITCH}) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL\n" \
-        "\t\t(1.0 - CENTS_SHIFT({VIB_PITCH}))*4, // VIBRATO_COEFFICIENT_SECONDARY\n" \
+        "\t\tuint32_t({VIB_INC_ENV}/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT\n" \
+        "\t\t(CENTS_SHIFT(-{VIB_PITCH}/1000.0) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL\n" \
+        "\t\t(1.0 - CENTS_SHIFT({VIB_PITCH}/1000.0))*4, // VIBRATO_COEFFICIENT_SECONDARY\n" \
         "\t\tuint32_t({MOD_DELAY_ENV} * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY\n" \
-        "\t\tuint32_t({MOD_INC_ENV}/1000 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT\n" \
-        "\t\t(CENTS_SHIFT(-{MOD_PITCH}) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL\n" \
-        "\t\t(1.0 - CENTS_SHIFT({MOD_PITCH}))*4, // MODULATION_PITCH_COEFFICIENT_SECOND\n" \
-        "\t\tint32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)), // MODULATION_AMPLITUDE_INITIAL_GAIN\n" \
-        "\t\tint32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))), // MODULATION_AMPLITUDE_FINAL_GAIN\n" \
+        "\t\tuint32_t({MOD_INC_ENV}/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT\n" \
+        "\t\t(CENTS_SHIFT(-{MOD_PITCH}/1000.0) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL\n" \
+        "\t\t(1.0 - CENTS_SHIFT({MOD_PITCH}/1000.0))*4, // MODULATION_PITCH_COEFFICIENT_SECOND\n" \
+        "\t\tint32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)) *4, // MODULATION_AMPLITUDE_INITIAL_GAIN\n" \
+        "\t\tint32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))) *4, // MODULATION_AMPLITUDE_FINAL_GAIN\n" \
         "\t}},\n"
 
     base_note = bag.base_note if bag.base_note else bag.sample.original_pitch
@@ -326,8 +327,9 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "VIB_INC_ENV": bag.gens[24].absolute_cents if 24 in bag.gens else global_bag.gens[24].absolute_cents if 24 in global_bag.gens else None,
         "MOD_DELAY_ENV": bag.gens[21].cents if 21 in bag.gens else global_bag.gens[21].cents if 21 in global_bag.gens else None,
         "MOD_INC_ENV": bag.gens[22].absolute_cents if 22 in bag.gens else global_bag.gens[22].absolute_cents if 22 in global_bag.gens else None,
-        "VIB_PITCH": bag.gens[6].absolute_cents/1000 if 6 in bag.gens else global_bag.gens[6].absolute_cents/1000 if 6 in global_bag.gens else None,
-        "MOD_PITCH": bag.gens[5].absolute_cents/1000 if 5 in bag.gens else global_bag.gens[5].absolute_cents/1000 if 5 in global_bag.gens else None,
+        "VIB_PITCH": bag.gens[6].absolute_cents if 6 in bag.gens else global_bag.gens[6].absolute_cents if 6 in global_bag.gens else None,
+        "MOD_PITCH": bag.gens[5].absolute_cents if 5 in bag.gens else global_bag.gens[5].absolute_cents if 5 in global_bag.gens else None,
+        "INIT_ATTENUATION": bag.gens[48].attenuation if 48 in bag.gens else global_bag.gens[48].attenuation if 48 in global_bag.gens else None,
     }
     env_vals = {k: int(env_vals[k] * 1000) if env_vals[k] else 0 for k in env_vals}
 
