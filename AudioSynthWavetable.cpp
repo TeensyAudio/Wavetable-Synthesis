@@ -1,53 +1,40 @@
-/* Audio Library for Teensy 3.X
- * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com
- *
- * Development of this audio library was funded by PJRC.COM, LLC by sales of
- * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop
- * open source software by purchasing Teensy or other PJRC products.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice, development funding notice, and this permission
- * notice shall be included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
 #include "AudioSynthWavetable.h"
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-uint32_t
-	AudioSynthWavetable::interpolation_update,
-	AudioSynthWavetable::envelope_update,
-	AudioSynthWavetable::total_update,
-	AudioSynthWavetable::total_parseSample,
-	AudioSynthWavetable::total_playFrequency,
-	AudioSynthWavetable::total_frequency,
-	AudioSynthWavetable::total_playNote,
-	AudioSynthWavetable::total_amplitude;
+#define TIME_TEST_ON
+//#define ENVELOPE_DEBUG
 
-/**
- * @brief Begin playing a waveform.
- *
- */
-void AudioSynthWavetable::play(void) {
-	if (waveform == NULL)
-		return;
-	tone_phase = 0;
-	playing = 1;
+#ifdef TIME_TEST_ON
+#define TIME_TEST(INTERVAL, CODE_BLOCK_TO_TEST) \
+static float MICROS_AVG = 0.0; \
+static int TEST_CUR_CNT = 0; \
+static int TEST_LST_CNT = 0; \
+static int NEXT_DISPLAY = 0; \
+static int TEST_TIME_ACC = 0; \
+int micros_start = micros(); \
+CODE_BLOCK_TO_TEST \
+int micros_end = micros(); \
+TEST_TIME_ACC += micros_end - micros_start; \
+++TEST_CUR_CNT; \
+if (NEXT_DISPLAY < micros_end) { \
+	MICROS_AVG += (TEST_TIME_ACC - TEST_CUR_CNT * MICROS_AVG) / (TEST_LST_CNT + TEST_CUR_CNT); \
+	NEXT_DISPLAY = micros_end + INTERVAL*1000; \
+	TEST_LST_CNT += TEST_CUR_CNT; \
+	TEST_TIME_ACC = TEST_CUR_CNT = 0; \
+	Serial.printf("avg: %f, n: %i\n", MICROS_AVG, TEST_LST_CNT); \
 }
+#else
+#define TIME_TEST(INTERVAL, CODE_BLOCK_TO_TEST) do { } while(0); \
+CODE_BLOCK_TO_TEST
+#endif
+
+#ifdef ENVELOPE_DEBUG
+#define PRINT_ENV(NAME) Serial.printf("%14s-- env_mult:%06.4f%% of UNITY_GAIN env_incr:%06.4f%% of UNITY_GAIN env_count:%i\n", #NAME, float(env_mult)/float(UNITY_GAIN), float(env_incr)/float(UNITY_GAIN), env_count);
+#else
+#define PRINT_ENV(NAME) do { } while(0);
+#endif
+
 
 /**
  * @brief Stop playing waveform.
@@ -57,127 +44,23 @@ void AudioSynthWavetable::play(void) {
  *
  */
 void AudioSynthWavetable::stop(void) {
-	envelopeState = STATE_RELEASE;
-	count = release_count;
-	inc = (-(float)mult / (count << 3));
-	//Serial.printf("RELEASE: %fms\n", 8*count/SAMPLES_PER_MSEC);
+	cli();
+	env_state = STATE_RELEASE;
+	env_count = current_sample->RELEASE_COUNT;
+	if (env_count == 0) env_count = 1;
+	env_incr = -(env_mult) / (env_count * ENVELOPE_PERIOD);
+	PRINT_ENV(STATE_RELEASE)
+	sei();
 }
 
 /**
- * @brief Parse the sample specified by the index sample_num.
- *
- * @param sample_num an index within the sample array
- * @param custom_env a value of 1 means a custom envelope
- * is set; the default value is 0 (no custom envelope)
- */
-void AudioSynthWavetable::parseSample(int sample_num, bool custom_env) {
-	total_parseSample -= micros();
-	sample_data data = samples[sample_num];
-	
-	tone_phase = 0;
-	playing = 0;
-	 
-	length = data.SAMPLE_LENGTH;
-	waveform = (uint32_t*)data.sample;
-	setSampleNote(data.ORIGINAL_PITCH);
-	sample_rate = data.SAMPLE_RATE;
-
-	cents_offset = data.CENTS_OFFSET;
-	
-	//setting start and end loop
-	setLoop(data.LOOP_START, data.LOOP_END);
-
-	if (!custom_env) {
-		env_delay(data.DELAY_ENV);
-		env_hold(data.HOLD_ENV);
-		env_attack(data.ATTACK_ENV);
-		env_decay(data.DECAY_ENV);
-		//if (data.SUSTAIN_ENV > 0)
-		env_sustain((float)data.SUSTAIN_ENV / UNITY_GAIN);
-		/*else
-			env_sustain(1);*/
-		env_release(data.RELEASE_ENV);
-	}
-
-	//length_bits = length & 0xFFFFF000 ? 13 : loop_length & 0xFFFFFF00 ? 9 : loop_length & 0xFFFFFFF0 ? 5 : 1;
-	//for (int len = length >> length_bits; len; len >>= 1) ++length_bits;
-	//int temp = length_bits
-	
-	length_bits = 1;
-	for (int len = length; len >>= 1; ++length_bits);
-
-	max_phase = (length - 1) << (32 - length_bits);
-	if (loop_start >= 0)
-		loop_start_phase = (loop_start - 1) << (32 - length_bits);
-	if (loop_end > 0)
-		loop_end_phase = (loop_end - 1) << (32 - length_bits);
-	else
-		loop_end_phase = max_phase;
-
-	//Serial.printf("set sample: loop_start_phase=%u, ", loop_start_phase);
-	//Serial.printf("loop_end_phase=%u, ", loop_end_phase);
-	//Serial.printf("tone_phase=%u, ", tone_phase);
-	//Serial.printf("max_phase=%u\n", max_phase);
-	total_parseSample += micros();
-}
-
-/**
- * @brief Play waveform at defined frequency.
+ * @brief Play waveform at defined frequency, amplitude.
  *
  * @param freq freqency of the generated output (between 0 and the board-specific sample rate)
- * @param custom_env a value of 1 means a custom envelope
- * is set; the default value is 0 (no custom envelope)
+ * @param amp the amplitude level at which playback should occur
  */
-void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
-	total_playFrequency -= micros();
-	playing = 0;
-	//float freq1, freq2;
-	//elapsedMillis timer = 0;
-	/*for(int i = 0; i < num_samples; i++) {
-		freq1 = noteToFreq(samples[i].NOTE_RANGE_1);
-		freq2 = noteToFreq(samples[i].NOTE_RANGE_2);
-		if (freq >= freq1 && freq <= freq2) {
-			parseSample(i, custom_env);
-			break;
-		} else if (i == 0 && freq < freq1) {
-			parseSample(0, custom_env);
-			break;
-		} else if (i == num_samples-1 && freq > freq2) {
-			parseSample(num_samples-1, custom_env);
-			break;
-		} else if (freq > freq2 && freq < noteToFreq(samples[i+1].NOTE_RANGE_1)) {
-			if (freq - freq2 < 0.5 * (noteToFreq(samples[i+1].NOTE_RANGE_1) - freq2))
-				parseSample(i, custom_env);
-			else
-				parseSample(i+1, custom_env);
-			break;
-		}
-	}*/
-	int i;
-	for(i = 0; i < num_samples-1 && freq > noteToFreq(samples[i].NOTE_RANGE_2); i++);
-	parseSample(i, custom_env);
-	if (waveform == NULL) {
-		total_playFrequency += micros();
-		return;
-	}
-	frequency(freq);
-	mult = 0;
-	count = delay_count;
-	if (count > 0) {
-		envelopeState = STATE_DELAY;
-		inc = 0;
-		//Serial.printf("DELAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
-	} else {
-		envelopeState = STATE_ATTACK;
-		count = attack_count;
-		// 2^16 divided by the number of samples
-		inc = (UNITY_GAIN / (count << 3));
-		//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
-	}
-	tone_phase = 0;
-	playing = 1;
-	//Serial.printf("Latency: %dms\n", (int)timer);
-	total_playFrequency += micros();
+void AudioSynthWavetable::playFrequency(float freq, int amp) {
+	setState(freqToNote(freq), amp, freq);
 }
 
 /**
@@ -185,266 +68,250 @@ void AudioSynthWavetable::playFrequency(float freq, bool custom_env) {
  *
  * @param note the midi note number (a value between 0 and 127)
  * @param amp amplitude of generated output
- * @param custom_env a value of 1 means a custom envelope
- * is set and a value is 0 means no custom envelope
  */
-void AudioSynthWavetable::playNote(int note, int amp, bool custom_env) {
-	total_playNote -= micros();
-	this->playing = 0;
+void AudioSynthWavetable::playNote(int note, int amp) {
+	setState(note, amp, noteToFreq(note));
+}
+
+/**
+ * @brief Set various state information for the wavetable object before playing.
+ * Selects the sample from within the instrument_data struct to be played.
+ *
+ * @param note the note that the wavetable object should play
+ * @param amp the amplitude level at which playback should occur
+ * @param freq exact frequency of the note to be played played
+ */
+void AudioSynthWavetable::setState(int note, int amp, float freq) {
+	cli();
 	int i;
-	for(i = 0; i < num_samples-1 && note > samples[i].NOTE_RANGE_2; i++);
-	parseSample(i, custom_env);
-	//Serial.printf("sustain_mult = %d\n", sustain_mult);
-	if (waveform == NULL) {
-		total_playFrequency += micros();
-		return;
-	}
-	frequency(noteToFreq(note));
-	mult = 0;
-	count = delay_count;
-	if (count > 0) {
-		envelopeState = STATE_DELAY;
-		inc = 0;
-		//Serial.printf("DELAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
-	} else {
-		envelopeState = STATE_ATTACK;
-		count = attack_count;
-		// 2^16 divided by the number of samples
-		inc = (UNITY_GAIN / (count << 3));
-		//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
-	}
-	tone_phase = 0;
-	playing = 1;
-	//Serial.printf("Latency: %dms\n", (int)timer);
-	//Serial.printf("Amplitude: %i\n", amp);  
-	//amplitude((float)amp/(float)127);
-	total_amplitude -= micros();
-	amplitude(midi_volume_transform(amp));
-	total_amplitude += micros();
-	//Serial.println(freq);
-	total_playNote += micros();
+	env_state = STATE_IDLE;
+	for (i = 0; note > instrument->sample_note_ranges[i]; i++);
+	current_sample = &instrument->samples[i];
+	if (current_sample == NULL) return;
+	setFrequency(freq);
+	vib_count = mod_count = tone_phase = env_incr = env_mult = 0;
+	vib_phase = mod_phase = TRIANGLE_INITIAL_PHASE;
+	env_count = current_sample->DELAY_COUNT;
+	tone_amp = amp * (UINT16_MAX / 127);
+	tone_amp = current_sample->INITIAL_ATTENUATION_SCALAR * tone_amp >> 16;
+	env_state = STATE_DELAY;
+	PRINT_ENV(STATE_DELAY);
+	state_change = true;
+	sei();
 }
 
 /**
  * @brief Change the frequency of the waveform to the defined freq.
  *
- * If the frequency is zero sample generation is stopped.
  * @param freq frequency of the generated output (between 0 and the board-specific sample rate)
  */
-void AudioSynthWavetable::frequency(float freq) {
-	total_frequency -= micros();
-	if (freq < 0.0)
-		freq = 0.0;
-	else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2)
-		freq = AUDIO_SAMPLE_RATE_EXACT / 2;
-	
-	//Serial.println(freq);
-	//Serial.println(cents_offset);
-	float rate_coef = sample_rate / AUDIO_SAMPLE_RATE_EXACT;
-	
-	//Serial.println(freq);
-	
-	//(0x80000000 >> (length_bits - 1) by itself results in a tone_incr that
-	//steps through the wavetable sample one element at a time; from there we
-	//only need to scale based a ratio of freq/sample_freq for the desired increment
-	tone_incr = cents_offset * ((rate_coef * freq) / sample_freq) * (0x80000000 >> (length_bits - 1)) + 0.5;
-	total_frequency += micros();
+void AudioSynthWavetable::setFrequency(float freq) {
+	float tone_incr_temp = freq * current_sample->PER_HERTZ_PHASE_INCREMENT;
+	tone_incr = tone_incr_temp;
+	vib_pitch_offset_init = tone_incr_temp * current_sample->VIBRATO_PITCH_COEFFICIENT_INITIAL;
+	vib_pitch_offset_scnd = tone_incr_temp * current_sample->VIBRATO_PITCH_COEFFICIENT_SECOND;
+	mod_pitch_offset_init = tone_incr_temp * current_sample->MODULATION_PITCH_COEFFICIENT_INITIAL;
+	mod_pitch_offset_scnd = tone_incr_temp * current_sample->MODULATION_PITCH_COEFFICIENT_SECOND;
 }
 
 /**
- * @brief Manages all the AudioSynthWavetable objects.
+ * @brief Called by the AudioStream library to fill the audio output buffer.
+ * Performs interpolation and enveloping of output audio values.
  *
  */
 void AudioSynthWavetable::update(void) {
-	total_update -= micros();
+	cli();
+	if (env_state == STATE_IDLE) {
+		sei();
+		return;
+	}
+	this->state_change = false;
+
+	const sample_data* s = (const sample_data*)current_sample;
+	uint32_t tone_phase = this->tone_phase;
+	uint32_t tone_incr = this->tone_incr;
+	uint16_t tone_amp = this->tone_amp;
+
+	envelopeStateEnum  env_state = this->env_state;
+	int32_t env_count = this->env_count;
+	int32_t env_mult = this->env_mult;
+	int32_t env_incr = this->env_incr;
+
+	uint32_t vib_count = this->vib_count;
+	uint32_t vib_phase = this->vib_phase;
+	int32_t vib_pitch_offset_init = this->vib_pitch_offset_init;
+	int32_t vib_pitch_offset_scnd = this->vib_pitch_offset_scnd;
+
+	uint32_t mod_count = this->mod_count;
+	int32_t mod_phase = this->mod_phase;
+	int32_t mod_pitch_offset_init = this->mod_pitch_offset_init;
+	int32_t mod_pitch_offset_scnd = this->mod_pitch_offset_scnd;
+	sei();
+
+	if (s->LOOP == false && tone_phase >= s->MAX_PHASE) return;
 
 	audio_block_t* block;
-	int16_t* out;
-	uint32_t index, scale;
-	int32_t s1, s2, v1, v2, v3;
-	//elapsedMillis timer = 0;
-
-	if (!playing || envelopeState == STATE_IDLE) {
-		total_update += micros();
-		return;
-	}
-
 	block = allocate();
-	if (block == NULL) {
-		total_update += micros();
-		return;
+	if (block == NULL) return;
+
+	uint32_t* p, * end;
+	uint32_t index, scale;
+	int32_t s1, s2;
+	uint32_t tmp1, tmp2;
+
+	TIME_TEST(5000,
+	p = (uint32_t*)block->data;
+	end = p + AUDIO_BLOCK_SAMPLES / 2;
+
+	while(p < end) {
+		if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
+
+		int32_t tone_incr_offset = 0;
+		if (vib_count++ > s->VIBRATO_DELAY) {
+			vib_phase += s->VIBRATO_INCREMENT;
+			int32_t vib_scale = vib_phase & 0x80000000 ? 0x40000000 + vib_phase : 0x3FFFFFFF - vib_phase;
+			int32_t vib_pitch_offset = vib_scale >= 0 ? vib_pitch_offset_init : vib_pitch_offset_scnd;
+			tone_incr_offset = multiply_accumulate_32x32_rshift32_rounded(tone_incr_offset, vib_scale, vib_pitch_offset);
+
+			tone_incr_offset += (int32_t(vib_scale>>15) * vib_pitch_offset) >> 15;
+
+			//int16_t vib_scale = (((vib_phase - 0x40000000) & 0x80000000) ? vib_phase : (0x7FFFFFFF - vib_phase)) >> 15;
+			//tone_incr_offset += (int32_t(vib_scale) * (vib_scale >= 0 ? vib_pitch_offset_init : vib_pitch_offset_scnd)) >> 15;
+		}
+
+		int32_t mod_amp = tone_amp;
+		if (mod_count++ > s->MODULATION_DELAY) {
+			mod_phase += s->MODULATION_INCREMENT;
+			int32_t mod_scale = mod_phase & 0x80000000 ? 0x40000000 + mod_phase : 0x3FFFFFFF - mod_phase;
+
+			int32_t mod_pitch_offset = mod_scale >= 0 ? mod_pitch_offset_init : mod_pitch_offset_scnd;
+			tone_incr_offset = multiply_accumulate_32x32_rshift32_rounded(tone_incr_offset, mod_scale, mod_pitch_offset);
+			//tone_incr_offset += (int32_t(mod_scale>>15) * mod_pitch_offset) >> 15;
+
+			int32_t mod_offset = (mod_scale >= 0 ? s->MODULATION_AMPLITUDE_INITIAL_GAIN : s->MODULATION_AMPLITUDE_SECOND_GAIN);
+			mod_scale = multiply_32x32_rshift32(mod_scale, mod_offset);
+			mod_amp = signed_multiply_accumulate_32x16b(mod_amp, mod_scale, mod_amp);
+		}
+
+		for (int i = LFO_PERIOD/2; i; --i, ++p) {
+			index = tone_phase >> (32 - s->INDEX_BITS);
+			tmp1 = *((uint32_t*)(s->sample + index));
+			scale = (tone_phase << s->INDEX_BITS) >> 16;
+			s1 = signed_multiply_32x16t(scale, tmp1);
+			s1 = signed_multiply_accumulate_32x16b(s1, 0xFFFF - scale, tmp1);
+			s1 = signed_multiply_32x16b(mod_amp, s1);
+
+			tone_phase += tone_incr + tone_incr_offset;
+			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
+			//tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+
+			index = tone_phase >> (32 - s->INDEX_BITS);
+			tmp1 = *((uint32_t*)(s->sample + index));
+			scale = (tone_phase << s->INDEX_BITS) >> 16;
+			s2 = signed_multiply_32x16t(scale, tmp1);
+			s2 = signed_multiply_accumulate_32x16b(s2, 0xFFFF - scale, tmp1);
+			s2 = signed_multiply_32x16b(mod_amp, s2);
+
+			*p = pack_16b_16b(s2, s1);
+
+			tone_phase += tone_incr + tone_incr_offset;
+			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
+			//tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+		}
 	}
+	); //end TIME_TEST
 
-	out = block->data;
-
-	interpolation_update -= micros();
-	//assuming 16 bit PCM, 44100 Hz
-	int16_t* waveform = (int16_t*)this->waveform;
-	//Serial.printf("update: length=%i, length_bits=%i, tone_phase=%u, max_phase=%u\n", length, length_bits, tone_phase, max_phase);
-	//Serial.printf("update: loop_start_phase=%u, loop_end_phase=%u, tone_phase=%u, max_phase=%u\n", loop_start_phase, loop_end_phase, tone_phase, max_phase);
-	//Serial.printf("tone_incr=%u, tone_amp=%u, sample_freq=%f\n", tone_incr, tone_amp, sample_freq);
-	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-		//tone_phase = tone_phase < max_phase ? tone_phase : tone_phase - loop_phase;
-
-		if (tone_phase >= loop_end_phase)
-			tone_phase = tone_phase - loop_end_phase + loop_start_phase;
-		//tone_phase = tone_phase < loop_end_phase ? tone_phase : tone_phase - loop_end_phase + loop_start_phase;
-		index = tone_phase >> (32 - length_bits);
-		scale = (tone_phase << length_bits) >> 16;
-		s1 = waveform[index];
-		s2 = waveform[index + 1];
-		v1 = s1 * (0xFFFF - scale);
-		v2 = s2 * scale;
-		v3 = (v1 + v2) >> 16;
-		*out++ = (int16_t)((v3 * tone_amp) >> 16);
-		tone_phase += tone_incr;
-	}
-	interpolation_update += micros();
-
-
-	//*********************************************************************
-	//Envelope code
-	//*********************************************************************
-
-	uint32_t* p;
-	uint32_t* end;
-	uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
-
-	envelope_update -= micros();
 	p = (uint32_t *)block->data;
-	// p increments by 1 for every 2 samples processed.
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 	while (p < end) {
-		// we only care about the state when completing a region
-		if (count == 0) switch (envelopeState) {
+		if (env_count <= 0) switch (env_state) {
 		case STATE_DELAY:
-			envelopeState = STATE_ATTACK;
-			count = attack_count;
-			inc = (UNITY_GAIN / (count << 3));
-			//Serial.printf("ATTACK: %fms\n", 8*count/SAMPLES_PER_MSEC);
+			env_state = STATE_ATTACK;
+			env_count = s->ATTACK_COUNT;
+			env_incr = UNITY_GAIN / (env_count * ENVELOPE_PERIOD);
+			PRINT_ENV(STATE_ATTACK);
 			continue;
 		case STATE_ATTACK:
-			count = hold_count;
-			envelopeState = STATE_HOLD;
-			mult = UNITY_GAIN;
-			inc = 0;
-			//Serial.printf("HOLD: %fms\n", 8*count/SAMPLES_PER_MSEC);
+			env_mult = UNITY_GAIN;
+			env_state = STATE_HOLD;
+			env_count = s->HOLD_COUNT;
+			env_incr = 0;
+			PRINT_ENV(STATE_HOLD);
 			continue;
 		case STATE_HOLD:
-			envelopeState = STATE_DECAY;
-			count = decay_count;
-			//inc = count > 0 ? (float)(-sustain_mult) / ((int32_t)count << 3) : 0;
-			inc = (float)(-sustain_mult) / (count << 3);
-			//Serial.printf("DECAY: %fms\n", 8*count/SAMPLES_PER_MSEC);
+			env_state = STATE_DECAY;
+			env_count = s->DECAY_COUNT;
+			env_incr = (-s->SUSTAIN_MULT) / (env_count * ENVELOPE_PERIOD);
+			PRINT_ENV(STATE_DECAY);
 			continue;
 		case STATE_DECAY:
-			envelopeState = STATE_SUSTAIN;
-			count = 0xFFFFFFFF;
-			mult = UNITY_GAIN - sustain_mult;
-			inc = 0;
-			//Serial.printf("SUSTAIN: %fdb\n", (float)mult/1000);
-			break;
+			env_mult = UNITY_GAIN - s->SUSTAIN_MULT;
+			env_state = env_mult < UNITY_GAIN / UINT16_MAX ? STATE_RELEASE : STATE_SUSTAIN;
+			env_incr = 0;
+			continue;
 		case STATE_SUSTAIN:
-			count = 0xFFFFFFFF;
-			break;
+			env_count = INT32_MAX;
+			PRINT_ENV(STATE_SUSTAIN);
+			continue;
 		case STATE_RELEASE:
-			envelopeState = STATE_IDLE;
-			//Serial.println("IDLE");
-			playing = 0;
-			for (; p < end; p += 4) p[0] = p[1] = p[2] = p[3] = 0;
+			env_state = STATE_IDLE;
+			for (; p < end; ++p) *p = 0;
+			PRINT_ENV(STATE_IDLE);
 			continue;
 		default:
 			p = end;
+			PRINT_ENV(DEFAULT);
 			continue;
 		}
-		// process 8 samples, using only mult and inc
-		sample12 = p[0];
-		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, sample12);
-		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, sample12);
+
+		env_mult += env_incr;
+		tmp1 = signed_multiply_32x16b(env_mult >> 15, p[0]);
+		env_mult += env_incr;
+		tmp2 = signed_multiply_32x16t(env_mult >> 15, p[0]);
 		p[0] = pack_16b_16b(tmp2, tmp1);
-
-		sample34 = p[1];
-		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, sample34);
-		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, sample34);
+		env_mult += env_incr;
+		tmp1 = signed_multiply_32x16b(env_mult >> 15, p[1]);
+		env_mult += env_incr;
+		tmp2 = signed_multiply_32x16t(env_mult >> 15, p[1]);
 		p[1] = pack_16b_16b(tmp2, tmp1);
-
-		sample56 = p[2];
-		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, sample56);
-		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, sample56);
+		env_mult += env_incr;
+		tmp1 = signed_multiply_32x16b(env_mult >> 15, p[2]);
+		env_mult += env_incr;
+		tmp2 = signed_multiply_32x16t(env_mult >> 15, p[2]);
 		p[2] = pack_16b_16b(tmp2, tmp1);
-
-		sample78 = p[3];
-		mult += inc;
-		tmp1 = signed_multiply_32x16b((int32_t)mult, sample78);
-		mult += inc;
-		tmp2 = signed_multiply_32x16t((int32_t)mult, sample78);
+		env_mult += env_incr;
+		tmp1 = signed_multiply_32x16b(env_mult >> 15, p[3]);
+		env_mult += env_incr;
+		tmp2 = signed_multiply_32x16t(env_mult >> 15, p[3]);
 		p[3] = pack_16b_16b(tmp2, tmp1);
 
-		p += 4;
-		count--;
+		p += ENVELOPE_PERIOD / 2;
+		env_count--;
 	}
-	envelope_update += micros();
+
+	cli();
+	if (this->state_change == false) {
+		this->tone_phase = tone_phase;
+		this->env_state = env_state;
+		this->env_count = env_count;
+		this->env_mult = env_mult;
+		this->env_incr = env_incr;
+		if (this->env_state != STATE_IDLE) {
+			this->vib_count = vib_count;
+			this->vib_phase = vib_phase;
+			this->mod_count = mod_count;
+			this->mod_phase = mod_phase;
+		} else {
+			this->vib_count = this->mod_count = 0;
+			this->vib_phase = this->mod_phase = TRIANGLE_INITIAL_PHASE;
+		}
+	}
+
+	sei();
 
 	transmit(block);
 	release(block);
-	//Serial.printf("Latency: %dms\n", (int)timer);
-	total_update += micros();
 }
-
-/**
- *
- *
- */
-void AudioSynthWavetable::print_performance() {
-	char format_str[] =
-		"total\t%i\t%.2f%%\tupdate()\t%i\t%.2f%%\tupdate_env\t%i\t\t\t\n"
-		"\t\t\t\t\t%.2f%%\tupdate_interpolate\t%i\t\t\t\n"
-		"\t\t%.2f%%\tplayNote()\t%i\t%.2f%%\tplayFrequency()\t%i\t%.2f%%\tparseSample()\t%i\n"
-		"\t\t\t\t\t\t\t\t%.2f%%\tfrequency()\t%i\n"
-		"\t\t\t\t\t%.2f%%\tamplitude()\t%i\n";
-
-	Serial.printf(
-		format_str,
-		total_update + total_playNote,
-		100.0 * (total_update / float(total_update + total_playNote)),
-		total_update,
-		100.0 * (envelope_update / float(total_update + total_playNote)),
-		envelope_update,
-		100.0 * (interpolation_update / float(total_update + total_playNote)),
-		interpolation_update,
-		100.0 * (total_playNote / float(total_update + total_playNote)),
-		total_playNote,
-		100.0 * (total_playFrequency / float(total_update + total_playNote)),
-		total_playFrequency,
-		100.0 * (total_parseSample / float(total_update + total_playNote)),
-		total_parseSample,
-		100.0 * (total_frequency / float(total_update + total_playNote)),
-		total_frequency,
-		100.0 * (total_amplitude / float(total_update + total_playNote)),
-		total_amplitude
-	);
-		//"interpolation_update=%i\n"
-		//"envelope_update=%i\n"
-		//"total_update=%i\n"
-		//"total_parseSample=%i\n"
-		//"total_playFrequency=%i\n"
-		//"total_frequency=%i\n"
-		//"total_playNote=%i\n"
-		//"total_amplitude=%i\n",
-		//AudioSynthWavetable::interpolation_update,
-		//AudioSynthWavetable::envelope_update,
-		//AudioSynthWavetable::total_update,
-		//AudioSynthWavetable::total_parseSample,
-		//AudioSynthWavetable::total_playFrequency,
-		//AudioSynthWavetable::total_frequency,
-		//AudioSynthWavetable::total_playNote,
-		//AudioSynthWavetable::total_amplitude);
-}
-
