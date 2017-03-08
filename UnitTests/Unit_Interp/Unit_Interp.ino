@@ -18,7 +18,7 @@
 #include <SD.h>
 //---------------------------------------------------------------------------------------
 #include <AudioSynthWavetable.h>
-#include "PerfeSine_samples.h"
+#include "Ocarina_samples.h"
 //---------------------------------------------------------------------------------------
 AudioAnalyzeNoteFrequency notefreq;
 AudioOutputI2S            i2s1;
@@ -59,7 +59,7 @@ void setup() {
   notefreq.begin(.15);
   sgtl5000_1.enable();
   sgtl5000_1.volume(0.7);
-  wavetable.setSamples(PerfeSine, sizeof(PerfeSine)/sizeof(sample_data));
+  wavetable.setInstrument(Ocarina);
   while (timer < 2000); // Spin for serial monitor
 }
 
