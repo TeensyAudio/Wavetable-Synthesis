@@ -1,5 +1,18 @@
 #SoundFont Decoder User-Guide
-[TOC]
+
+##Table Of Contents
+**[Table of Contents](#Table-Of-Contents)**
+**[1.0 About](#1.0-About)**
+**[2.0 Using the Decoder with the GUI](#2.0-Using-the-Decoder-with-the-GUI)**
+	*[2.1 GUI Layout](#2.1-GUI-Layout)*
+	*[2.2 Decoding a Sample](#2.2-Decoding-a-Sample)*
+**[3.0 Using the Decoder from the Command Line](#3.0-Using-the-Decoder-from-the-Command-Line)**
+	*[3.1 Decoding a Sample](#3.1-Decoding-a-Sample)*
+	*[3.2 Command Line Options](#3.2-Command-Line-Options)*
+**[4.0 Decoder Output](#4.0-Decoder-Output)**
+	*[4.1 .cpp file](#4.1-.cpp-file)*
+	*[4.2 .h file](#-.h-file)*
+
 ## About
 This document is a user guide for the SF2 decoder created for the Wavetable Synthesis Capstone project at Portland State, Fall 2016 - Winter 2017. The decoder described in this document is meant to take SF2 files and translate them into a format that can be used with the AudioSynthWavetable library for use on the Teensy 3.2 and 3.6.
 
