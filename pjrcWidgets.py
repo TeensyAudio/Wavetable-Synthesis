@@ -25,7 +25,7 @@
 #
 
 from tkinter import *
-from tkinter import Tk, Label, Button, filedialog
+from tkinter import Label
 from tkinter.ttk import *
 
 

@@ -25,11 +25,9 @@
 #
 
 from tkinter import *
-from tkinter import Tk, Label, Button, filedialog
-from tkinter.ttk import *
+from tkinter import Tk, filedialog
 import view
 import model
-import sf2elements
 import decoder
 
 class MyController():

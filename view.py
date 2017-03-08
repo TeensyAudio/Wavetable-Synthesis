@@ -25,9 +25,9 @@
 #
 
 from tkinter import *
-from tkinter import Tk, Label, Button, filedialog
+from tkinter import Label, Button
 from tkinter.ttk import *
-import JoJenWidgets as JJ
+import pjrcWidgets as pjrc
 
 #View : User interface elements.
 #       --Controller can send messages to it.
@@ -78,18 +78,18 @@ class MyView(Frame):
         self.rowconfigure(2, weight=1) # StatusBar
 
         # main menu
-        self.menu = JJ.JJMenu(self.parent)
+        self.menu = pjrc.JJMenu(self.parent)
         self.parent.config(menu=self.menu)
         self.menu.filemenu.add_command(label='Load SF2', command=self.controller.inBrowseSelected)
 
 
-        self.upper_frame = JJ.JJFrame(self)
+        self.upper_frame = pjrc.JJFrame(self)
         self.upper_frame.rcconfigure(_rows=[(0,1)], _columns=[(0,1),(1,2),(2,3)])
         self.upper_frame.grid(column=0, row=0, columnspan=4, sticky=N + S + E + W, padx=5, pady=5)
 
-        self.box_1 = JJ.JJLabelFrame(self.upper_frame, 3, 1, 1, 1, text='Select Teensy Version')
+        self.box_1 = pjrc.JJLabelFrame(self.upper_frame, 3, 1, 1, 1, text='Select Teensy Version')
         self.box_1.grid(column=0, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
-        self.version_frame = JJ.JJFrame(self.box_1, 2, 1, 1, 1)
+        self.version_frame = pjrc.JJFrame(self.box_1, 2, 1, 1, 1)
         self.version_frame.grid(row=1, padx=def_pad, sticky=N + E + W)
         self.ver_32 = Radiobutton(self.version_frame, text='Teensy 3.2 (default)', 
                 variable=self.version, command=lambda: self.teensyButtonSelect(1), value=1)
@@ -98,7 +98,7 @@ class MyView(Frame):
                 variable=self.version, command=lambda: self.teensyButtonSelect(2), value=2)
         self.ver_36.grid(row=1, column=0, sticky=N + S + E + W, padx=def_pad)
 
-        self.box_2 = JJ.JJLabelFrame(self.upper_frame, 2, 1, 1, 1, text='Load a SoundFont')
+        self.box_2 = pjrc.JJLabelFrame(self.upper_frame, 2, 1, 1, 1, text='Load a SoundFont')
         self.box_2.grid(column=1, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
         # TODO make this text wrap better
         self.infile_label = Message(self.box_2, textvariable=self.inFile, anchor=W, justify=LEFT, aspect=400)
@@ -106,7 +106,7 @@ class MyView(Frame):
         self.browse_button = Button(self.box_2, text="Browse", command=self.controller.inBrowseSelected)
         self.browse_button.grid(row=1, column=0, padx=def_pad, pady=def_pad, sticky=N)
 
-        self.box_3 = JJ.JJLabelFrame(self.upper_frame, 2, 1, 1, 1, text='Output Settings')
+        self.box_3 = pjrc.JJLabelFrame(self.upper_frame, 2, 1, 1, 1, text='Output Settings')
         self.box_3.grid(column=2, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
         self.dir_line = Frame(self.box_3)
         self.dir_line.grid(row=0, column=0)
@@ -121,27 +121,27 @@ class MyView(Frame):
         self.name_entry = Entry(self.dir_line, textvariable=self.out_name)
         self.name_entry.grid(row=0, column=1, columnspan=2, sticky=E + W)
 
-        self.lower_frame = JJ.JJFrame(self, 1, 2, 1, 1)
+        self.lower_frame = pjrc.JJFrame(self, 1, 2, 1, 1)
         self.lower_frame.configurerows([(0,1), (1,0)])
         self.lower_frame.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=1, pady=1)
 
         # Instruments
-        self.inst_listbox = JJ.JJListBox(self.lower_frame, 'Instruments', self.i_names)
+        self.inst_listbox = pjrc.JJListBox(self.lower_frame, 'Instruments', self.i_names)
         self.inst_listbox.grid(column=0, row=0, rowspan=2, sticky=N + S + E + W, padx=5)
 
         # Samples
         # TODO combine listboxes to simulate separate columns for key range
-        self.samp_listbox = JJ.JJListBox(self.lower_frame, 'Samples', self.s_names)
+        self.samp_listbox = pjrc.JJListBox(self.lower_frame, 'Samples', self.s_names)
         self.samp_listbox.grid(column=1, row=0, sticky=N + S + E + W, padx=5)
         self.samp_listbox.list_box.config(selectmode = EXTENDED)
-        self.under_frame = JJ.JJFrame(self.lower_frame, 1, 1, 1, 1)
+        self.under_frame = pjrc.JJFrame(self.lower_frame, 1, 1, 1, 1)
         self.under_frame.grid(column=1, row=1, sticky=N + S + E + W)
         self.decode_button = Button(self.under_frame, text='Decode', command=self.samplesSelected)
         self.decode_button.grid(row=1, column=0, padx=2, pady=2)
         
         # Displays sample size, num selected and memory usage percentage for teensy
         #TODO put in different frame to fix listbox stretching
-        self.stats_frame = JJ.JJLabelFrame(self.under_frame, 3, 2, 1, 1, text='Sample Stats')
+        self.stats_frame = pjrc.JJLabelFrame(self.under_frame, 3, 2, 1, 1, text='Sample Stats')
         self.stats_frame.grid(row=0, column=0, sticky=N + E + W, padx=5, pady=0)
         self.stats_frame.num_selected_text_label = Label(self.stats_frame, text='Num Samples Selected:', anchor=E)
         self.stats_frame.num_selected_text_label.grid(row=0, column=0, padx=2, pady=0, sticky=N + S + E)
@@ -157,7 +157,7 @@ class MyView(Frame):
         self.stats_frame.teensy_percent_label.grid(row=2, column=1, padx=2, pady=0, sticky=N + S + W)
 
         # Status bar at bottom
-        self.status_bar = JJ.JJStatusBar(self, 'Load a Soundfont')
+        self.status_bar = pjrc.JJStatusBar(self, 'Load a Soundfont')
         self.status_bar.grid(row=2, column=0, sticky=E + W + S, padx=0, pady=0)
 
         # Set Bindings
