@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['isplaying',['isPlaying',['../class_audio_synth_wavetable.html#aa33de2bae93c9690001c88568fba9867',1,'AudioSynthWavetable']]]
+  ['midi_5fvolume_5ftransform',['midi_volume_transform',['../class_audio_synth_wavetable.html#ab47cbc293b9f77a67b261fdc59209f30',1,'AudioSynthWavetable']]]
 ];
