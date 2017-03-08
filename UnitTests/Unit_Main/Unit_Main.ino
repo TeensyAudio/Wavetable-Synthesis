@@ -16,7 +16,6 @@
 #define TEST_ENV
 
 #define NUM_VOICES 64
-#define NUM_SECTIONS 7
 
 #include <SerialFlash.h>
 #include <Audio.h>
@@ -25,7 +24,12 @@
 #include <SD.h>
 //---------------------------------------------------------------------------------------
 #include <AudioSynthWavetable.h>
+//#include "Explosion_samples.h"
 #include "Viola_samples.h"
+//#include "SawDecline_samples.h"
+//#include "Applause_samples.h"
+//#include "RoomKick_samples.h"
+//#include "DistortionGuitar_1_samples.h"
 //---------------------------------------------------------------------------------------
 AudioOutputI2S            i2s1;
 AudioSynthWavetable       wavetable[NUM_VOICES];
@@ -120,8 +124,8 @@ AudioConnection PatchCord[] = {
     {mixer[18], 0, mixer[20], 2},
     {mixer[19], 0, mixer[20], 3},
     /********************************/
-    //{mixer[20], 0, i2s1, 0},
-    //{mixer[20], 0, i2s1, 1},
+    {mixer[20], 0, i2s1, 0},
+    {mixer[20], 0, i2s1, 1},
     {mixer[20], 0, test, 0},
   };
 //---------------------------------------------------------------------------------------
@@ -137,11 +141,13 @@ const String STATE_TO_STR[] = {
   "RELEASE"
 };
 
+// Update these on a per-sample basis
 const instrument_data* SAMPLES_LATENCY = &Viola;
 const instrument_data* SAMPLES_PROC = &Viola;
 const instrument_data* SAMPLES_ENV = &Viola;
+const int NUM_SAMPLES_ENV = 8;
 
-float ENV_EXPECTED[8][NUM_SECTIONS];
+float ENV_EXPECTED[NUM_SAMPLES_ENV][7];
 
 const int TICK = 250;           // Timer period (ms)
 const int UPPER_BOUND = 127;    // Highest tested note
