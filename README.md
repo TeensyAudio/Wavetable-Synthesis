@@ -8,9 +8,9 @@ The project consists of two main components:
 1. SoundFont Decoder
 2. Audio Synth Wavetable class
 
-The project documentation can be found at: https://connorreilly.github.io/Wavetable-Synthesis/html/index.html.
+The project documentation can be found at: https://teensyaudio.github.io/Wavetable-Synthesis/html/index.html.
 
-The project's source is available on GitHub: https://github.com/ConnorReilly/Wavetable-Synthesis
+The project's source is available on GitHub: https://github.com/TeensyAudio/Wavetable-Synthesis
 
 ## SoundFont Decoder
 
