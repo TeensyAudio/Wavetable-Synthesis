@@ -1,3 +1,29 @@
+# Audio Library for Teensy 3.X
+# Copyright (c) 2017, TeensyAudio PSU Team
+#
+# Development of this audio library was sponsored by PJRC.COM, LLC.
+# Please support PJRC's efforts to develop open source 
+# software by purchasing Teensy or other PJRC products.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice, development funding notice, and this permission
+# notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
 from tkinter import *
 from tkinter import Tk, Label, Button, filedialog
 from tkinter.ttk import *
@@ -27,8 +53,6 @@ class MyController():
         idxs = _selection
         if len(idxs) == 1:
             self.model.setCurrInstrument(int(idxs[0]))
-            # self.model.update_samples()
-            #TODO set curr in view
             curr_inst = self.model.getCurrInstrument()
             self.view.setSampleList(curr_inst.samplesForDisplay())
         #reset size labels
@@ -68,9 +92,6 @@ class MyController():
             out_name = None
         elif out_name != default_name_check:
             pass
-
-        # TODO user supplied filepath after updating decoder.py
-        # 2/28/2017
 
         for samp in self.model.getCurrSamples():
             selected_bags.append(samp.bag_idx)

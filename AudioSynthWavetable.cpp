@@ -1,3 +1,29 @@
+/* Audio Library for Teensy 3.X
+ * Copyright (c) 2017, TeensyAudio PSU Team
+ *
+ * Development of this audio library was sponsored by PJRC.COM, LLC.
+ * Please support PJRC's efforts to develop open source 
+ * software by purchasing Teensy or other PJRC products.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice, development funding notice, and this permission
+ * notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 #include "AudioSynthWavetable.h"
 #include <dspinst.h>
 #include <SerialFlash.h>
@@ -175,9 +201,6 @@ void AudioSynthWavetable::update(void) {
 			tone_incr_offset = multiply_accumulate_32x32_rshift32_rounded(tone_incr_offset, vib_scale, vib_pitch_offset);
 
 			tone_incr_offset += (int32_t(vib_scale>>15) * vib_pitch_offset) >> 15;
-
-			//int16_t vib_scale = (((vib_phase - 0x40000000) & 0x80000000) ? vib_phase : (0x7FFFFFFF - vib_phase)) >> 15;
-			//tone_incr_offset += (int32_t(vib_scale) * (vib_scale >= 0 ? vib_pitch_offset_init : vib_pitch_offset_scnd)) >> 15;
 		}
 
 		int32_t mod_amp = tone_amp;
@@ -187,7 +210,6 @@ void AudioSynthWavetable::update(void) {
 
 			int32_t mod_pitch_offset = mod_scale >= 0 ? mod_pitch_offset_init : mod_pitch_offset_scnd;
 			tone_incr_offset = multiply_accumulate_32x32_rshift32_rounded(tone_incr_offset, mod_scale, mod_pitch_offset);
-			//tone_incr_offset += (int32_t(mod_scale>>15) * mod_pitch_offset) >> 15;
 
 			int32_t mod_offset = (mod_scale >= 0 ? s->MODULATION_AMPLITUDE_INITIAL_GAIN : s->MODULATION_AMPLITUDE_SECOND_GAIN);
 			mod_scale = multiply_32x32_rshift32(mod_scale, mod_offset);
@@ -205,7 +227,6 @@ void AudioSynthWavetable::update(void) {
 			tone_phase += tone_incr + tone_incr_offset;
 			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
 			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-			//tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
@@ -219,7 +240,6 @@ void AudioSynthWavetable::update(void) {
 			tone_phase += tone_incr + tone_incr_offset;
 			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
 			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-			//tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		}
 	}
 	); //end TIME_TEST
