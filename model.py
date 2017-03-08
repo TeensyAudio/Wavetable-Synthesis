@@ -24,12 +24,9 @@
 # THE SOFTWARE.
 #
 
-from tkinter import *
 import sf2elements
 from sf2utils.sf2parse import Sf2File
-import decoder
-from tkinter import Tk, Label, Button, filedialog
-from tkinter.ttk import *
+
 
 
 class MyModel():
