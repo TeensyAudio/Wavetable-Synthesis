@@ -43,7 +43,8 @@ last_check_time = millis();
 
 void AudioSynthWavetable::stop(void) {
 	cli();
-	env_state = STATE_STOP;
+	env_state = env_state == STATE_IDLE ? STATE_IDLE : STATE_STOP;
+	state_change = true;
 	DEBUG_PRINT_ENV(STATE_STOP)
 	sei();
 }
@@ -69,12 +70,12 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	env_count = current_sample->DELAY_COUNT;
 	tone_amp = amp * (UINT16_MAX / 127);
 	tone_amp = current_sample->INITIAL_ATTENUATION_SCALAR * tone_amp >> 16;
-	env_state = STATE_DELAY;
+	env_state = STATE_PLAY;
 #ifdef ENVELOPE_DEBUG
 	Serial.println("");
 	last_check_time = millis();
 #endif
-	DEBUG_PRINT_ENV(STATE_DELAY);
+	DEBUG_PRINT_ENV(STATE_PLAY);
 	state_change = true;
 	sei();
 }
@@ -101,7 +102,8 @@ void AudioSynthWavetable::update(void) {
 	uint32_t tone_incr = this->tone_incr;
 	uint16_t tone_amp = this->tone_amp;
 
-	envelopeStateEnum  env_state = this->env_state;
+	envelopeStateEnum env_state = this->env_state;
+	env_state
 	int32_t env_count = this->env_count;
 	int32_t env_mult = this->env_mult;
 	int32_t env_incr = this->env_incr;
@@ -198,11 +200,20 @@ void AudioSynthWavetable::update(void) {
 	float decibel_drop = 0;
 
 	while (p < end) {
+		cli();
+		if (this->state_change) {
+			env_state = this->env_state;
+			env_count = 0;
+			this->state_change = env_state != STATE_STOP;
+		}
+		sei();
+
 		if (env_count <= 0) switch (env_state) {
+		case STATE_PLAY:
 		case STATE_DELAY:
 			env_state = STATE_ATTACK;
 			env_count = s->ATTACK_COUNT;
-			env_incr = UNITY_GAIN / (env_count * ENVELOPE_PERIOD);
+			env_incr = (UNITY_GAIN / (env_count * ENVELOPE_PERIOD/2));
 			DEBUG_PRINT_ENV(STATE_ATTACK);
 			continue;
 		case STATE_ATTACK:
@@ -221,7 +232,6 @@ void AudioSynthWavetable::update(void) {
 			DEBUG_PRINT_ENV(STATE_DECAY);
 			continue;
 		case STATE_DECAY:
-			//env_mult = UNITY_GAIN - s->SUSTAIN_MULT;
 			env_state = env_mult < UNITY_GAIN / (2*UINT16_MAX) ? STATE_RELEASE : STATE_SUSTAIN;
 			continue;
 		case STATE_SUSTAIN:
@@ -231,8 +241,11 @@ void AudioSynthWavetable::update(void) {
 			continue;
 		case STATE_STOP:
 			env_state = STATE_RELEASE;
-			decibel_drop = -20.0*log10(env_mult / UNITY_GAIN);
-			env_incr = DECIBEL_SHIFT(decibel_drop / s->RELEASE_COUNT) * UNITY_GAIN;
+			env_count = s->RELEASE_COUNT;
+			float cnt_ratio = 1.0 / env_count;
+			env_incr = pow(float(env_mult) / UNITY_GAIN, cnt_ratio) * UNITY_GAIN;
+			//decibel_drop = 20.0*log10(env_mult / UNITY_GAIN);
+			//env_incr = DECIBEL_SHIFT(decibel_drop / s->RELEASE_COUNT) * UNITY_GAIN;
 			env_incr = env_incr < 0 ? UNITY_GAIN : env_incr;
 			continue;
 		case STATE_RELEASE:
@@ -240,60 +253,72 @@ void AudioSynthWavetable::update(void) {
 			for (; p < end; ++p) *p = 0;
 			DEBUG_PRINT_ENV(STATE_IDLE);
 			continue;
-		default:
+		case STATE_IDLE:
 			p = end;
 			DEBUG_PRINT_ENV(DEFAULT);
 			continue;
 		}
-		if (env_state == STATE_DECAY || env_state == STATE_RELEASE) {
-			if (env_mult < UNITY_GAIN / (2 * UINT16_MAX)) {
-				env_state = STATE_IDLE;
-				for (; p < end; ++p) *p = 0;
+
+		switch (env_state) {
+		case STATE_DELAY:
+			while (env_count && p < end) { 
+				p[0] = p[1] = p[2] = p[3] = 0; 
+				p += ENVELOPE_PERIOD / 2;
+				env_count--;
+			}
+			break;
+		case STATE_ATTACK:
+			env_mult += env_incr;
+			tmp1 = signed_multiply_32x16b(env_mult, p[0]) << 1;
+			tmp2 = signed_multiply_32x16t(env_mult, p[0]) << 1;
+			p[0] = pack_16t_16t(tmp2, tmp1);
+			env_mult += env_incr;
+			tmp1 = signed_multiply_32x16b(env_mult, p[1]) << 1;
+			tmp2 = signed_multiply_32x16t(env_mult, p[1]) << 1;
+			p[1] = pack_16t_16t(tmp2, tmp1);
+			env_mult += env_incr;
+			tmp1 = signed_multiply_32x16b(env_mult, p[2]) << 1;
+			tmp2 = signed_multiply_32x16t(env_mult, p[2]) << 1;
+			p[2] = pack_16t_16t(tmp2, tmp1);
+			env_mult += env_incr;
+			tmp1 = signed_multiply_32x16b(env_mult, p[3]) << 1;
+			tmp2 = signed_multiply_32x16t(env_mult, p[3]) << 1;
+			p[3] = pack_16t_16t(tmp2, tmp1);
+			p += ENVELOPE_PERIOD / 2;
+			env_count--;
+			break;
+		case STATE_HOLD:
+			p += ENVELOPE_PERIOD / 2;
+			env_count--;
+			break;
+		case STATE_DECAY:
+		case STATE_RELEASE:
+			env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
+			if (env_mult < UNITY_GAIN * DECIBEL_SHIFT(-100)) {
+				env_state = STATE_RELEASE;
 				env_count = 0;
-				DEBUG_PRINT_ENV(STATE_IDLE);
 				break;
 			}
-			env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
+		case STATE_SUSTAIN:
 			tmp1 = signed_multiply_32x16b(env_mult, p[0]) << 1;
 			tmp2 = signed_multiply_32x16t(env_mult, p[0]) << 1;
 			p[0] = pack_16t_16t(tmp2, tmp1);
-			//env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
 			tmp1 = signed_multiply_32x16b(env_mult, p[1]) << 1;
 			tmp2 = signed_multiply_32x16t(env_mult, p[1]) << 1;
 			p[1] = pack_16t_16t(tmp2, tmp1);
-			//env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
 			tmp1 = signed_multiply_32x16b(env_mult, p[2]) << 1;
 			tmp2 = signed_multiply_32x16t(env_mult, p[2]) << 1;
 			p[2] = pack_16t_16t(tmp2, tmp1);
-			//env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
 			tmp1 = signed_multiply_32x16b(env_mult, p[3]) << 1;
 			tmp2 = signed_multiply_32x16t(env_mult, p[3]) << 1;
 			p[3] = pack_16t_16t(tmp2, tmp1);
-		} else {
-			env_mult += env_incr;
-			tmp1 = signed_multiply_32x16b(env_mult, p[0]) << 1;
-			env_mult += env_incr;
-			tmp2 = signed_multiply_32x16t(env_mult, p[0]) << 1;
-			p[0] = pack_16t_16t(tmp2, tmp1);
-			env_mult += env_incr;
-			tmp1 = signed_multiply_32x16b(env_mult, p[1]) << 1;
-			env_mult += env_incr;
-			tmp2 = signed_multiply_32x16t(env_mult, p[1]) << 1;
-			p[1] = pack_16t_16t(tmp2, tmp1);
-			env_mult += env_incr;
-			tmp1 = signed_multiply_32x16b(env_mult, p[2]) << 1;
-			env_mult += env_incr;
-			tmp2 = signed_multiply_32x16t(env_mult, p[2]) << 1;
-			p[2] = pack_16t_16t(tmp2, tmp1);
-			env_mult += env_incr;
-			tmp1 = signed_multiply_32x16b(env_mult, p[3]) << 1;
-			env_mult += env_incr;
-			tmp2 = signed_multiply_32x16t(env_mult, p[3]) << 1;
-			p[3] = pack_16t_16t(tmp2, tmp1);
+			p += ENVELOPE_PERIOD / 2;
+			env_count--;
+			break;
+		case STATE_STOP:
+			env_count = 0;
+			break;
 		}
-
-		p += ENVELOPE_PERIOD / 2;
-		env_count--;
 	}
 
 	cli();
@@ -303,7 +328,6 @@ void AudioSynthWavetable::update(void) {
 		this->mod_count = mod_count;
 		this->mod_phase = mod_phase;
 		this->tone_phase = tone_phase;
-		this->env_state = this->env_state == STATE_STOP ? STATE_STOP : env_state;
 		this->env_count = this->env_state == STATE_STOP ? 0 : env_count;
 		this->env_mult = env_mult;
 		this->env_incr = env_incr;
