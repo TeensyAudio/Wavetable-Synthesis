@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.13"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Teensy Wavetable Synthesis: soundfontDecoder</title>
+<title>Teensy Wavetable Synthesis: SoundFont Decoder User-Guide</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -89,37 +89,35 @@ $(document).ready(function(){initNavTree('md_additional_pages_soundfont_decoder.
 
 <div class="header">
   <div class="headertitle">
-<div class="title">soundfontDecoder </div>  </div>
+<div class="title">SoundFont Decoder User-Guide </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>#SoundFont Decoder User-Guide</p>
-<h2>Table Of Contents</h2>
-<ul>
-<li><a href="#table-of-contents">Table of Contents</a></li>
-<li><a href="#1-0-about">1-0 About</a></li>
-<li><a href="#2-0-using-the-decoder-with-the-gui">2-0 Using the Decoder with the GUI</a><ul>
-<li><a href="#2-1-gui-layout">2-1 GUI Layout</a></li>
-<li><a href="#2-2-decoding-a-sample">2-2 Decoding a Sample</a></li>
+<div class="toc"><h3>Table of Contents</h3>
+<ul><li class="level1"><a href="#about">1-0 About</a></li>
+<li class="level1"><a href="#decoderGUI">2-0 Using the Decoder with the GUI</a><ul><li class="level2"><a href="#guiLayout">2-1 GUI Layout</a></li>
+<li class="level2"><a href="#decodesampleGUI">2-2 Decoding a Sample</a></li>
 </ul>
 </li>
-<li><a href="#3-0-using-the-decoder-from-the-command-line">3-0 Using the Decoder from the Command Line</a><ul>
-<li><a href="#3-1-decoding-a-sample">3-1 Decoding a Sample</a></li>
-<li><a href="#3-2-command-line-options">3-2 Command Line Options</a></li>
+<li class="level1"><a href="#decodercommandline">3-0 Using the Decoder from the Command Line</a><ul><li class="level2"><a href="#decodesamplecl">3-1 Decoding a Sample</a></li>
+<li class="level2"><a href="#CLoptions">3-2 Command Line Options</a></li>
 </ul>
 </li>
-<li><a href="#4-0-decoder-output">4-0 Decoder Output</a><ul>
-<li><a href="#4-1-cpp-file">4-1 .cpp file</a></li>
-<li><a href="#4-2-h-file">4-2 .h file</a></li>
+<li class="level1"><a href="#decoderoutput">4-0 Decoder Output</a><ul><li class="level2"><a href="#cppfile">4-1 .cpp file</a></li>
+<li class="level2"><a href="#hfile">4-2 .h file</a></li>
 </ul>
 </li>
 </ul>
-<h2>1-0 About</h2>
+</div>
+<div class="textblock"><h1><a class="anchor" id="about"></a>
+1-0 About</h1>
 <p>This document is a user guide for the SF2 decoder created for the Wavetable Synthesis Capstone project at Portland State, Fall 2016 - Winter 2017. The decoder described in this document is meant to take SF2 files and translate them into a format that can be used with the <a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> library for use on the Teensy 3.2 and 3.6.</p>
 <p>Python3 is required for the decoder to operate properly.</p>
-<p>More information about the <a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> library can be found at: <a href="https://github.com/ConnorReilly/Wavetable-Synthesis">https://github.com/ConnorReilly/Wavetable-Synthesis</a></p>
+<p>More information about the <a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> library can be found at: <a href="https://github.com/TeensyAudio/Wavetable-Synthesis">https://github.com/TeensyAudio/Wavetable-Synthesis</a></p>
 <p>More information about the Teensy 3.2 and 3.6 can be found at: <a href="https://www.pjrc.com/teensy/index.html">https://www.pjrc.com/teensy/index.html</a></p>
-<h2>2-0 Using the Decoder with the GUI</h2>
-<h3>2-1 GUI Layout</h3>
+<h1><a class="anchor" id="decoderGUI"></a>
+2-0 Using the Decoder with the GUI</h1>
+<h2><a class="anchor" id="guiLayout"></a>
+2-1 GUI Layout</h2>
 <p>The following section covers what each component of the GUI does.</p>
 <p>(Image of the GUI with numbers corresponding to descriptions needs to go here)</p>
 <ol type="1">
@@ -132,7 +130,8 @@ $(document).ready(function(){initNavTree('md_additional_pages_soundfont_decoder.
 <li>Sample Stats: As samples are selected/deselected this window displays quantity, size and Teensy usage information. The Teensy usage % is only an estimate of the actual usage and results may vary.</li>
 <li>Status Bar: The current status of the decoder is displayed here.</li>
 </ol>
-<h3>2-2 Decoding a Sample</h3>
+<h2><a class="anchor" id="decodesampleGUI"></a>
+2-2 Decoding a Sample</h2>
 <p>This section gives a basic walk through of loading a <code>.sf2</code> file, selecting a sample and decoding it with the GUI. </p><h4>Step 1: Load .sf2 file into decoder</h4>
 <p>(image)</p>
 <h4>Step 2: Select an Instrument to bring up its sample list</h4>
@@ -144,18 +143,21 @@ $(document).ready(function(){initNavTree('md_additional_pages_soundfont_decoder.
 <h4>Step 5: Get confirmation message</h4>
 <p>(image)</p>
 <p>At this point the decoded sample files (<code>.cpp</code> and <code>.h</code>) will be in the output directory and will be named after the selected instrument. By default this directory is the same that the decoder was launched from.</p>
-<h2>3-0 Using the Decoder from the Command Line</h2>
-<h3>3-1 Decoding a Sample</h3>
+<h1><a class="anchor" id="decodercommandline"></a>
+3-0 Using the Decoder from the Command Line</h1>
+<h2><a class="anchor" id="decodesamplecl"></a>
+3-1 Decoding a Sample</h2>
 <p>This section gives a basic walk through of starting the decoder, loading an <code>.sf2</code> file, selecting a sample and decoding it from the command line.</p>
 <h4>Step 1: Start the decoder &amp; load <code>.sf2</code> file</h4>
 <p>The following shows how to start the decoder with a file <code>Example.sf2</code> </p><pre class="fragment">python3 decoder.py -i Soundfonts/Example.sf2
-</pre> <h4>Step 2: Select option to bring up instrument list for <code>.sf2</code> file</h4>
-<p>WELCOME</p>
-<ol type="1">
-<li>Select by Instrument</li>
-<li>Quit</li>
-</ol>
-<p>Select [1-2]: 1 </p><h4>Step 3: Enter the number corresponding to the instrument to select samples from</h4>
+</pre><h4>Step 2: Select option to bring up instrument list for <code>.sf2</code> file</h4>
+<pre class="fragment">       WELCOME  
+
+1. Select by Instrument
+2. Quit
+
+Select [1-2]: 1
+</pre><h4>Step 3: Enter the number corresponding to the instrument to select samples from</h4>
 <pre class="fragment">1. string
 2. bass
 3. tom
@@ -167,7 +169,8 @@ Select Instrument [1-4]: 3
 2. Select Samples to Export
 
 Select [1-2]: 2
-</pre><p>Alternatively, the option to decode all samples could be chosen and a confirmation message would be displayed before exiting the decoder. </p><h4>Step 5: Select samples to decode by entering their number.</h4>
+</pre><p>Alternatively, the option to decode all samples could be chosen and a confirmation message would be displayed before exiting the decoder.</p>
+<h4>Step 5: Select samples to decode by entering their number.</h4>
 <pre class="fragment">1. mood2
 2. mood3
 
@@ -179,10 +182,17 @@ Select Sample [1-2]: 2
 Select [1-2]: 2
 Selected samples for instrument decoded successfully. Exiting Program.
 </pre><p>Following step 6 the decoded sample files (<code>.cpp</code> and <code>.h</code>) will be in the output directory and will be named after the selected instrument. By default this directory is the same that the decoder was launched from.</p>
-<h3>3-2 Command Line Options</h3>
-<p>There are 2 options available when running the decoder from the command line. <code>-i</code> is the input flag. This option is mandatory for proper operation of the decoder and must precede the name of the <code>.sf2</code> input file. <code>-d</code> is the debug flag. This should only be used when making changes to the decoder and debug info is needed. </p><h2>4-0 Decoder Output</h2>
-<p>This sections gives a brief overview of what is found in the output files created by the decoder. </p><h3>4-1 .cpp file</h3>
-<p>This file contains a <code>sample_data</code> structure that contains metadata for each sample that was extracted from the <code>.sf2</code> file. Following the <code>sample_data</code> structure is all of the sample arrays holding the audio data. The samples in this file are organized by key range values in ascending order. </p><h3>4-2 .h file</h3>
+<h2><a class="anchor" id="CLoptions"></a>
+3-2 Command Line Options</h2>
+<p>There are 2 options available when running the decoder from the command line. <code>-i</code> is the input flag. This option is mandatory for proper operation of the decoder and must precede the name of the <code>.sf2</code> input file. <code>-d</code> is the debug flag. This should only be used when making changes to the decoder and debug info is needed.</p>
+<h1><a class="anchor" id="decoderoutput"></a>
+4-0 Decoder Output</h1>
+<p>This sections gives a brief overview of what is found in the output files created by the decoder.</p>
+<h2><a class="anchor" id="cppfile"></a>
+4-1 .cpp file</h2>
+<p>This file contains a <code>sample_data</code> structure that contains metadata for each sample that was extracted from the <code>.sf2</code> file. Following the <code>sample_data</code> structure is all of the sample arrays holding the audio data. The samples in this file are organized by key range values in ascending order.</p>
+<h2><a class="anchor" id="hfile"></a>
+4-2 .h file</h2>
 <p>This file contains <code>extern</code> declarations for all of the sample arrays in the <code>.cpp</code> file as well as a declaration for the structure that holds the metadata.</p>
 <p>This is the file that will be included using a <code>#include</code> statement in an Arduino sketch file so that the samples are available. </p>
 </div></div><!-- contents -->
