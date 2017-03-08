@@ -36,9 +36,6 @@
 #define DEFAULT_AMPLITUDE 127
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define TRIANGLE_INITIAL_PHASE (-0x40000000)
-
-// int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-1 (1..7 for AUDIO_BLOCK_SAMPLES == 128)
-// where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
 #define LFO_SMOOTHNESS 3
 #define LFO_PERIOD (AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1)))
 
@@ -106,7 +103,6 @@ public:
 	 * @return a frequency
 	 */
 	static float noteToFreq(int note) {
-		//440.0 * pow(2.0, (note - 69) / 12.0);
 		float exp = note * (1.0 / 12.0) + 3.0313597;
 		return powf(2.0, exp);
 	}

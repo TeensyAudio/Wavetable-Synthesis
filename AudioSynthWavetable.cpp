@@ -201,9 +201,6 @@ void AudioSynthWavetable::update(void) {
 			tone_incr_offset = multiply_accumulate_32x32_rshift32_rounded(tone_incr_offset, vib_scale, vib_pitch_offset);
 
 			tone_incr_offset += (int32_t(vib_scale>>15) * vib_pitch_offset) >> 15;
-
-			//int16_t vib_scale = (((vib_phase - 0x40000000) & 0x80000000) ? vib_phase : (0x7FFFFFFF - vib_phase)) >> 15;
-			//tone_incr_offset += (int32_t(vib_scale) * (vib_scale >= 0 ? vib_pitch_offset_init : vib_pitch_offset_scnd)) >> 15;
 		}
 
 		int32_t mod_amp = tone_amp;
@@ -213,7 +210,6 @@ void AudioSynthWavetable::update(void) {
 
 			int32_t mod_pitch_offset = mod_scale >= 0 ? mod_pitch_offset_init : mod_pitch_offset_scnd;
 			tone_incr_offset = multiply_accumulate_32x32_rshift32_rounded(tone_incr_offset, mod_scale, mod_pitch_offset);
-			//tone_incr_offset += (int32_t(mod_scale>>15) * mod_pitch_offset) >> 15;
 
 			int32_t mod_offset = (mod_scale >= 0 ? s->MODULATION_AMPLITUDE_INITIAL_GAIN : s->MODULATION_AMPLITUDE_SECOND_GAIN);
 			mod_scale = multiply_32x32_rshift32(mod_scale, mod_offset);
@@ -231,7 +227,6 @@ void AudioSynthWavetable::update(void) {
 			tone_phase += tone_incr + tone_incr_offset;
 			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
 			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-			//tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
@@ -245,7 +240,6 @@ void AudioSynthWavetable::update(void) {
 			tone_phase += tone_incr + tone_incr_offset;
 			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
 			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
-			//tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		}
 	}
 	); //end TIME_TEST

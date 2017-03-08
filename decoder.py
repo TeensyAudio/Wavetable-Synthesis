@@ -368,8 +368,6 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
 # Checks if the selected sample is valid. Input is a sample object, and output is
 # a tuple with (boolean, error_message - if any)
 def check_is_valid_sample(sample):
-    if sample.loop_duration >= sample.duration:
-        return False, 'Loop length >= sample length'
     if sample.end_loop > sample.duration:
         return False, 'End loop index is larger than sample end index'
     return True, None
@@ -411,28 +409,6 @@ def getKeyRanges(bags, keyRanges):
 
 def error(message):
     print("ERROR: " + message)
-
-
-# Copying functionality from wav2sketch.c
-# Currently unused
-def ulaw_encode(audio):
-    if audio >= 0:
-        mag = audio
-        neg = 0
-    else:
-        mag = audio * -1
-        neg = 0x80
-
-    mag += 128
-    if mag > 0x7FFF: mag = 0x7FFF
-    if mag >= 0x4000: return neg | 0x70 | ((mag >> 10) & 0x0F)  # 01wx yz00 0000 0000
-    if mag >= 0x2000: return neg | 0x60 | ((mag >> 9) & 0x0F)   # 001w xyz0 0000 0000
-    if mag >= 0x1000: return neg | 0x50 | ((mag >> 8) & 0x0F)   # 0001 wxyz 0000 0000
-    if mag >= 0x0800: return neg | 0x40 | ((mag >> 7) & 0x0F)   # 0000 1wxy z000 0000
-    if mag >= 0x0400: return neg | 0x30 | ((mag >> 6) & 0x0F)   # 0000 01wx yz00 0000
-    if mag >= 0x0200: return neg | 0x20 | ((mag >> 5) & 0x0F)   # 0000 001w xyz0 0000
-    if mag >= 0x0100: return neg | 0x10 | ((mag >> 4) & 0x0F)   # 0000 0001 wxyz 0000
-    return neg | 0x00 | ((mag >> 3) & 0x0F)   # 0000 0000 1wxy z000
 
 
 if __name__ == "__main__":

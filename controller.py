@@ -53,8 +53,6 @@ class MyController():
         idxs = _selection
         if len(idxs) == 1:
             self.model.setCurrInstrument(int(idxs[0]))
-            # self.model.update_samples()
-            #TODO set curr in view
             curr_inst = self.model.getCurrInstrument()
             self.view.setSampleList(curr_inst.samplesForDisplay())
         #reset size labels
@@ -94,9 +92,6 @@ class MyController():
             out_name = None
         elif out_name != default_name_check:
             pass
-
-        # TODO user supplied filepath after updating decoder.py
-        # 2/28/2017
 
         for samp in self.model.getCurrSamples():
             selected_bags.append(samp.bag_idx)
