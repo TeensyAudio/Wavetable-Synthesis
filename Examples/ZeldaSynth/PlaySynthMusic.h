@@ -69,4 +69,3 @@ print "\n};\n";
 
 // User must supply this score array
 extern unsigned char score[];
-extern unsigned char score1[];
