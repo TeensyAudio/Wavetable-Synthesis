@@ -4,7 +4,7 @@ var NAVTREE =
     [ "Wavetable-Synthesis", "index.html", null ],
     [ "Examples", "md_additional_pages_examples.html", null ],
     [ "Getting started", "md_additional_pages_getting_started.html", null ],
-    [ "SoundFont decoder", "md_additional_pages_soundfont_decoder.html", null ],
+    [ "soundfontDecoder", "md_additional_pages_soundfont_decoder.html", null ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
