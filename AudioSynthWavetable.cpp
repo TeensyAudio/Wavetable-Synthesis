@@ -3,7 +3,7 @@
 #include <SerialFlash.h>
 
 #define TIME_TEST_ON
-//#define ENVELOPE_DEBUG
+#define ENVELOPE_DEBUG
 
 #ifdef TIME_TEST_ON
 #define TIME_TEST(INTERVAL, CODE_BLOCK_TO_TEST) \
@@ -70,6 +70,7 @@ void AudioSynthWavetable::playFrequency(float freq, int amp) {
  * @param amp amplitude of generated output
  */
 void AudioSynthWavetable::playNote(int note, int amp) {
+	Serial.printf("note=%d\n", note);
 	setState(note, amp, noteToFreq(note));
 }
 

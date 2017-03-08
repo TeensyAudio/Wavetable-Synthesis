@@ -18,6 +18,8 @@
 
 #define ENVELOPE_PERIOD 8
 
+enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE };
+
 class AudioSynthWavetable : public AudioStream
 {
 public:
@@ -100,12 +102,12 @@ public:
 	void playNote(int note, int amp = DEFAULT_AMPLITUDE);
 	bool isPlaying(void) { return env_state != STATE_IDLE; }
 	virtual void update(void);
+	
+	envelopeStateEnum getEnvState(void) { return env_state; }
 
 private:
 	void setState(int note, int amp, float freq);
 	void setFrequency(float freq);
-
-	enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE };
 
 	volatile bool state_change = false;
 
