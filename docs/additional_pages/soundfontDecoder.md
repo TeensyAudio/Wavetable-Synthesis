@@ -1,19 +1,19 @@
 #SoundFont Decoder User-Guide
 
 ##Table Of Contents
-**[Table of Contents](#Table-Of-Contents)**
-**[1.0 About](#1.0-About)**
-**[2.0 Using the Decoder with the GUI](#2.0-Using-the-Decoder-with-the-GUI)**
-	*[2.1 GUI Layout](#2.1-GUI-Layout)*
-	*[2.2 Decoding a Sample](#2.2-Decoding-a-Sample)*
-**[3.0 Using the Decoder from the Command Line](#3.0-Using-the-Decoder-from-the-Command-Line)**
-	*[3.1 Decoding a Sample](#3.1-Decoding-a-Sample)*
-	*[3.2 Command Line Options](#3.2-Command-Line-Options)*
-**[4.0 Decoder Output](#4.0-Decoder-Output)**
-	*[4.1 .cpp file](#4.1-.cpp-file)*
-	*[4.2 .h file](#-.h-file)*
+- [Table of Contents](#table-of-contents)
+- [1-0 About](#1-0-about)
+- [2-0 Using the Decoder with the GUI](#2-0-using-the-decoder-with-the-gui)
+	* [2-1 GUI Layout](#2-1-gui-layout)
+	* [2-2 Decoding a Sample](#2-2-decoding-a-sample)
+- [3-0 Using the Decoder from the Command Line](#3-0-using-the-decoder-from-the-command-line)
+	* [3-1 Decoding a Sample](#3-1-decoding-a-sample)
+	* [3-2 Command Line Options](#3-2-command-line-options)
+- [4-0 Decoder Output](#4-0-decoder-output)
+	* [4-1 .cpp file](#4-1-cpp-file)
+	* [4-2 .h file](#4-2-h-file)
 
-## About
+##1-0 About
 This document is a user guide for the SF2 decoder created for the Wavetable Synthesis Capstone project at Portland State, Fall 2016 - Winter 2017. The decoder described in this document is meant to take SF2 files and translate them into a format that can be used with the AudioSynthWavetable library for use on the Teensy 3.2 and 3.6.
 
 Python3 is required for the decoder to operate properly.
@@ -24,8 +24,8 @@ https://github.com/ConnorReilly/Wavetable-Synthesis
 More information about the Teensy 3.2 and 3.6 can be found at:
 https://www.pjrc.com/teensy/index.html
 
-## 2.0 Using the Decoder with the GUI
-###2.1 GUI Layout
+##2-0 Using the Decoder with the GUI
+###2-1 GUI Layout
 The following section covers what each component of the GUI does.
 
 (Image of the GUI with numbers corresponding to descriptions needs to go here)
@@ -47,7 +47,7 @@ This window also displays a confirmation message and list of decoded samples whe
 
 8. Status Bar: The current status of the decoder is displayed here.
 
-###2.2 Decoding a Sample
+###2-2 Decoding a Sample
 This section gives a basic walk through of loading a `.sf2` file, selecting a sample and decoding it with the GUI.
 ####Step 1: Load .sf2 file into decoder
 (image)
@@ -67,8 +67,8 @@ Note that multiple samples can be selected if the `ctrl` button on the keyboard 
 
 At this point the decoded sample files (`.cpp` and `.h`) will be in the output directory and will be named after the selected instrument. By default this directory is the same that the decoder was launched from.
 
-##3.0 Using the Decoder from the Command Line
-###3.1 Decoding a Sample
+##3-0 Using the Decoder from the Command Line
+###3-1 Decoding a Sample
 This section gives a basic walk through of starting the decoder, loading an `.sf2` file, selecting a sample and decoding it from the command line.
 
 ####Step 1: Start the decoder & load `.sf2` file
@@ -118,15 +118,15 @@ Alternatively, the option to decode all samples could be chosen and a confirmati
 
 Following step 6 the decoded sample files (`.cpp` and `.h`) will be in the output directory and will be named after the selected instrument. By default this directory is the same that the decoder was launched from.
 
-###3.2 Command Line Options
+###3-2 Command Line Options
 There are 2 options available when running the decoder from the command line.
 `-i` is the input flag. This option is mandatory for proper operation of the decoder and must precede the name of the `.sf2` input file.
 `-d` is the debug flag. This should only be used when making changes to the decoder and debug info is needed.
-##4.0 Decoder Output
+##4-0 Decoder Output
 This sections gives a brief overview of what is found in the output files created by the decoder.
-###4.1 .cpp file
+###4-1 .cpp file
 This file contains a `sample_data` structure that contains metadata for each sample that was extracted from the `.sf2` file. Following the `sample_data` structure is all of the sample arrays holding the audio data. The samples in this file are organized by key range values in ascending order.
-###4.2 .h file
+###4-2 .h file
 This file contains `extern` declarations for all of the sample arrays in the `.cpp` file as well as a declaration for the structure that holds the metadata.
 
 This is the file that will be included using a `#include` statement in an Arduino sketch file so that the samples are available.
