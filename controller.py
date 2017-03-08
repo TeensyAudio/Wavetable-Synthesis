@@ -15,6 +15,7 @@ class MyController():
     #Input Handlers
     def inBrowseSelected(self):
         temp = filedialog.askopenfilename(filetypes=(("sf2 files", "*.sf2"), ("SF2 files", "*.SF2")))
+    #TODO catch filenotfound error
         self.model.setInFile(temp)
         self.view.setInFile(temp)
         self.model.loadSoundfont()
@@ -96,7 +97,7 @@ class MyController():
 def main():
     root = Tk()
     root.title('Teensy Soundfont Decoder')
-    root.geometry("650x650+450+100")  # height x width + horizontal_pos + vertical_pos
+    root.geometry("650x650+450+100")  # width x height + horizontal_pos + vertical_pos
     app = MyController(root)
     root.mainloop()
 

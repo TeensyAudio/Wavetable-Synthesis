@@ -96,38 +96,39 @@ class MyView(Frame):
         self.name_entry.grid(row=0, column=1, columnspan=2, sticky=E + W)
 
         self.lower_frame = JJ.JJFrame(self, 1, 2, 1, 1)
+        self.lower_frame.configurerows([(0,1), (1,0)])
         self.lower_frame.grid(column=0, row=1, columnspan=4, sticky=N + S + E + W, padx=1, pady=1)
 
         # Instruments
         self.inst_listbox = JJ.JJListBox(self.lower_frame, 'Instruments', self.i_names)
-        self.inst_listbox.grid(column=0, row=0, sticky=N + S + E + W, padx=5)
+        self.inst_listbox.grid(column=0, row=0, rowspan=2, sticky=N + S + E + W, padx=5)
 
         # Samples
         # TODO combine listboxes to simulate separate columns for key range
         self.samp_listbox = JJ.JJListBox(self.lower_frame, 'Samples', self.s_names)
         self.samp_listbox.grid(column=1, row=0, sticky=N + S + E + W, padx=5)
-        self.samp_listbox.rcconfigure([(0, 1), (1, 16), (2, 1)], [(0, 1)])
         self.samp_listbox.list_box.config(selectmode = EXTENDED)
-        self.samp_listbox.under_frame = JJ.JJFrame(self.samp_listbox, 1, 2, 1, 1)
-        self.samp_listbox.under_frame.grid(column=0, row=3)
-        self.samp_listbox.decode_button = Button(self.samp_listbox.under_frame, text='Decode', command=self.samplesSelected)
-        self.samp_listbox.decode_button.grid(row=0, column=0, padx=2, pady=2, sticky=N + E + W)
+        self.under_frame = JJ.JJFrame(self.lower_frame, 1, 1, 1, 1)
+        self.under_frame.grid(column=1, row=1, sticky=N + S + E + W)
+        self.decode_button = Button(self.under_frame, text='Decode', command=self.samplesSelected)
+        self.decode_button.grid(row=1, column=0, padx=2, pady=2)
         
         # Displays sample size, num selected and memory usage percentage for teensy
-        self.stats_frame = JJ.JJLabelFrame(self.samp_listbox.under_frame, 3, 2, 1, 1, text='Sample Stats')
-        self.stats_frame.grid(row=0, column=1, sticky=N + W + E, padx=2, pady=2)
+        #TODO put in different frame to fix listbox stretching
+        self.stats_frame = JJ.JJLabelFrame(self.under_frame, 3, 2, 1, 1, text='Sample Stats')
+        self.stats_frame.grid(row=0, column=0, sticky=N + E + W, padx=5, pady=0)
         self.stats_frame.num_selected_text_label = Label(self.stats_frame, text='Num Samples Selected:', anchor=E)
-        self.stats_frame.num_selected_text_label.grid(row=0, column=0, padx=2, pady=2, sticky=N + S + E)
-        self.stats_frame.num_selected_label = Label(self.stats_frame, textvariable=self.num_samples_selected, anchor=W, width=8)
-        self.stats_frame.num_selected_label.grid(row=0, column=1, padx=2, pady=2, sticky=N + S + W)
-        self.stats_frame.samp_size_text_label = Label(self.stats_frame, text='Size Selected (kb):', anchor=E)
-        self.stats_frame.samp_size_text_label.grid(row=1, column=0, padx=2, pady=2, sticky=N + S + E)
-        self.stats_frame.samp_size_label = Label(self.stats_frame, textvariable=self.total_sample_size, anchor=W, width=8)
-        self.stats_frame.samp_size_label.grid(row=1, column=1, padx=2, pady=2, sticky=N + S + W)
+        self.stats_frame.num_selected_text_label.grid(row=0, column=0, padx=2, pady=0, sticky=N + S + E)
+        self.stats_frame.num_selected_label = Label(self.stats_frame, textvariable=self.num_samples_selected, anchor=W)
+        self.stats_frame.num_selected_label.grid(row=0, column=1, padx=2, pady=0, sticky=N + S + W)
+        self.stats_frame.samp_size_text_label = Label(self.stats_frame, text='Size of Selections (kb):', anchor=E)
+        self.stats_frame.samp_size_text_label.grid(row=1, column=0, padx=2, pady=0, sticky=N + S + E)
+        self.stats_frame.samp_size_label = Label(self.stats_frame, textvariable=self.total_sample_size, anchor=W)
+        self.stats_frame.samp_size_label.grid(row=1, column=1, padx=2, pady=0, sticky=N + S + W)
         self.stats_frame.teensy_percent_text_label = Label(self.stats_frame, text='Est. Teensy Usage (%):', anchor=E)
-        self.stats_frame.teensy_percent_text_label.grid(row=2, column=0, padx=2, pady=2, sticky=N + S + E)
-        self.stats_frame.teensy_percent_label = Label(self.stats_frame, textvariable=self.teensy_percent_used, anchor=W, width=8)
-        self.stats_frame.teensy_percent_label.grid(row=2, column=1, padx=2, pady=2, sticky=N + S + W)
+        self.stats_frame.teensy_percent_text_label.grid(row=2, column=0, padx=2, pady=0, sticky=N + S + E)
+        self.stats_frame.teensy_percent_label = Label(self.stats_frame, textvariable=self.teensy_percent_used, anchor=W)
+        self.stats_frame.teensy_percent_label.grid(row=2, column=1, padx=2, pady=0, sticky=N + S + W)
 
         # Status bar at bottom
         self.status_bar = JJ.JJStatusBar(self, 'Load a Soundfont')
