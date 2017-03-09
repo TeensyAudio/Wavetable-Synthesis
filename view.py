@@ -130,10 +130,12 @@ class MyView(Frame):
         self.inst_listbox.grid(column=0, row=0, rowspan=2, sticky=N + S + E + W, padx=5)
 
         # Samples
-        # TODO combine listboxes to simulate separate columns for key range
         self.samp_listbox = pjrc.JJListBox(self.lower_frame, 'Samples', self.s_names)
         self.samp_listbox.grid(column=1, row=0, sticky=N + S + E + W, padx=5)
         self.samp_listbox.list_box.config(selectmode = EXTENDED)
+        # self.samp_listbox.list_box.config(selectmode=MULTIPLE) FOR CHECKBOX STYLE SELECTION
+
+
         self.under_frame = pjrc.JJFrame(self.lower_frame, 1, 1, 1, 1)
         self.under_frame.grid(column=1, row=1, sticky=N + S + E + W)
         self.decode_button = Button(self.under_frame, text='Decode', command=self.samplesSelected)
@@ -167,26 +169,31 @@ class MyView(Frame):
 
     # controller callback helpers
     def instSelected(self, *args):
+        self.samp_listbox.list_box.config(state=NORMAL)
         self.controller.instrumentSelected(self.inst_listbox.getCurrSelection())
     def sampleSelected(self, *args):
         self.controller.sampleSelected(self.samp_listbox.getCurrSelection())
+    def samplesSelected(self, *args):
+        self.samp_listbox.list_box.config(state=DISABLED)
+        self.controller.decode(self.samp_listbox.getCurrSelection())
     def teensyButtonSelect(self, value):
         if value == 1:
             self.controller.setTeensyMemSize(250) #teensy 3.2 size in kb
         if value == 2:
             self.controller.setTeensyMemSize(1048) #teensy 3.6 size in kb
 
-    def samplesSelected(self, *args):
-        self.controller.decode(self.samp_listbox.getCurrSelection())
-
 
     #Getters and setters for the control variables.
     def setInstrumentList(self, _newInstruments):
         self.i_names.set(_newInstruments)
+        for i in range(0, len(self.i_names.get()), 2):
+            self.inst_listbox.list_box.itemconfigure(i, background='#f0f0ff')
     def getInstrumentList(self):
         return self.i_names.get()
     def setSampleList(self, _newSamples):
         self.s_names.set(_newSamples)
+        for i in range(0, len(self.s_names.get()), 2):
+            self.samp_listbox.list_box.itemconfigure(i, background='#f0f0ff')
     def getSampleList(self):
         return self.s_names.get()
     def setInFile(self, _newFile):

@@ -25,7 +25,7 @@
 #
 
 from tkinter import *
-from tkinter import Tk, filedialog
+from tkinter import Tk, filedialog, messagebox
 import view
 import model
 import decoder
@@ -47,17 +47,19 @@ class MyController():
     def outBrowseSelected(self):
         self.model.setOutDir(filedialog.askdirectory())
         self.view.setOutDirectory(self.model.out_dir)
+
     def instrumentSelected(self, _selection):
         idxs = _selection
         if len(idxs) == 1:
             self.model.setCurrInstrument(int(idxs[0]))
             curr_inst = self.model.getCurrInstrument()
+            self.view.setStatus('Select Sample(s) for Decode')
+            # reset size labels
+            self.view.setTotalSampleSize(0)
+            self.view.setNumSelected(0)
+            self.view.setTeensyPercent(0.0)
+            self.model.setTotalSampleSize([])
             self.view.setSampleList(curr_inst.samplesForDisplay())
-        #reset size labels
-        self.view.setTotalSampleSize(0)
-        self.view.setNumSelected(0)
-        self.view.setTeensyPercent(0.0)
-        self.model.setTotalSampleSize([])
 
     def sampleSelected(self, _selection):
         idxs = _selection
@@ -104,8 +106,11 @@ class MyController():
         decoded_samples = ['Decoded sample(s):']
         for samp in self.model.getCurrSamples():
             decoded_samples.append(str(samp.getName()) + str(samp.getKeyRange()))
+
         self.view.setSampleList(decoded_samples)
 
+    def showError(self, _message):
+        messagebox.showerror(_message)
 # Model update responses
 
     # delegates -- add functions called by delegtes in model or view
