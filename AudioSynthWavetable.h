@@ -4,164 +4,135 @@
 #include "AudioStream.h"
 #include <math.h>
 #include <sample_data.h>
+#include <stdint.h>
 
-#define MAX_MS 11000.0      // Max section length (milliseconds)
-#define UNITY_GAIN 65536.0  // Max amplitude
+#define UNITY_GAIN INT32_MAX // Max amplitude
+#define DEFAULT_AMPLITUDE 127
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
-#define AMP_DEF 69
+#define TRIANGLE_INITIAL_PHASE (-0x40000000)
+
+// int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-1 (1..7 for AUDIO_BLOCK_SAMPLES == 128)
+// where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
+#define LFO_SMOOTHNESS 3
+#define LFO_PERIOD (AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1)))
+
+#define ENVELOPE_PERIOD 8
 
 class AudioSynthWavetable : public AudioStream
 {
 public:
+	/**
+	 * Class constructor.
+	 */
 	AudioSynthWavetable(void) : AudioStream(0, NULL) {}
 
-	void setSamples(const sample_data * samples, int num_samples);
-	void setLoop(int start, int end) {
-		loop_start = start;
-		loop_end = end;
-		loop_length = loop_end - loop_start;
-		
-		length_bits = 1;
-		for (int len = loop_length; len >>= 1; ++length_bits);
-		loop_phase = (loop_length - 1) << (32 - length_bits);
-	}
-	
-	void play(void);
-	void playFrequency(float freq, bool custom_env=0);
-	void playNote(int note, int amp=AMP_DEF, bool custom_env=0);
-	void stop(void);
-	bool isPlaying(void);
-	void frequency(float freq);
-	void parseSample(int sample_num, bool custom_env);
-	
-	void setFreqAmp(float freq, float amp) {
-		frequency(freq);
-		amplitude(amp);
-	}
-	
-	void setSampleNote(int note) {
-		sample_freq = noteToFreq(note);
+	/**
+	 * @brief Set the instrument_data struct to be used as the playback instrument.
+	 *
+	 * A wavetable uses a set of samples to generate sound.
+	 * This function is used to set the instrument samples.
+	 * @param instrument a struct of type instrument_data, commonly prodced from a 
+	 * decoded SoundFont file using the SoundFont Decoder Script which accompanies this library.
+	 */
+	void setInstrument(const instrument_data& instrument) {
+		cli();
+		this->instrument = &instrument;
+		current_sample = NULL;
+		env_state = STATE_IDLE;
+		state_change = true;
+		sei();
 	}
 
+	/**
+	 * @brief Changes the amplitude to 'v'
+	 *
+	 * A value of 0 will set the synth output to minimum amplitude
+	 * (i.e., no output). A value of 1 will set the output to the
+	 * maximum amplitude. Amplitude is set linearly with intermediate
+	 * values.
+	 * @param v a value between 0.0 and 1.0
+	 */
 	void amplitude(float v) {
 		v = (v < 0.0) ? 0.0 : (v > 1.0) ? 1.0 : v;
-		tone_amp = (uint16_t)(32767.0*v);
+		tone_amp = (uint16_t)(UINT16_MAX*v);
 	}
 
-	float midi_volume_transform(int midi_amp) {
-		// 4 approximates a logarithmic taper for the volume
-		// however, we might need to play with this value
-		// if people think the volume is too quiet at low
-		// input amplitudes
-		int logarithmicness = 4;
-
+	/**
+	 * @brief Scale midi_amp to a value between 0.0 and 1.0
+	 * using a logarithmic tranformation.
+	 *
+	 * @param midi_amp a value between 0 and 127
+	 * @return a value between 0.0 to 1.0
+	 */
+	static float midi_volume_transform(int midi_amp) {
 		// scale midi_amp which is 0 t0 127 to be between
 		// 0 and 1 using a logarithmic transformation
-		return (float)pow(midi_amp, logarithmicness) / (float)pow(127, logarithmicness);
+		return powf(midi_amp / 127.0, 4);
 	}
-	
+
+	/**
+	 * @brief Convert a MIDI note value to
+	 * its corresponding frequency.
+	 *
+	 * @param note a value between 0 and 127
+	 * @return a frequency
+	 */
 	static float noteToFreq(int note) {
-		//return 440.0 * pow(2.0, (note - 69) / 12.0);
-		//float exp = (note + 36.37631656) / 12.0;
-		float exp = note * 0.083333333 + 3.0313597;
-		float freq = pow(2, exp);
-		return freq;
+		//440.0 * pow(2.0, (note - 69) / 12.0);
+		float exp = note * (1.0 / 12.0) + 3.0313597;
+		return powf(2.0, exp);
 	}
-	
-	void env_delay(float milliseconds) {
-		delay_count = milliseconds2count(milliseconds);
+
+	/**
+	 * @brief Convert a frequency to the corressponding
+	 * MIDI note value.
+	 *
+	 * @param freq the frequency value as a float to convert
+	 * @return a MIDI note (between 0 - 127)
+	 */
+	static int freqToNote(float freq) {
+		return (12.0 / 440.0) * log2f(freq) + 69.5;
 	}
-	void env_attack(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 1.5;
-		}
-		attack_count = milliseconds2count(milliseconds);
-	}
-	void env_hold(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 0.5;
-		}
-		hold_count = milliseconds2count(milliseconds);
-	}
-	void env_decay(float milliseconds) {
-		if (milliseconds <= 0) {
-			milliseconds = 100;
-		}
-		decay_count = milliseconds2count(milliseconds);
-	}
-	void env_sustain(float level) {
-		if (level < 0.0) level = 0;
-		else if (level > 1.0) level = 1.0;
-		sustain_mult = level * UNITY_GAIN;
-	}
-	void env_release(float milliseconds) {
-		release_count = milliseconds2count(milliseconds);
-	}
-	
+
+	// Defined in AudioSynthWavetable.cpp
+	void stop(void);
+	void playFrequency(float freq, int amp = DEFAULT_AMPLITUDE);
+	void playNote(int note, int amp = DEFAULT_AMPLITUDE);
+	bool isPlaying(void) { return env_state != STATE_IDLE; }
 	virtual void update(void);
 
-	static void print_performance();
-
 private:
+	void setState(int note, int amp, float freq);
+	void setFrequency(float freq);
 
-	enum envelopeStateEnum { 
-		STATE_IDLE,
-		STATE_DELAY,
-		STATE_ATTACK,
-		STATE_HOLD,
-		STATE_DECAY,
-		STATE_SUSTAIN,
-		STATE_RELEASE
-	};
+	enum envelopeStateEnum { STATE_IDLE, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE };
 
-	uint16_t milliseconds2count(float milliseconds) {
-		if (milliseconds < 0.0) milliseconds = 0.0;
-		if (milliseconds > MAX_MS) milliseconds = MAX_MS;
-		// # of 8-sample units to process
-		// Add 7 to round up
-		return ((uint32_t)(milliseconds*SAMPLES_PER_MSEC)+7)>>3;
-	}
-	//int32_t signed_multiply_32x16b(int32_t a, uint32_t b) {
-	//	return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
-	//}
-	//int32_t signed_multiply_32x16t(int32_t a, uint32_t b) {
-	//	return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
-	//}
-	//uint32_t pack_16b_16b(int32_t a, int32_t b) {
-	//	return (a << 16) | (b & 0x0000FFFF);
-	//}
+	volatile bool state_change = false;
 
-	uint32_t* waveform = NULL;
-	const sample_data * samples = NULL;
-	int length = 0, length_bits = 0, loop_start = 0, loop_end = 0, loop_length = 0;
-	float sample_freq = 440.0, cents_offset = 1.0;
-	uint8_t playing = 0, num_samples = 0;
-	uint32_t tone_phase = 0, loop_phase = 0, loop_start_phase = 0, loop_end_phase = 0;
-	uint32_t max_phase = 0;
-	uint32_t tone_incr = 0;
-	uint16_t tone_amp = 0, sample_rate = 0;
-    
-	// state
-	envelopeStateEnum  envelopeState = STATE_IDLE;  // idle, delay, attack, hold, decay, sustain, release
-	uint16_t count = 0;  // how much time remains in this state, in 8 sample units
-	float    mult = 0;   // attenuation, 0=off, 0x10000=unity gain
-	float    inc = 0;    // amount to change mult on each sample
-	// settings
-	uint16_t delay_count = 0;
-	uint16_t attack_count = 0;
-	uint16_t hold_count = 0;
-	uint16_t decay_count = 0;
-	int32_t  sustain_mult = 0;
-	uint16_t release_count = 0;
+	volatile const instrument_data* instrument = NULL;
+	volatile const sample_data* current_sample = NULL;
 
-	static uint32_t
-		interpolation_update,
-		envelope_update,
-		total_update,
-		total_parseSample,
-		total_playFrequency,
-		total_frequency,
-		total_playNote,
-		total_amplitude;
+	//sample output state
+	volatile uint32_t tone_phase = 0;
+	volatile uint32_t tone_incr = 0;
+	volatile uint16_t tone_amp = 0;
+
+	//volume environment state
+	volatile envelopeStateEnum  env_state = STATE_IDLE;
+	volatile int32_t env_count = 0;
+	volatile int32_t env_mult = 0;
+	volatile int32_t env_incr = 0;
+
+	//vibrato LFO state
+	volatile uint32_t vib_count = 0;
+	volatile uint32_t vib_phase = 0;
+	volatile int32_t vib_pitch_offset_init = 0;
+	volatile int32_t vib_pitch_offset_scnd = 0;
+
+	//modulation LFO state
+	volatile uint32_t mod_count = 0;
+	volatile uint32_t mod_phase = TRIANGLE_INITIAL_PHASE;
+	volatile int32_t mod_pitch_offset_init = 0;
+	volatile int32_t mod_pitch_offset_scnd = 0;
 };
 
