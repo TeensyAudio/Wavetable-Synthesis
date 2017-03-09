@@ -111,63 +111,26 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a0cfb82eece9fd307f7d4f3a24cdca547">AudioSynthWavetable</a> (void)</td></tr>
 <tr class="memdesc:a0cfb82eece9fd307f7d4f3a24cdca547"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class constructor. <br /></td></tr>
 <tr class="separator:a0cfb82eece9fd307f7d4f3a24cdca547"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac428f10e355aecaaa0282ad8785424d3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#ac428f10e355aecaaa0282ad8785424d3">setSamples</a> (const sample_data *samples, int num_samples)</td></tr>
-<tr class="memdesc:ac428f10e355aecaaa0282ad8785424d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the wavetable samples.  <a href="#ac428f10e355aecaaa0282ad8785424d3">More...</a><br /></td></tr>
-<tr class="separator:ac428f10e355aecaaa0282ad8785424d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36fbe1f736eb7d9a9e5fe5c1acddef99"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a36fbe1f736eb7d9a9e5fe5c1acddef99">setLoop</a> (int start, int end)</td></tr>
-<tr class="memdesc:a36fbe1f736eb7d9a9e5fe5c1acddef99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the loop start to and end points.  <a href="#a36fbe1f736eb7d9a9e5fe5c1acddef99">More...</a><br /></td></tr>
-<tr class="separator:a36fbe1f736eb7d9a9e5fe5c1acddef99"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac5f2293fcc4eb37e727b704ee7a63b0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#aac5f2293fcc4eb37e727b704ee7a63b0">setFreqAmp</a> (float freq, float amp)</td></tr>
-<tr class="memdesc:aac5f2293fcc4eb37e727b704ee7a63b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the frequency and amplitude of the Wavetable.  <a href="#aac5f2293fcc4eb37e727b704ee7a63b0">More...</a><br /></td></tr>
-<tr class="separator:aac5f2293fcc4eb37e727b704ee7a63b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0022ffce9565f08a7b1a3af7cd8f017a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a0022ffce9565f08a7b1a3af7cd8f017a">setSampleNote</a> (int note)</td></tr>
-<tr class="memdesc:a0022ffce9565f08a7b1a3af7cd8f017a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define the note of the sample.  <a href="#a0022ffce9565f08a7b1a3af7cd8f017a">More...</a><br /></td></tr>
-<tr class="separator:a0022ffce9565f08a7b1a3af7cd8f017a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca90211dbcfa25332cffe3496ff62e51"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#aca90211dbcfa25332cffe3496ff62e51">setInstrument</a> (const instrument_data &amp;instrument)</td></tr>
+<tr class="memdesc:aca90211dbcfa25332cffe3496ff62e51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the instrument_data struct to be used as the playback instrument.  <a href="#aca90211dbcfa25332cffe3496ff62e51">More...</a><br /></td></tr>
+<tr class="separator:aca90211dbcfa25332cffe3496ff62e51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6621dec194472cd178c4c7b557a1d9e0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a6621dec194472cd178c4c7b557a1d9e0">amplitude</a> (float v)</td></tr>
 <tr class="memdesc:a6621dec194472cd178c4c7b557a1d9e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Changes the amplitude to 'v'.  <a href="#a6621dec194472cd178c4c7b557a1d9e0">More...</a><br /></td></tr>
 <tr class="separator:a6621dec194472cd178c4c7b557a1d9e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9be61667f0c8a5b1bdf4bd261b6860e0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a9be61667f0c8a5b1bdf4bd261b6860e0">env_delay</a> (float milliseconds)</td></tr>
-<tr class="memdesc:a9be61667f0c8a5b1bdf4bd261b6860e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the delay time.  <a href="#a9be61667f0c8a5b1bdf4bd261b6860e0">More...</a><br /></td></tr>
-<tr class="separator:a9be61667f0c8a5b1bdf4bd261b6860e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a037bea5bb495edc086d8b79bf83db16f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a037bea5bb495edc086d8b79bf83db16f">env_attack</a> (float milliseconds)</td></tr>
-<tr class="memdesc:a037bea5bb495edc086d8b79bf83db16f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the attack time.  <a href="#a037bea5bb495edc086d8b79bf83db16f">More...</a><br /></td></tr>
-<tr class="separator:a037bea5bb495edc086d8b79bf83db16f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a126b041c14df4d031fc8faa3dbd2ba50"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a126b041c14df4d031fc8faa3dbd2ba50">env_hold</a> (float milliseconds)</td></tr>
-<tr class="memdesc:a126b041c14df4d031fc8faa3dbd2ba50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the hold time.  <a href="#a126b041c14df4d031fc8faa3dbd2ba50">More...</a><br /></td></tr>
-<tr class="separator:a126b041c14df4d031fc8faa3dbd2ba50"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a310e7c74f70bfd2c43ae0bd2f875e23b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a310e7c74f70bfd2c43ae0bd2f875e23b">env_decay</a> (float milliseconds)</td></tr>
-<tr class="memdesc:a310e7c74f70bfd2c43ae0bd2f875e23b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the decay time.  <a href="#a310e7c74f70bfd2c43ae0bd2f875e23b">More...</a><br /></td></tr>
-<tr class="separator:a310e7c74f70bfd2c43ae0bd2f875e23b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ad4caafe0ddd548005d99272c250b22"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a0ad4caafe0ddd548005d99272c250b22">env_sustain</a> (float level)</td></tr>
-<tr class="memdesc:a0ad4caafe0ddd548005d99272c250b22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the sustain level.  <a href="#a0ad4caafe0ddd548005d99272c250b22">More...</a><br /></td></tr>
-<tr class="separator:a0ad4caafe0ddd548005d99272c250b22"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0aaef84c08f2462c5b439647e5df5951"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a0aaef84c08f2462c5b439647e5df5951">env_release</a> (float milliseconds)</td></tr>
-<tr class="memdesc:a0aaef84c08f2462c5b439647e5df5951"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the release time.  <a href="#a0aaef84c08f2462c5b439647e5df5951">More...</a><br /></td></tr>
-<tr class="separator:a0aaef84c08f2462c5b439647e5df5951"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a394a93a1f34c956ca47c297936ada42a"><td class="memItemLeft" align="right" valign="top"><a id="a394a93a1f34c956ca47c297936ada42a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a394a93a1f34c956ca47c297936ada42a">play</a> (void)</td></tr>
-<tr class="memdesc:a394a93a1f34c956ca47c297936ada42a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Begin playing a waveform. <br /></td></tr>
-<tr class="separator:a394a93a1f34c956ca47c297936ada42a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36bbb6732768963bea068e9a24e95675"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a36bbb6732768963bea068e9a24e95675">stop</a> (void)</td></tr>
 <tr class="memdesc:a36bbb6732768963bea068e9a24e95675"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop playing waveform.  <a href="#a36bbb6732768963bea068e9a24e95675">More...</a><br /></td></tr>
 <tr class="separator:a36bbb6732768963bea068e9a24e95675"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4256be18a7e3f75bd3d30a00038070b2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a4256be18a7e3f75bd3d30a00038070b2">parseSample</a> (int sample_num, bool custom_env)</td></tr>
-<tr class="memdesc:a4256be18a7e3f75bd3d30a00038070b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse the sample specified by the index sample_num.  <a href="#a4256be18a7e3f75bd3d30a00038070b2">More...</a><br /></td></tr>
-<tr class="separator:a4256be18a7e3f75bd3d30a00038070b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a19340743194c7f1ba8d9ae708e9aa81c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a19340743194c7f1ba8d9ae708e9aa81c">playFrequency</a> (float freq, bool custom_env=0)</td></tr>
-<tr class="memdesc:a19340743194c7f1ba8d9ae708e9aa81c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Play waveform at defined frequency.  <a href="#a19340743194c7f1ba8d9ae708e9aa81c">More...</a><br /></td></tr>
-<tr class="separator:a19340743194c7f1ba8d9ae708e9aa81c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aece96de13ca5aa28f8a71bac0f362ae1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#aece96de13ca5aa28f8a71bac0f362ae1">playNote</a> (int note, int amp=AMP_DEF, bool custom_env=0)</td></tr>
-<tr class="memdesc:aece96de13ca5aa28f8a71bac0f362ae1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Play sample at specified note, amplitude.  <a href="#aece96de13ca5aa28f8a71bac0f362ae1">More...</a><br /></td></tr>
-<tr class="separator:aece96de13ca5aa28f8a71bac0f362ae1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa33de2bae93c9690001c88568fba9867"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#aa33de2bae93c9690001c88568fba9867">isPlaying</a> (void)</td></tr>
+<tr class="memitem:a60adfe8dacbf241920beee4bc7b734d7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a60adfe8dacbf241920beee4bc7b734d7">playFrequency</a> (float freq, int amp=DEFAULT_AMPLITUDE)</td></tr>
+<tr class="memdesc:a60adfe8dacbf241920beee4bc7b734d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Play waveform at defined frequency, amplitude.  <a href="#a60adfe8dacbf241920beee4bc7b734d7">More...</a><br /></td></tr>
+<tr class="separator:a60adfe8dacbf241920beee4bc7b734d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef3c33ce91c2b0626a319730abf205c6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#aef3c33ce91c2b0626a319730abf205c6">playNote</a> (int note, int amp=DEFAULT_AMPLITUDE)</td></tr>
+<tr class="memdesc:aef3c33ce91c2b0626a319730abf205c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Play sample at specified note, amplitude.  <a href="#aef3c33ce91c2b0626a319730abf205c6">More...</a><br /></td></tr>
+<tr class="separator:aef3c33ce91c2b0626a319730abf205c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa33de2bae93c9690001c88568fba9867"><td class="memItemLeft" align="right" valign="top"><a id="aa33de2bae93c9690001c88568fba9867"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isPlaying</b> (void)</td></tr>
 <tr class="separator:aa33de2bae93c9690001c88568fba9867"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afbee0a23666cdaaeb2121e5bdb8136d3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#afbee0a23666cdaaeb2121e5bdb8136d3">frequency</a> (float freq)</td></tr>
-<tr class="memdesc:afbee0a23666cdaaeb2121e5bdb8136d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change the frequency of the waveform to the defined freq.  <a href="#afbee0a23666cdaaeb2121e5bdb8136d3">More...</a><br /></td></tr>
-<tr class="separator:afbee0a23666cdaaeb2121e5bdb8136d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88156c1f4c995435ca36f081cbdddf59"><td class="memItemLeft" align="right" valign="top"><a id="a88156c1f4c995435ca36f081cbdddf59"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a88156c1f4c995435ca36f081cbdddf59">update</a> (void)</td></tr>
-<tr class="memdesc:a88156c1f4c995435ca36f081cbdddf59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Manages all the <a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> objects. <br /></td></tr>
+<tr class="memitem:a88156c1f4c995435ca36f081cbdddf59"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a88156c1f4c995435ca36f081cbdddf59">update</a> (void)</td></tr>
+<tr class="memdesc:a88156c1f4c995435ca36f081cbdddf59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called by the AudioStream library to fill the audio output buffer.  <a href="#a88156c1f4c995435ca36f081cbdddf59">More...</a><br /></td></tr>
 <tr class="separator:a88156c1f4c995435ca36f081cbdddf59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2cbb11c7ef32313b74ba59b1c0465e20"><td class="memItemLeft" align="right" valign="top"><a id="a2cbb11c7ef32313b74ba59b1c0465e20"></a>
 envelopeStateEnum&#160;</td><td class="memItemRight" valign="bottom"><b>getEnvState</b> (void)</td></tr>
@@ -181,9 +144,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:acd387a0d7e1ccfe215f5a4991189a34b"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#acd387a0d7e1ccfe215f5a4991189a34b">noteToFreq</a> (int note)</td></tr>
 <tr class="memdesc:acd387a0d7e1ccfe215f5a4991189a34b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a MIDI note value to its corresponding frequency.  <a href="#acd387a0d7e1ccfe215f5a4991189a34b">More...</a><br /></td></tr>
 <tr class="separator:acd387a0d7e1ccfe215f5a4991189a34b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a6325bbdcbc8b00093367a5398b73ef"><td class="memItemLeft" align="right" valign="top"><a id="a9a6325bbdcbc8b00093367a5398b73ef"></a>
-static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performance</b> (void)</td></tr>
-<tr class="separator:a9a6325bbdcbc8b00093367a5398b73ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7973aa8040f2ed59f865e8f56d11d88e"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_audio_synth_wavetable.html#a7973aa8040f2ed59f865e8f56d11d88e">freqToNote</a> (float freq)</td></tr>
+<tr class="memdesc:a7973aa8040f2ed59f865e8f56d11d88e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a frequency to the corressponding MIDI note value.  <a href="#a7973aa8040f2ed59f865e8f56d11d88e">More...</a><br /></td></tr>
+<tr class="separator:a7973aa8040f2ed59f865e8f56d11d88e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a6621dec194472cd178c4c7b557a1d9e0"></a>
@@ -220,8 +183,8 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
 
 </div>
 </div>
-<a id="a037bea5bb495edc086d8b79bf83db16f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a037bea5bb495edc086d8b79bf83db16f">&#9670;&nbsp;</a></span>env_attack()</h2>
+<a id="a7973aa8040f2ed59f865e8f56d11d88e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7973aa8040f2ed59f865e8f56d11d88e">&#9670;&nbsp;</a></span>freqToNote()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -230,250 +193,28 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void AudioSynthWavetable::env_attack </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>milliseconds</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the attack time. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">milliseconds</td><td>length of the attack time </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a310e7c74f70bfd2c43ae0bd2f875e23b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a310e7c74f70bfd2c43ae0bd2f875e23b">&#9670;&nbsp;</a></span>env_decay()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::env_decay </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>milliseconds</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the decay time. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">milliseconds</td><td>the length of the decay time </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a9be61667f0c8a5b1bdf4bd261b6860e0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9be61667f0c8a5b1bdf4bd261b6860e0">&#9670;&nbsp;</a></span>env_delay()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::env_delay </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>milliseconds</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the delay time. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">milliseconds</td><td>length of delay (in milliseconds) </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a126b041c14df4d031fc8faa3dbd2ba50"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a126b041c14df4d031fc8faa3dbd2ba50">&#9670;&nbsp;</a></span>env_hold()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::env_hold </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>milliseconds</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the hold time. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">milliseconds</td><td>the length of the hold time </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a0aaef84c08f2462c5b439647e5df5951"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0aaef84c08f2462c5b439647e5df5951">&#9670;&nbsp;</a></span>env_release()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::env_release </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>milliseconds</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the release time. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">milliseconds</td><td>the length of the release time </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a0ad4caafe0ddd548005d99272c250b22"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0ad4caafe0ddd548005d99272c250b22">&#9670;&nbsp;</a></span>env_sustain()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::env_sustain </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>level</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the sustain level. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">level</td><td>a value between 0.0 and 1.0 </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="afbee0a23666cdaaeb2121e5bdb8136d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afbee0a23666cdaaeb2121e5bdb8136d3">&#9670;&nbsp;</a></span>frequency()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::frequency </td>
+          <td class="memname">static int AudioSynthWavetable::freqToNote </td>
           <td>(</td>
           <td class="paramtype">float&#160;</td>
           <td class="paramname"><em>freq</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
-</div><div class="memdoc">
-
-<p>Change the frequency of the waveform to the defined freq. </p>
-<p>If the frequency is zero sample generation is stopped. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">freq</td><td>frequency of the generated output (between 0 and the board-specific sample rate) </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="aa33de2bae93c9690001c88568fba9867"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa33de2bae93c9690001c88568fba9867">&#9670;&nbsp;</a></span>isPlaying()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool AudioSynthWavetable::isPlaying </td>
-          <td>(</td>
-          <td class="paramtype">void&#160;</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true (non-zero) if playing, otherwise false (zero) if not playing. </dd></dl>
+
+<p>Convert a frequency to the corressponding MIDI note value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">freq</td><td>the frequency value as a float to convert </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a MIDI note (between 0 - 127) </dd></dl>
 
 </div>
 </div>
@@ -547,45 +288,8 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
 
 </div>
 </div>
-<a id="a4256be18a7e3f75bd3d30a00038070b2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4256be18a7e3f75bd3d30a00038070b2">&#9670;&nbsp;</a></span>parseSample()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::parseSample </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>sample_num</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>custom_env</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Parse the sample specified by the index sample_num. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">sample_num</td><td>an index within the sample array </td></tr>
-    <tr><td class="paramname">custom_env</td><td>a value of 1 means a custom envelope is set; the default value is 0 (no custom envelope) </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a19340743194c7f1ba8d9ae708e9aa81c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a19340743194c7f1ba8d9ae708e9aa81c">&#9670;&nbsp;</a></span>playFrequency()</h2>
+<a id="a60adfe8dacbf241920beee4bc7b734d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60adfe8dacbf241920beee4bc7b734d7">&#9670;&nbsp;</a></span>playFrequency()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -599,8 +303,8 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>custom_env</em> = <code>0</code>&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>amp</em> = <code>DEFAULT_AMPLITUDE</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -610,19 +314,19 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
       </table>
 </div><div class="memdoc">
 
-<p>Play waveform at defined frequency. </p>
+<p>Play waveform at defined frequency, amplitude. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">freq</td><td>freqency of the generated output (between 0 and the board-specific sample rate) </td></tr>
-    <tr><td class="paramname">custom_env</td><td>a value of 1 means a custom envelope is set; the default value is 0 (no custom envelope) </td></tr>
+    <tr><td class="paramname">amp</td><td>the amplitude level at which playback should occur </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="aece96de13ca5aa28f8a71bac0f362ae1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aece96de13ca5aa28f8a71bac0f362ae1">&#9670;&nbsp;</a></span>playNote()</h2>
+<a id="aef3c33ce91c2b0626a319730abf205c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef3c33ce91c2b0626a319730abf205c6">&#9670;&nbsp;</a></span>playNote()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -637,13 +341,7 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>amp</em> = <code>AMP_DEF</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>custom_env</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>amp</em> = <code>DEFAULT_AMPLITUDE</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -658,15 +356,14 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
   <table class="params">
     <tr><td class="paramname">note</td><td>the midi note number (a value between 0 and 127) </td></tr>
     <tr><td class="paramname">amp</td><td>amplitude of generated output </td></tr>
-    <tr><td class="paramname">custom_env</td><td>a value of 1 means a custom envelope is set and a value is 0 means no custom envelope </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="aac5f2293fcc4eb37e727b704ee7a63b0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aac5f2293fcc4eb37e727b704ee7a63b0">&#9670;&nbsp;</a></span>setFreqAmp()</h2>
+<a id="aca90211dbcfa25332cffe3496ff62e51"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca90211dbcfa25332cffe3496ff62e51">&#9670;&nbsp;</a></span>setInstrument()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -675,100 +372,10 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void AudioSynthWavetable::setFreqAmp </td>
+          <td class="memname">void AudioSynthWavetable::setInstrument </td>
           <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>freq</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>amp</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the frequency and amplitude of the Wavetable. </p>
-<p>You can use this to set the frequency and amplitude before calling <a class="el" href="class_audio_synth_wavetable.html#a394a93a1f34c956ca47c297936ada42a" title="Begin playing a waveform. ">play()</a>. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">freq</td><td>frequency of the generated output (between 0 and the board-specific sample rate) </td></tr>
-    <tr><td class="paramname">amp</td><td>amplitude of generated output </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a36fbe1f736eb7d9a9e5fe5c1acddef99"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a36fbe1f736eb7d9a9e5fe5c1acddef99">&#9670;&nbsp;</a></span>setLoop()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::setLoop </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>start</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>end</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the loop start to and end points. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">start</td><td>index within the sample array representing the start of the loop </td></tr>
-    <tr><td class="paramname">end</td><td>index within the sample array representing the end of the loop </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a0022ffce9565f08a7b1a3af7cd8f017a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0022ffce9565f08a7b1a3af7cd8f017a">&#9670;&nbsp;</a></span>setSampleNote()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::setSampleNote </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>note</em></td><td>)</td>
+          <td class="paramtype">const instrument_data &amp;&#160;</td>
+          <td class="paramname"><em>instrument</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -779,55 +386,10 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
 </table>
 </div><div class="memdoc">
 
-<p>Define the note of the sample. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Set the instrument_data struct to be used as the playback instrument. </p>
+<p>A wavetable uses a set of samples to generate sound. This function is used to set the instrument samples. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">note</td><td>the midi note number a value between 0 and 127 </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ac428f10e355aecaaa0282ad8785424d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac428f10e355aecaaa0282ad8785424d3">&#9670;&nbsp;</a></span>setSamples()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void AudioSynthWavetable::setSamples </td>
-          <td>(</td>
-          <td class="paramtype">const sample_data *&#160;</td>
-          <td class="paramname"><em>samples</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>num_samples</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Set the wavetable samples. </p>
-<p>A wavetable uses a set of samples to generate sound. This function is used to set the samples. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">samples</td><td>an array of samples from a decoded SoundFont file </td></tr>
-    <tr><td class="paramname">num_samples</td><td>number of samples in the array </td></tr>
+    <tr><td class="paramname">instrument</td><td>a struct of type instrument_data, commonly prodced from a decoded SoundFont file using the SoundFont Decoder Script which accompanies this library. </td></tr>
   </table>
   </dd>
 </dl>
@@ -852,6 +414,35 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>print_performa
 
 <p>Stop playing waveform. </p>
 <p>Waveform does not immediately stop, but fades out based on release time. </p>
+
+</div>
+</div>
+<a id="a88156c1f4c995435ca36f081cbdddf59"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88156c1f4c995435ca36f081cbdddf59">&#9670;&nbsp;</a></span>update()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void AudioSynthWavetable::update </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Called by the AudioStream library to fill the audio output buffer. </p>
+<p>Performs interpolation and enveloping of output audio values. </p>
 
 </div>
 </div>

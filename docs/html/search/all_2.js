@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['frequency',['frequency',['../class_audio_synth_wavetable.html#afbee0a23666cdaaeb2121e5bdb8136d3',1,'AudioSynthWavetable']]]
+  ['freqtonote',['freqToNote',['../class_audio_synth_wavetable.html#a7973aa8040f2ed59f865e8f56d11d88e',1,'AudioSynthWavetable']]]
 ];

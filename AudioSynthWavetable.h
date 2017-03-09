@@ -1,3 +1,29 @@
+/* Audio Library for Teensy 3.X
+ * Copyright (c) 2017, TeensyAudio PSU Team
+ *
+ * Development of this audio library was sponsored by PJRC.COM, LLC.
+ * Please support PJRC's efforts to develop open source 
+ * software by purchasing Teensy or other PJRC products.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice, development funding notice, and this permission
+ * notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 #pragma once
 
 #include "Arduino.h"
@@ -10,9 +36,6 @@
 #define DEFAULT_AMPLITUDE 127
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define TRIANGLE_INITIAL_PHASE (-0x40000000)
-
-// int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-1 (1..7 for AUDIO_BLOCK_SAMPLES == 128)
-// where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
 #define LFO_SMOOTHNESS 3
 #define LFO_PERIOD (AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1)))
 
@@ -80,7 +103,6 @@ public:
 	 * @return a frequency
 	 */
 	static float noteToFreq(int note) {
-		//440.0 * pow(2.0, (note - 69) / 12.0);
 		float exp = note * (1.0 / 12.0) + 3.0313597;
 		return powf(2.0, exp);
 	}
