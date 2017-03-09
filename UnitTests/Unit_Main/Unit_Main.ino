@@ -11,8 +11,9 @@
  8 4186  4435  4699  4978  5274  5588  5920  6272  6645  7040  7459  7902
 */
 
-//#define TEST_LATENCY
-//#define TEST_PROC
+// Selectively perform tests by commenting/uncommenting these define statements
+#define TEST_LATENCY
+#define TEST_PROC
 #define TEST_ENV
 
 #define NUM_VOICES 64
@@ -142,11 +143,11 @@ const String STATE_TO_STR[] = {
   "RELEASE"
 };
 
-// Update these on a per-sample basis
+// Update these on a per-instrument basis
 const instrument_data* SAMPLES_LATENCY = &Viola;
 const instrument_data* SAMPLES_PROC = &Viola;
 const instrument_data* SAMPLES_ENV = &Viola;
-const int NUM_SAMPLES_ENV = 8;
+const int NUM_SAMPLES_ENV = 8; // Must be less than or equal to SAMPLES_ENV->sample_count
 
 float ENV_EXPECTED[NUM_SAMPLES_ENV][7];
 
@@ -172,6 +173,8 @@ int shortest_latency = sizeof(int);
 bool flag_latency = false;
 int passed_env = 0;
 int total_tests_env = 0;
+int largest_error_env = 0;
+int smallest_error_env = sizeof(int);
 bool flag_env = false;
 bool flag2_env = false;
 int passed_proc = 0;
@@ -186,13 +189,32 @@ void printBar() {
     Serial.print("-");
 }
 
+// Go to next test
 void nextTest() {
   testTypeVal++;
   testType = (testEnum)testTypeVal;
   flag_init = false;
 }
 
+void printResults_Latency() {
+  Serial.printf("Longest latency: %dms\n", longest_latency);
+  Serial.printf("Shortest latency: %dms\n", shortest_latency);
+  Serial.printf("%d/%d tests passed.\n\n", passed_latency, NUM_TESTS_LATENCY);
+}
+
+void printResults_Env() {
+  Serial.printf("Largest error: %d\n", largest_error_env);
+  Serial.printf("Smallest error: %d\n", smallest_error_env);
+  Serial.printf("%d/%d tests passed\n\n", passed_env, total_tests_env);
+}
+
+void printResults_Proc() {
+  Serial.printf("%d/%d concurrent voices\n\n", passed_proc, NUM_VOICES);
+}
+
 void setup() {
+  // Store expected section lengths for each sample.
+  // IDLE and SUSTAIN states have no length.
   for (int i = 0; i < SAMPLES_ENV->sample_count; i++) {
     ENV_EXPECTED[i][0] = -1;
     ENV_EXPECTED[i][1] = (SAMPLES_ENV->samples[i].DELAY_COUNT - 0.5) * ENVELOPE_PERIOD/SAMPLES_PER_MSEC;
@@ -211,10 +233,12 @@ void setup() {
 
 void loop() {
   switch (testType) {
-  
+
+  /* LATENCY TEST */
   case LATENCY:
 
 #ifdef TEST_LATENCY
+    // Setup
     if (!flag_init) {
       printBar();
       Serial.print("BEGIN TEST: LATENCY");
@@ -224,17 +248,17 @@ void loop() {
       wavetable[0].setInstrument(*SAMPLES_LATENCY);
       flag_init = true;
     }
-    
+
     if (timer >= TICK) {
+      // Print final test results
       if (count <= UPPER_BOUND - NUM_TESTS_LATENCY) {
         wavetable[0].stop();
-        Serial.printf("Longest latency: %dms\n", longest_latency);
-        Serial.printf("Shortest latency: %dms\n", shortest_latency);
-        Serial.printf("%d/%d tests passed.\n\n", passed_latency, NUM_TESTS_LATENCY);
+        printResults_Latency();
         nextTest();
         return;
       }
-      
+
+      // Call playNote and start timer
       note = count--;
       timer_latency = 0;
       wavetable[0].playNote(note); // A3 = 57
@@ -242,7 +266,8 @@ void loop() {
       timer = 0;
       flag_latency = false;
     }
-    
+
+    // When audio data becomes available, stop timer and print detected latency
     if (test.available() && !flag_latency) {
       int latency = (int)timer_latency;
       Serial.printf("Latency: %dms\n", latency);
@@ -262,9 +287,11 @@ void loop() {
 
   /**********************************************************************************************/
 
+  /* ENVELOPE TEST */
   case ENV:
 
 #ifdef TEST_ENV
+    // Setup
     if (!flag_init) {
       printBar();
       Serial.print("BEGIN TEST: ENVELOPE");
@@ -274,40 +301,37 @@ void loop() {
       wavetable[0].setInstrument(*SAMPLES_ENV);
       flag_init = true;
     }
-    
+
     if (current_section == STATE_IDLE) {
-      if (flag_env) {
-        if (count == NUM_SAMPLES_ENV) {
-          Serial.printf("%d/%d tests passed\n\n", passed_env, total_tests_env);
-          nextTest();
-          return;
-        }
-      } else {
-        if (count == NUM_TESTS_ENV_DEF) {
-          Serial.printf("%d/%d tests passed\n\n", passed_env, total_tests_env);
-          nextTest();
-          return;
-        }
+      // Print final test results
+      // The number of tests performed depends on NUM_SAMPLES_ENV
+      // If NUM_SAMPLES_ENV < 3, default to 4 tests
+      if ((flag_env && count == NUM_SAMPLES_ENV) || (!flag_env && count == NUM_TESTS_ENV_DEF)) {
+        Serial.println();
+        printResults_Env();
+        nextTest();
+        return;
       }
       
       count++;
       timer_env = 0;
-      while (timer_env < 500);
+      while (timer_env < 500); // Spin for a bit to prevent erroneous data
+      
+      // Determine next tested note based on NUM_SAMPLES_ENV and note ranges
+      // note=1 and note=UPPER_BOUND are always tested first and last, respectively
       if (flag_env) {
         if (count == 1 && !flag2_env) {
           note = 1;
           flag2_env = true;
-        }
-        else {
+        } else {
           if (count != NUM_SAMPLES_ENV) {
             note = SAMPLES_ENV->sample_note_ranges[count-1];
             note -= note % (SAMPLES_ENV->sample_note_ranges[count-2] - note);
-          }
-          else 
-            note = UPPER_BOUND;
+          } else note = UPPER_BOUND;
         }
       } else note = count > 1 ? (count - 1) * UPPER_BOUND / (NUM_TESTS_ENV_DEF-1) : 1;
-      
+
+      // Start playing note and start timer
       Serial.printf("---------NOTE = %d---------\n\n", note);
       timer_env = 0;
       wavetable[0].playNote(note); // A3 = 57
@@ -316,7 +340,8 @@ void loop() {
       Serial.print(STATE_TO_STR[(int)current_section]);
       Serial.println();
     }
-    
+
+    // When envelope section changes, print duration in ms and compare with the expected length
     if (current_section != wavetable[0].getEnvState()) {
       int duration = (int)timer_env;
       timer_env = 0;
@@ -327,17 +352,21 @@ void loop() {
       int error = duration - (int)ENV_EXPECTED[i][(int)current_section];
       if (error < 0) error = -error;
       Serial.printf("Error = %dms\n", error);
+      if (error < smallest_error_env) smallest_error_env = error;
+      if (error > largest_error_env) largest_error_env = error;
       if (error <= TOLERANCE_ENV) {
         Serial.println("Passed!\n");
         passed_env++;
       } else Serial.println("Failed...\n");
       total_tests_env++;
-      
+
       current_section = wavetable[0].getEnvState();
       Serial.print("State = ");
       Serial.print(STATE_TO_STR[(int)current_section]);
       Serial.println();
-      
+
+      // When sustain section is reached, spin for a bit and then stop the object
+      // to proceed to RELEASE section
       if (current_section == STATE_SUSTAIN) {
         while (timer_env < 500);
         timer_env = 0;
@@ -355,10 +384,12 @@ void loop() {
     break;
 
   /**********************************************************************************************/
-    
+
+  /* PROCESSOR USAGE TEST */
   case PROC:
 
 #ifdef TEST_PROC
+    // Setup
     if (!flag_init) {
       printBar();
       Serial.print("BEGIN TEST: PROC USAGE");
@@ -370,14 +401,18 @@ void loop() {
         wavetable[i].setInstrument(*SAMPLES_PROC);
       flag_init = true;
     }
-    
+
     if (timer >= TICK) {
+      // Print the current processor usage (%)
       float proc_usage = AudioProcessorUsage();
       if (count > 0)
         Serial.printf("Processor usage: %3.5f\n\n", proc_usage);
+
+      // Print final test results
+      // If processor usage exceeded 95% before maxing out voice count, test is failed
       if (count == NUM_VOICES || proc_usage > MAX_PROC_USAGE) {
         passed_proc = count;
-        Serial.printf("%d/%d concurrent voices\n", passed_proc, NUM_VOICES);
+        printResults_Proc();
         if (count == NUM_VOICES)
           Serial.println("Passed!\n");
         else
@@ -387,6 +422,8 @@ void loop() {
         nextTest();
         return;
       }
+
+      // Add another voice
       wavetable[count++].playNote(note++);
       Serial.printf("voices: %d\n", count);
       timer = 0;
@@ -398,7 +435,8 @@ void loop() {
     break;
 
   /**********************************************************************************************/
-    
+
+  // Print summary of all tests performed
   default:
     if (!flag_init) {
       printBar();
@@ -407,17 +445,15 @@ void loop() {
       Serial.println("\n");
 #ifdef TEST_LATENCY
       Serial.println("LATENCY:");
-      Serial.printf("Longest latency: %dms\n", longest_latency);
-      Serial.printf("Shortest latency: %dms\n", shortest_latency);
-      Serial.printf("%d/%d tests passed.\n\n", passed_latency, NUM_TESTS_LATENCY);
+      printResults_Latency();
 #endif
 #ifdef TEST_PROC
       Serial.println("PROC USAGE:");
-      Serial.printf("%d/%d tests passed\n\n", passed_proc, NUM_VOICES);
+      printResults_Proc();
 #endif
 #ifdef TEST_ENV
       Serial.println("ENVELOPE:");
-      Serial.printf("%d/%d tests passed", passed_env, total_tests_env);
+      printResults_Env();
 #endif
       flag_init = true;
     }
