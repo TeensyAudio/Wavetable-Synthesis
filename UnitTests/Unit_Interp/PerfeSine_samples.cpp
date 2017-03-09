@@ -1,141 +1,190 @@
 #include "PerfeSine_samples.h"
-sample_data PerfeSine[7] = {
+const sample_data PerfeSine_samples[7] = {
 	{
-		48,
-		1.0,
-		44100,
-		44100,
-		21249,
-		43162,
-		0,
-		51,
-		0,
-		127,
-		0,
-		0,
-		0,
-		0,
-		0,
-		100,
-		PerfeSine_sample_0_PerfeSine048L,
+		(int16_t*)sample_0_PerfeSine_PerfeSine048L,	//16-bit PCM encoded audio sample
+		true,	//Whether or not to loop this sample
+		16,	//Number of bits needed to hold length
+		(65536*1.0*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 130.8127826502993 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)44100-1) << (32 - 16),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)43162-1) << (32 - 16),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)43162-1) << (32 - 16)) - (((uint32_t)21249-1) << (32 - 16)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint16_t(UINT16_MAX * DECIBEL_SHIFT(-0/100.0)), //INITIAL_ATTENUATION_SCALAR
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(0*UNITY_GAIN),	//SUSTAIN_MULT
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), 	// VIBRATO_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // VIBRATO_COEFFICIENT_SECONDARY
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // MODULATION_PITCH_COEFFICIENT_SECOND
+		int32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)) *4, // MODULATION_AMPLITUDE_INITIAL_GAIN
+		int32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))) *4, // MODULATION_AMPLITUDE_FINAL_GAIN
 	},
 	{
-		54,
-		1.0,
-		44100,
-		44100,
-		22061,
-		43277,
-		52,
-		58,
-		0,
-		127,
-		0,
-		0,
-		0,
-		0,
-		0,
-		100,
-		PerfeSine_sample_1_PerfeSine054L,
+		(int16_t*)sample_1_PerfeSine_PerfeSine054L,	//16-bit PCM encoded audio sample
+		true,	//Whether or not to loop this sample
+		16,	//Number of bits needed to hold length
+		(65536*1.0*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 184.9972113558172 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)44100-1) << (32 - 16),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)43277-1) << (32 - 16),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)43277-1) << (32 - 16)) - (((uint32_t)22061-1) << (32 - 16)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint16_t(UINT16_MAX * DECIBEL_SHIFT(-0/100.0)), //INITIAL_ATTENUATION_SCALAR
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(0*UNITY_GAIN),	//SUSTAIN_MULT
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), 	// VIBRATO_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // VIBRATO_COEFFICIENT_SECONDARY
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // MODULATION_PITCH_COEFFICIENT_SECOND
+		int32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)) *4, // MODULATION_AMPLITUDE_INITIAL_GAIN
+		int32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))) *4, // MODULATION_AMPLITUDE_FINAL_GAIN
 	},
 	{
-		60,
-		1.0,
-		44100,
-		44100,
-		21331,
-		43244,
-		59,
-		63,
-		0,
-		127,
-		0,
-		0,
-		0,
-		0,
-		0,
-		100,
-		PerfeSine_sample_2_PerfeSine060L,
+		(int16_t*)sample_2_PerfeSine_PerfeSine060L,	//16-bit PCM encoded audio sample
+		true,	//Whether or not to loop this sample
+		16,	//Number of bits needed to hold length
+		(65536*1.0*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 261.6255653005986 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)44100-1) << (32 - 16),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)43244-1) << (32 - 16),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)43244-1) << (32 - 16)) - (((uint32_t)21331-1) << (32 - 16)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint16_t(UINT16_MAX * DECIBEL_SHIFT(-0/100.0)), //INITIAL_ATTENUATION_SCALAR
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(0*UNITY_GAIN),	//SUSTAIN_MULT
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), 	// VIBRATO_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // VIBRATO_COEFFICIENT_SECONDARY
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // MODULATION_PITCH_COEFFICIENT_SECOND
+		int32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)) *4, // MODULATION_AMPLITUDE_INITIAL_GAIN
+		int32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))) *4, // MODULATION_AMPLITUDE_FINAL_GAIN
 	},
 	{
-		66,
-		1.0,
-		44100,
-		44100,
-		14906,
-		36122,
-		64,
-		66,
-		0,
-		127,
-		0,
-		0,
-		0,
-		0,
-		0,
-		100,
-		PerfeSine_sample_3_PerfeSine066L,
+		(int16_t*)sample_3_PerfeSine_PerfeSine066L,	//16-bit PCM encoded audio sample
+		true,	//Whether or not to loop this sample
+		16,	//Number of bits needed to hold length
+		(65536*1.0*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 369.9944227116344 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)44100-1) << (32 - 16),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)36122-1) << (32 - 16),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)36122-1) << (32 - 16)) - (((uint32_t)14906-1) << (32 - 16)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint16_t(UINT16_MAX * DECIBEL_SHIFT(-0/100.0)), //INITIAL_ATTENUATION_SCALAR
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(0*UNITY_GAIN),	//SUSTAIN_MULT
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), 	// VIBRATO_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // VIBRATO_COEFFICIENT_SECONDARY
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // MODULATION_PITCH_COEFFICIENT_SECOND
+		int32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)) *4, // MODULATION_AMPLITUDE_INITIAL_GAIN
+		int32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))) *4, // MODULATION_AMPLITUDE_FINAL_GAIN
 	},
 	{
-		72,
-		1.0,
-		44100,
-		44100,
-		21414,
-		43327,
-		67,
-		72,
-		0,
-		127,
-		0,
-		0,
-		0,
-		0,
-		0,
-		100,
-		PerfeSine_sample_4_PerfeSine072L,
+		(int16_t*)sample_4_PerfeSine_PerfeSine072L,	//16-bit PCM encoded audio sample
+		true,	//Whether or not to loop this sample
+		16,	//Number of bits needed to hold length
+		(65536*1.0*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 523.2511306011972 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)44100-1) << (32 - 16),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)43327-1) << (32 - 16),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)43327-1) << (32 - 16)) - (((uint32_t)21414-1) << (32 - 16)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint16_t(UINT16_MAX * DECIBEL_SHIFT(-0/100.0)), //INITIAL_ATTENUATION_SCALAR
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(0*UNITY_GAIN),	//SUSTAIN_MULT
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), 	// VIBRATO_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // VIBRATO_COEFFICIENT_SECONDARY
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // MODULATION_PITCH_COEFFICIENT_SECOND
+		int32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)) *4, // MODULATION_AMPLITUDE_INITIAL_GAIN
+		int32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))) *4, // MODULATION_AMPLITUDE_FINAL_GAIN
 	},
 	{
-		78,
-		1.0,
-		36570,
-		44100,
-		15650,
-		31562,
-		73,
-		82,
-		0,
-		127,
-		0,
-		0,
-		0,
-		0,
-		0,
-		100,
-		PerfeSine_sample_5_PerfeSine078L,
+		(int16_t*)sample_5_PerfeSine_PerfeSine078L,	//16-bit PCM encoded audio sample
+		true,	//Whether or not to loop this sample
+		16,	//Number of bits needed to hold length
+		(65536*1.0*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 739.9888454232688 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)36570-1) << (32 - 16),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)31562-1) << (32 - 16),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)31562-1) << (32 - 16)) - (((uint32_t)15650-1) << (32 - 16)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint16_t(UINT16_MAX * DECIBEL_SHIFT(-0/100.0)), //INITIAL_ATTENUATION_SCALAR
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(0*UNITY_GAIN),	//SUSTAIN_MULT
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), 	// VIBRATO_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // VIBRATO_COEFFICIENT_SECONDARY
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // MODULATION_PITCH_COEFFICIENT_SECOND
+		int32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)) *4, // MODULATION_AMPLITUDE_INITIAL_GAIN
+		int32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))) *4, // MODULATION_AMPLITUDE_FINAL_GAIN
 	},
 	{
-		84,
-		1.0,
-		27167,
-		44100,
-		9976,
-		21986,
-		83,
-		127,
-		0,
-		127,
-		0,
-		0,
-		0,
-		0,
-		0,
-		100,
-		PerfeSine_sample_6_PerfeSine084L,
+		(int16_t*)sample_6_PerfeSine_PerfeSine084L,	//16-bit PCM encoded audio sample
+		true,	//Whether or not to loop this sample
+		15,	//Number of bits needed to hold length
+		(131072*1.0*(44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / 1046.5022612023945 + 0.5,	//((0x80000000 >> (index_bits - 1)) * cents_offset * sampling_rate / AUDIO_SAME_RATE_EXACT) / sample_freq + 0.5
+		((uint32_t)27167-1) << (32 - 15),	//(sample_length-1) << (32 - sample_length_bits)
+		((uint32_t)21986-1) << (32 - 15),	//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END
+		(((uint32_t)21986-1) << (32 - 15)) - (((uint32_t)9976-1) << (32 - 15)),	//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH
+		uint16_t(UINT16_MAX * DECIBEL_SHIFT(-0/100.0)), //INITIAL_ATTENUATION_SCALAR
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DELAY_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//ATTACK_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//HOLD_COUNT
+		uint32_t(0*SAMPLES_PER_MSEC/8.0+0.5),	//DECAY_COUNT
+		uint32_t(100*SAMPLES_PER_MSEC/8.0+0.5),	//RELEASE_COUNT
+		int32_t(0*UNITY_GAIN),	//SUSTAIN_MULT
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), 	// VIBRATO_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // VIBRATO_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // VIBRATO_COEFFICIENT_SECONDARY
+		uint32_t(0 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY
+		uint32_t(0/1000.0 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT
+		(CENTS_SHIFT(-0/1000.0) - 1.0)*4, // MODULATION_PITCH_COEFFICIENT_INITIAL
+		(1.0 - CENTS_SHIFT(0/1000.0))*4, // MODULATION_PITCH_COEFFICIENT_SECOND
+		int32_t(UINT16_MAX * (DECIBEL_SHIFT(-0.1) - 1.0)) *4, // MODULATION_AMPLITUDE_INITIAL_GAIN
+		int32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT(0.1))) *4, // MODULATION_AMPLITUDE_FINAL_GAIN
 	},
 };
 
-const uint32_t PerfeSine_sample_0_PerfeSine048L[22144] = {
+const uint32_t sample_0_PerfeSine_PerfeSine048L[22144] = {
 0x00000000,0x00000000,0x00000000,0x00000000,0xfffefffe,0x000a0000,0x0038001c,0x0088005d,
 0x00f100b8,0x017d0132,0x023801d5,0x032202a7,0x043f03aa,0x059504e3,0x07270657,0x08fb0809,
 0x0a1b09b1,0x0aee0a85,0x0bbb0b55,0x0c850c21,0x0d4a0ce8,0x0e0b0dab,0x0ec80e6a,0x0f7e0f23,
@@ -2898,7 +2947,7 @@ const uint32_t PerfeSine_sample_0_PerfeSine048L[22144] = {
 0x00000000,0x00000000,
 };
 
-const uint32_t PerfeSine_sample_1_PerfeSine054L[22144] = {
+const uint32_t sample_1_PerfeSine_PerfeSine054L[22144] = {
 0x00000000,0x00000000,0x00000000,0xffffffff,0x000d0001,0x003e0021,0x008b0061,0x00fc00be,
 0x019b0145,0x026b01fc,0x037202e7,0x04b7040d,0x063e0572,0x080d071d,0x0a260910,0x0c8c0b4f,
 0x0dfb0d73,0x0f040e81,0x10030f85,0x10f5107d,0x11dc116a,0x12b6124b,0x1382131e,0x144113e4,
@@ -5661,7 +5710,7 @@ const uint32_t PerfeSine_sample_1_PerfeSine054L[22144] = {
 0x00000000,0x00000000,
 };
 
-const uint32_t PerfeSine_sample_2_PerfeSine060L[22144] = {
+const uint32_t sample_2_PerfeSine_PerfeSine060L[22144] = {
 0x00000000,0x00000000,0x00000000,0x00100003,0x00410025,0x00950066,0x011800d0,0x01d1016d,
 0x02c90244,0x0405035e,0x058c04bf,0x0763066d,0x098e086e,0x0c0e0ac3,0x0ee40d6e,0x120f106f,
 0x13b8132b,0x14bc143d,0x15a21533,0x166b160b,0x171316c3,0x179a175a,0x180017d1,0x18431825,
@@ -8424,7 +8473,7 @@ const uint32_t PerfeSine_sample_2_PerfeSine060L[22144] = {
 0x00000000,0x00000000,
 };
 
-const uint32_t PerfeSine_sample_3_PerfeSine066L[22144] = {
+const uint32_t sample_3_PerfeSine_PerfeSine066L[22144] = {
 0x00000000,0x00000000,0x00090000,0x0032001a,0x00850056,0x010e00c2,0x01d8016a,0x02eb0258,
 0x044f0392,0x06070520,0x08160704,0x0a7a093e,0x0d2f0bcb,0x102c0ea5,0x136811c3,0x16d31519,
 0x181517d7,0x185d1842,0x18601867,0x181d1847,0x179617e2,0x16cc1739,0x15c1164f,0x14781524,
@@ -11187,7 +11236,7 @@ const uint32_t PerfeSine_sample_3_PerfeSine066L[22144] = {
 0x00000000,0x00000000,
 };
 
-const uint32_t PerfeSine_sample_4_PerfeSine072L[22144] = {
+const uint32_t sample_4_PerfeSine_PerfeSine072L[22144] = {
 0x00000000,0x00000000,0x00090000,0x0038001c,0x009c0063,0x014300e6,0x023901b4,0x038602d4,
 0x0529044d,0x071f061a,0x095d0836,0x0bd00a91,0x0e620d17,0x10f50fad,0x13661234,0x15901486,
 0x165f167c,0x149d1595,0x127613a4,0x0fe51142,0x0cf90e7f,0x09c30b6a,0x06550814,0x02c40491,
@@ -13950,7 +13999,7 @@ const uint32_t PerfeSine_sample_4_PerfeSine072L[22144] = {
 0x00000000,0x00000000,
 };
 
-const uint32_t PerfeSine_sample_5_PerfeSine078L[18304] = {
+const uint32_t sample_5_PerfeSine_PerfeSine078L[18304] = {
 0x00000000,0x00000000,0x00180006,0x00630035,0x00f700a3,0x01df0160,0x031f0275,0x04ae03de,
 0x0673058b,0x084d0760,0x0a0f0935,0x0b820ad6,0x0c6c0c0c,0x0c920c9b,0x0bbc0c4a,0x09bd0ae4,
 0x06300842,0x011f03ba,0xfc02fe95,0xf710f982,0xf282f4bb,0xee8df072,0xeb5eecdb,0xe919ea1d,
@@ -16240,7 +16289,7 @@ const uint32_t PerfeSine_sample_5_PerfeSine078L[18304] = {
 0x00000000,0x00000000,
 };
 
-const uint32_t PerfeSine_sample_6_PerfeSine084L[13696] = {
+const uint32_t sample_6_PerfeSine_PerfeSine084L[13696] = {
 0x00000000,0x00020000,0x002c0010,0x009b0059,0x016200f3,0x027c01e5,0x03c9031e,0x05160474,
 0x061705a4,0x06790661,0x05ec0655,0x042d0536,0x011602cd,0xfcabff09,0xf71dfa03,0xf0d2f407,
 0xeb37ed94,0xe86be997,0xe7a2e7ba,0xe8fee806,0xec63ea6f,0xf184eebf,0xf7ecf495,0xff0bfb6d,
@@ -17942,5 +17991,5 @@ const uint32_t PerfeSine_sample_6_PerfeSine084L[13696] = {
 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+0x00000000,0x00000000,0x00000000,0x00000000,
 };

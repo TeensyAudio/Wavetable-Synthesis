@@ -47,7 +47,7 @@ bool flag_stop = false;
 const int TICK = 500;           // Timer period (ms)
 const int DELAY = 2;            // Spin count for analyzer
 const int LOWER_BOUND = 22;     // Lowest tested note
-const double TOLERANCE = 0.005; // Allowed error
+const float TOLERANCE = 0.01; // Allowed error
 const int NUM_TESTS = count - LOWER_BOUND + 1;
 
 void setup() {
@@ -59,7 +59,7 @@ void setup() {
   notefreq.begin(.15);
   sgtl5000_1.enable();
   sgtl5000_1.volume(0.7);
-  wavetable.setSamples(PerfeSine, sizeof(PerfeSine)/sizeof(sample_data));
+  wavetable.setInstrument(PerfeSine);
   while (timer < 2000); // Spin for serial monitor
 }
 
