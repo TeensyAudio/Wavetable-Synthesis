@@ -1,3 +1,4 @@
+##
 # Audio Library for Teensy 3.X
 # Copyright (c) 2017, TeensyAudio PSU Team
 #
@@ -22,9 +23,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-#
+##
 
-# Python script for decoding a .SF2 file for use with Wavetable library.
 from sf2utils.sf2parse import Sf2File
 import logging
 import sys
@@ -36,6 +36,10 @@ import math
 DEBUG_FLAG = False
 logging.disable(logging.WARNING)
 
+## Prints out debug information
+# @param flag the current debug flag being used
+# @param message the debug message to print
+# @param function the function being debugged
 def print_debug(flag, message, function=None):
     if flag:
         debug = '-----DEBUG-----'
@@ -48,7 +52,18 @@ def print_debug(flag, message, function=None):
         print(message)
         print(debug)
 
+## Prints the menu
+# @param choices a list of different input choices for the menu
+#
+# @return returns the selected choice
+def menu(choices):
+    print('')
+    print_menu(choices)
+    choice = safe_input('Select [1-{}]: '.format(len(choices)), int, 1, len(choices))
+    return choice
 
+## Prints out the menu options when running from command line
+# @param menu_items a list of menu items
 def print_menu(menu_items):
     if len(menu_items) < 1:
         return
@@ -56,7 +71,15 @@ def print_menu(menu_items):
         print('{}. {}'.format(i, j))
     print('')
 
-
+## Gets user input from the command line and verifies that it's valid and
+#  within the menu option bounds
+# @param prompt the prompt for user input
+# @param type the type of user input expected (int, char, etc...)
+# @param min_ the minimum allowable entered value
+# @param max_ the maximum allowable entered value
+# @param range_ an allowable range for user input to be within
+#
+# @return returns the user's choice
 def safe_input(prompt, type_=None, min_=None, max_=None, range_=None):
     if min_ is not None and max_ is not None and max_ < min_:
         raise ValueError('min_ must be less than or equal to max_.')
@@ -86,20 +109,17 @@ def safe_input(prompt, type_=None, min_=None, max_=None, range_=None):
         else:
             return ui
 
+## Clears the screen
+def clear_screen():
+    print(150*'\n')
 
-def menu(choices):
-    print('')
-    print_menu(choices)
-    choice = safe_input('Select [1-{}]: '.format(len(choices)), int,
-                        1, len(choices))
-    return choice
-
-
+## Main loop of the decoder when running from the command line
 def main(argv):
     global DEBUG_FLAG
     # Disable warning logging to prevent sf2utils from logging any un-needed messages
     logging.disable(logging.WARNING)
 
+    # Check for command line options
     path = None
     try:
         opts, args = getopt.getopt(argv, 'di:o:', ['ifile=', 'ofile='])
@@ -114,7 +134,7 @@ def main(argv):
         elif opt in ('-o', '--ofile'):
             outFile = arg
 
-    print(150*'\n')
+    clear_screen()
     print('       WELCOME  ')
     # print out some info:
     # version, date, etc...
@@ -126,8 +146,8 @@ def main(argv):
     options2 = ('Select Again', 'Save and Quit')
     while True:
         choice = menu(options)
-
-        if choice == 1:
+        if choice == 1: # select instrument
+            clear_screen()
             # Returns a List of sf2Instrument.name
             instruments = [x.name for x in sf2.instruments]
             print('')
@@ -135,6 +155,7 @@ def main(argv):
             print_menu(instruments)
             instrument = safe_input('Select Instrument [1-{}]: '.format(len(instruments)), int, 1, len(instruments))
             print('')
+            
             # for the selected instrument, go through all bags and
             # retrieve sample(s)
             instrument -= 1
@@ -154,28 +175,37 @@ def main(argv):
             sample_names = [x.name for x in samples]
             print('{} contains {} samples.'.format(sf2.instruments[instrument].name, len(sample_names)))
             method = menu(('Export All Samples', 'Select Samples to Export'))
-            if method == 1:
+            if method == 1: # decode all samples for instrument
                 decode_all(path, instrument, global_bag_index)
                 sys.exit('All samples for instrument decoded successfully. Exiting Program.')
-            else:
+            else: # decode selected samples for instrument
                 selected_bags = []
-                while True:
+                while True: # select which samples to decode
+                    clear_screen()
+                    print('Select Samples to Export\n')
                     print_menu(sample_names)
                     sample = safe_input('Select Sample [1-{}]: '.format(len(sample_names)), int, 1, len(sample_names))
                     print_debug(DEBUG_FLAG, 'Selected Sample is {}'.format(samples[sample-1].name))
                     if(bag_to_sample[sample-1][0] not in selected_bags):
                         selected_bags.append(bag_to_sample[sample-1][0])
                     i_result = menu(options2)
-                    if i_result == 1:
+                    if i_result == 1: # select another sample
                         continue
-                    elif i_result == 2:
+                    elif i_result == 2: # decode list of selected samples
                         decode_selected(path, instrument, selected_bags, global_bag_index)
                         sys.exit('Selected samples for instrument decoded successfully. Exiting Program.')
-        elif choice == 2:
+        elif choice == 2: # exit
             sys.exit('Program Terminated by User')
-        else:   # shouldn't be reached
+        else: # shouldn't be reached
             input("Wrong option selection. Enter any key to try again..")
 
+## Decodes selected samples and outputs them to a file
+# @param path the path of the file that contains the samples 
+# @param inst_index the index of the instrument in the sf2 file whose samples are being decoded
+# @param selected_bags a list of bag indexes for the samples being decoded
+# @param global_bag_index the index of the insrument global bag if it exists otherwise value is None
+# @param user_title a user selected filename for the samples output file
+# @param user_dir the output directory for the decoded samples
 def decode_selected(path, inst_index, selected_bags, global_bag_index, user_title=None, user_dir=None):
     with open(path, 'rb') as file:
         sf2 = Sf2File(file)
@@ -196,7 +226,6 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
 
         global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index != None else None
         file_title = user_title if user_title else sf2.instruments[inst_index].name
-
         file_title = re.sub(r'[\W]+', '', file_title)
         if user_dir is not None:
             export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title, file_dir=user_dir)
@@ -204,19 +233,26 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
             export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title)
         return True
 
-
+## Decodes all the samples for an instrument
+# @param path the path of the file that contains the samples 
+# @param inst_index the index of the instrument in the sf2 file whose samples are being decoded
+# @param global_bag_index the index of the insrument global bag if it exists otherwise value is None
 def decode_all(path, inst_index, global_bag_index):
     decode_selected(path, inst_index, selected_bags=None, global_bag_index=global_bag_index)
 
-
-# Write a sample out to C++ style data files.
+## Write a sample out to C++ style data files.
+# @param bags a list of bag indexes
+# @param global_bag a global bag index. value is None if there isn't one
+# @param num_samples number of samples to decode
+# @param file_title the title of the ouptut file
+# @param file_dir the output directory for the decoded samples
 def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir="."):
     instrument_name = file_title
     h_file_name = "{}_samples.h".format(instrument_name)
     cpp_file_name = "{}_samples.cpp".format(instrument_name)
     with open(file_dir + "/" + cpp_file_name, "w") as cpp_file, open(file_dir + "/" + h_file_name, "w") as h_file:
-        h_file.write("#pragma once\n#include <AudioStream.h>\n#include <AudioSynthWavetable.h>\n\n")
         # Decode data to sample_data array in header file
+        h_file.write("#pragma once\n#include <AudioStream.h>\n#include <AudioSynthWavetable.h>\n\n")
         h_file.write("extern const sample_data {0}_samples[{1}];\n".format(instrument_name, num_samples))
 
         #Sort bags by key range and expand ranges to fill all key values
@@ -236,6 +272,7 @@ def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir
             cpp_file.write(out_str)
         cpp_file.write("};\n")
 
+        # For each sample print out sample array to .cpp file and init to .h file
         for i in range(len(bags)):
             raw_wav_data = bags[i].sample.raw_sample_data
             length_16 = bags[i].sample.duration
@@ -275,8 +312,12 @@ def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir
                 pad_length -= 4
             cpp_file.write("};\n" if line_width == 8 else "\n};\n")
 
-
-# prints out the sample metadata into the first portion of the sample array
+## Prints out the sample metadata
+# @param bag the bag of the current sample being dedoded
+# @param global_bag the global bag of the instrument
+# @param sample_num the number assigned to this sample in the output file
+# @param instrument_name name of the instrument
+# @param keyRange the key range value pair for this sample. Always between 0-127.
 def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, keyRange):
     out_fmt_str = \
         "\t{{\n" \
@@ -287,8 +328,8 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "\t\t((uint32_t){LENGTH}-1) << (32 - {LENGTH_BITS}),\t//(sample_length-1) << (32 - sample_length_bits)\n" \
         "\t\t((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS}),\t//(loop_end-1) << (32 - sample_length_bits) == LOOP_PHASE_END\n" \
         "\t\t(((uint32_t){LOOP_END}-1) << (32 - {LENGTH_BITS})) - (((uint32_t){LOOP_START}-1) << (32 - {LENGTH_BITS})),\t//LOOP_PHASE_END - (loop_start-1) << (32 - sample_length_bits) == LOOP_PHASE_END - LOOP_PHASE_START == LOOP_PHASE_LENGTH\n" \
-		"\t\tuint16_t(UINT16_MAX * DECIBEL_SHIFT(-{INIT_ATTENUATION}/100.0)), //INITIAL_ATTENUATION_SCALAR\n" \
-		"\t\tuint32_t({DELAY_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//DELAY_COUNT\n" \
+	"\t\tuint16_t(UINT16_MAX * DECIBEL_SHIFT(-{INIT_ATTENUATION}/100.0)), //INITIAL_ATTENUATION_SCALAR\n" \
+	"\t\tuint32_t({DELAY_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//DELAY_COUNT\n" \
         "\t\tuint32_t({ATTACK_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//ATTACK_COUNT\n" \
         "\t\tuint32_t({HOLD_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//HOLD_COUNT\n" \
         "\t\tuint32_t({DECAY_ENV}*SAMPLES_PER_MSEC/8.0+0.5),\t//DECAY_COUNT\n" \
@@ -318,6 +359,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
     phase_mult = (0x80000000 >> (length_bits - 1))
     
     out_vals = {
+
         "LOOP": "true" if bag.sample_loop == 1 or global_bag.sample_loop == 1 else "false",
         "ORIGINAL_PITCH": base_note,
         "CENTS_OFFSET": cents_offset,
@@ -365,8 +407,9 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
     return out_fmt_str.format(**out_vals, **env_vals)
 
 
-# Checks if the selected sample is valid. Input is a sample object, and output is
-# a tuple with (boolean, error_message - if any)
+# Checks if the selected sample is valid
+# @param sample a sample object
+# @return a tuple with (boolean, error_message)
 def check_is_valid_sample(sample):
     if sample.end_loop > sample.duration:
         return False, 'End loop index is larger than sample end index'
@@ -379,6 +422,8 @@ def note_to_freq(note):
 
 # Retrieves all key ranges for the samples and expands them to fill empty
 # space in the 0-127 range if needed.
+# @param bags the sample bags to expand key ranges for
+# @param keyRanges a list object that will hold the expanded key ranges of the samples. Should be empty when passed to this function.
 def getKeyRanges(bags, keyRanges):
     # remove any bags without key ranges before sorting bags by key range
     tempList = [bag for bag in bags if bag.key_range == None]
@@ -407,9 +452,10 @@ def getKeyRanges(bags, keyRanges):
         bags.append(aBag)
         keyRanges.append([0, 127])
 
+## Prints out an error message
+# @param message an error message to display
 def error(message):
     print("ERROR: " + message)
-
 
 if __name__ == "__main__":
     main(sys.argv[1:])
