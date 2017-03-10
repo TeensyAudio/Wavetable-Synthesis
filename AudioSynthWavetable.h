@@ -17,6 +17,8 @@
 #define LFO_PERIOD (AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1)))
 
 #define ENVELOPE_PERIOD 8
+#define ENVELOPE_ATTACK_UPDATE_RATE 2
+#define MINIMUM_VOL_MULT UINT16_MAX
 
 class AudioSynthWavetable : public AudioStream
 {
