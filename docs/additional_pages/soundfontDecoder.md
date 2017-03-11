@@ -19,6 +19,7 @@ https://www.pjrc.com/teensy/index.html
 
 The following section covers what each component of the GUI does.
 
+![Caption text](../additional_pages/images/test.jpeg)
 (Image of the GUI with numbers corresponding to descriptions needs to go here)
 
 1. Select Teensy Version: Select the current version of the Teensy that is being decoded for. The size selected will affect the Teensy % usage estimate given when selecting samples. The output files for both options is the same.
@@ -45,16 +46,25 @@ This section gives a basic walk through of loading a `.sf2` file, selecting a sa
 (image)
 
 #### Step 2: Select an Instrument to bring up its sample list
+
+![Caption text](../additional_pages/images/test.jpeg)
 (image)
 
 #### Step 3: Select samples to decode from instrument
+
+![Caption text](../additional_pages/images/test.jpeg)
 (image)
+
 Note that multiple samples can be selected if the `ctrl` button on the keyboard is held during sample selection.
 
 #### Step 4: Click the decode button to decode samples
+
+![Caption text](../additional_pages/images/test.jpeg)
 (image)
 
 #### Step 5: Get confirmation message
+
+![Caption text](../additional_pages/images/test.jpeg)
 (image)
 
 At this point the decoded sample files (`.cpp` and `.h`) will be in the output directory and will be named after the selected instrument. By default this directory is the same that the decoder was launched from.
