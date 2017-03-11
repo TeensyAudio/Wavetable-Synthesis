@@ -119,14 +119,11 @@ def print_usage():
     print("-o (output file) : output to selected file")
     print("-d : debug mode")
 
-## Main loop of the decoder when running from the command line
-def main(argv):
+## Get the options from command line and open file for menu
+def read_args(argv):
     global DEBUG_FLAG
-    # Disable warning logging to prevent sf2utils from logging any un-needed messages
-    logging.disable(logging.WARNING)
-
-    # Check for command line options
-    path = None
+    
+    path, outFile = None
     try:
         opts, args = getopt.getopt(argv, 'di:o:', ['ifile=', 'ofile='])
         single_opts = [opt[0] for opt in opts]
@@ -148,13 +145,24 @@ def main(argv):
                 path = arg
             elif opt in ('-o', '--ofile'):
                 outFile = arg
-
-        with open(path, 'rb') as sf2_file:
-            sf2 = Sf2File(sf2_file)
     except TypeError as err:
         print("ERROR: " + str(err.args[0]))
         print_usage()
         sys.exit(2)
+
+    return path, outFile
+
+## Main loop of the decoder when running from the command line
+def main(argv):
+    global DEBUG_FLAG
+    # Disable warning logging to prevent sf2utils from logging any un-needed messages
+    logging.disable(logging.WARNING)
+
+    # Read args from the command line and open file
+    try:
+        path, outFile = read_args(argv)
+        with open(path, 'rb') as sf2_file:
+            sf2 = Sf2File(sf2_file)
     except FileNotFoundError as err:
         print("ERROR: " + str(err.args[1]) + ": " + arg)
         print_usage()
@@ -204,7 +212,7 @@ def main(argv):
             if method == 1: # decode all samples for instrument
                 decode_all(path, instrument, global_bag_index)
                 print('All samples for instrument decoded successfully. Exiting Program.')
-                return
+                break
             else: # decode selected samples for instrument
                 selected_bags = []
                 while True: # select which samples to decode
@@ -221,12 +229,15 @@ def main(argv):
                     elif i_result == 2: # decode list of selected samples
                         decode_selected(path, instrument, selected_bags, global_bag_index)
                         print('Selected samples for instrument decoded successfully. Exiting Program.')
-                        return
+                        break
         elif choice == 2: # exit
             print('Program Terminated by User')
             return
         else: # shouldn't be reached
             input("Wrong option selection. Enter any key to try again..")
+
+        sf2.close()
+        return
 
 ## Decodes selected samples and outputs them to a file
 # @param path the path of the file that contains the samples 
