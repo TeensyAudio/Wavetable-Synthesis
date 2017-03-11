@@ -143,6 +143,7 @@ def main(argv):
                 DEBUG_FLAG = True
             elif opt in ('-i', '--ifile'):
                 if(arg == None or arg[-4:].lower() != '.sf2'): 
+                    print(arg[-4:])
                     raise TypeError("Invalid .sf2 file given: " + arg)
                 path = arg
             elif opt in ('-o', '--ofile'):
@@ -202,7 +203,8 @@ def main(argv):
             method = menu(('Export All Samples', 'Select Samples to Export'))
             if method == 1: # decode all samples for instrument
                 decode_all(path, instrument, global_bag_index)
-                sys.exit('All samples for instrument decoded successfully. Exiting Program.')
+                print('All samples for instrument decoded successfully. Exiting Program.')
+                return
             else: # decode selected samples for instrument
                 selected_bags = []
                 while True: # select which samples to decode
@@ -218,9 +220,11 @@ def main(argv):
                         continue
                     elif i_result == 2: # decode list of selected samples
                         decode_selected(path, instrument, selected_bags, global_bag_index)
-                        sys.exit('Selected samples for instrument decoded successfully. Exiting Program.')
+                        print('Selected samples for instrument decoded successfully. Exiting Program.')
+                        return
         elif choice == 2: # exit
-            sys.exit('Program Terminated by User')
+            print('Program Terminated by User')
+            return
         else: # shouldn't be reached
             input("Wrong option selection. Enter any key to try again..")
 
