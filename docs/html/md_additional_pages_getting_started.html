@@ -92,8 +92,21 @@ $(document).ready(function(){initNavTree('md_additional_pages_getting_started.ht
 <div class="title">Getting started </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>This section is currently under construction </p>
-</div></div><!-- contents -->
+<div class="textblock"><p>This section is currently under construction</p>
+<p>This is a short guide on how to get started using the Audio Synth Wavetable library.</p>
+<h2>What is the Audio Synth Wavetable library?</h2>
+<p>The Audio Synth Wavetable is a C++ library uses sound data from a decoded SoundFont file and creates sound using wavetable synthesis. This library is for <a href="https://www.pjrc.com/teensy/">Teensy 3.2/3.6</a>.</p>
+<h2>How do I use the Audio Synth Wavetable library?</h2>
+<p>To use the Audio Synth Wavetable library you must include the header file in your Arduino sketch (a <code>.ino</code> file):</p>
+<div class="fragment"><div class="line">#include &lt;AudioSynthWavetable.h&gt;</div></div><!-- fragment --><p>The <code><a class="el" href="_audio_synth_wavetable_8h_source.html">AudioSynthWavetable.h</a></code> and <code>AudioSynthWavetable.cpp</code> files need to be in your Arduino library folder.</p>
+<h2>Dependencies</h2>
+<p>To use the Audio Synth Wavetable library you must have decoded SoundFont files. The library retrieves its sound data from these files. The decoded SoundFont files must be in the same directory as your Arduino sketch.</p>
+<p>To learn how to decode a SoundFont file read <a href="https://teensyaudio.github.io/Wavetable-Synthesis/html/md_additional_pages_soundfont_decoder.html">SoundFont Decoder User-Guide</a>.</p>
+<h2>Using decoded SoundFont file and the library</h2>
+<p>The name of the data structures containing the sound data are in the decoded SoundFont's <code>.h</code> file.</p>
+<p>For example, in this example <code>.h</code></p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;AudioStream.h&gt;</span></div><div class="line"><span class="preprocessor">#include &lt;AudioSynthWavetable.h&gt;</span></div><div class="line"></div><div class="line"><span class="keyword">extern</span> <span class="keyword">const</span> sample_data nylonstrgtr_samples[3];</div><div class="line"><span class="keyword">const</span> uint8_t nylonstrgtr_ranges[] = {56, 77, 127, };</div><div class="line"><span class="keyword">const</span> instrument_data nylonstrgtr = {3, nylonstrgtr_ranges, nylonstrgtr_samples };</div><div class="line"><span class="keyword">extern</span> <span class="keyword">const</span> uint32_t sample_0_nylonstrgtr_nguitrf2[1920];</div><div class="line"><span class="keyword">extern</span> <span class="keyword">const</span> uint32_t sample_1_nylonstrgtr_nguitb2[2688];</div><div class="line"><span class="keyword">extern</span> <span class="keyword">const</span> uint32_t sample_2_nylonstrgtr_acgtrb3[3200];</div></div><!-- fragment --><h1>A very simple first program</h1>
+<div class="fragment"><div class="line">#include &lt;AudioSynthWavetable.h&gt;</div></div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
