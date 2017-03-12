@@ -16,11 +16,16 @@ The project's source is available on GitHub: https://github.com/TeensyAudio/Wave
 
 The SoundFont decoder is a python utility to decode a SoundFont file into native C++ datatypes. The decoder can be run via a GUI or via the command line. 
 
-### GUI
-To run the GUI you must use Python3, specifically 3.6
-invoke with `$ python3 decoderGui.py`  
+### How To Run
+To run the pre-built version of the SoundfontDecoder, simply execute the SoundfontDecoder.exe executable
 
-### Command Line
+### To Run Soundfont Decoder Via Python
+To run the GUI via Python, you must use Python3, specifically 3.6. The Sf2Utils Python package must be installed in order to run/build the decoder.
+Sf2Utils can be installed via `pip install sf2utils`
+
+After dependancies have been installed, invoke with `$ python3 controller.py`
+
+### Command Line Python Execution
 How to invoke the script:  
 The `-d` flag is for debug mode  
 The `-i` flag precedes the input file  
@@ -36,5 +41,5 @@ pyinstaller --onefile --noconsole <path-to-wavetable-code>\controller.py
 
 ## Audio Synth Wavetable
 
-C++ class implementing wavetable synthesis.
+C++ class implementing wavetable synthesis. For in-depth class member and field descriptions, see https://teensyaudio.github.io/Wavetable-Synthesis/html/index.html
 
