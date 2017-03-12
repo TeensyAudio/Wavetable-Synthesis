@@ -1,3 +1,35 @@
+##
+# Audio Library for Teensy 3.X
+# Copyright (c) 2017, TeensyAudio PSU Team
+#
+# Development of this audio library was sponsored by PJRC.COM, LLC.
+# Please support PJRC's efforts to develop open source 
+# software by purchasing Teensy or other PJRC products.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice, development funding notice, and this permission
+# notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+##
+
+################## IMPORTANT USAGE NOTE!!! ##########################
+# In order for this test script to operate correctly, please follow the 
+# instructions within the README.txt of the \DecoderTest directory.
+#####################################################################
+
 from unittest.mock import patch, MagicMock, mock_open
 from io import  StringIO
 from contextlib import *
@@ -11,7 +43,24 @@ import glob
 from shutil import copyfile
 from subprocess import check_output
 
-arduino_upload_str = '"C:\\Program Files (x86)\\Arduino\\arduino-builder" -hardware "C:\\Program Files (x86)\\Arduino\\hardware" -tools "C:\\Program Files (x86)\\Arduino\\hardware\\tools" -tools "C:\\Program Files (x86)\\Arduino\\tools-builder" -fqbn teensy:avr:teensy36:usb=serialmidi -libraries C:\\Users\\Ryan\\Documents\\Arduino\\libraries -libraries "C:\\Program Files (x86)\\Arduino\\hardware\\teensy\\avr\\libraries" ./AutoTest/AutoTest.ino'
+########### To use this test, update these values with the locations on your specific machine ######################
+arduino_builder_location = '"C:\\Program Files (x86)\\Arduino\\arduino-builder"'
+arduino_hardware_location1 = '"C:\\Program Files (x86)\\Arduino\\hardware"'
+arduino_tools_location1 = '"C:\\Program Files (x86)\\Arduino\\hardware\\tools"'
+arduino_tools_location2 = '"C:\\Program Files (x86)\\Arduino\\tools-builder"'
+fully_qual_board_name = 'teensy:avr:teensy36:usb=serialmidi'
+wavetable_lib_location = 'C:\\Users\\Ryan\\Documents\\Arduino\\libraries'
+teensy_lib_location = '"C:\\Program Files (x86)\\Arduino\\hardware\\teensy\\avr\\libraries"'
+####################################################################################################################
+
+arduino_upload_str = '{0} -hardware {1} -tools {2} -tools {3} -fqbn {4} -libraries {5} -libraries {6} ./AutoTest/AutoTest.ino'
+arduino_upload_str = arduino_upload_str.format(arduino_builder_location,
+												arduino_hardware_location1,
+												arduino_tools_location1,
+												arduino_tools_location2,
+												fully_qual_board_name,
+												wavetable_lib_location,
+												teensy_lib_location)
 path = "*.h"
 
 ## This class is for testing the command line input for the decoder
