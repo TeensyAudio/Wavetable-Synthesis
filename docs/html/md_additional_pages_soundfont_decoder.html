@@ -120,9 +120,8 @@ $(document).ready(function(){initNavTree('md_additional_pages_soundfont_decoder.
 2-1 GUI Layout</h2>
 <p>The following section covers what each component of the GUI does.</p>
 <div class="image">
-<img src="../additional_pages/images/test.jpeg" alt="Caption text"/>
+<img src="../additional_pages/images/layout_nocircle.jpg" alt="Caption text"/>
 </div>
-<p> (Image of the GUI with numbers corresponding to descriptions needs to go here)</p>
 <ol type="1">
 <li>Select Teensy Version: Select the current version of the Teensy that is being decoded for. The size selected will affect the Teensy % usage estimate given when selecting samples. The output files for both options is the same.</li>
 <li>Load a SoundFont: Browse for a file with an <code>.sf2</code> extension to load into the decoder. Once a file is selected the file path will is displayed here as well.</li>
@@ -135,29 +134,28 @@ $(document).ready(function(){initNavTree('md_additional_pages_soundfont_decoder.
 </ol>
 <h2><a class="anchor" id="decodesampleGUI"></a>
 2-2 Decoding a Sample</h2>
-<p>This section gives a basic walk through of loading a <code>.sf2</code> file, selecting a sample and decoding it with the GUI. </p><h4>Step 1: Load .sf2 file into decoder</h4>
-<p>(image)</p>
+<p>This section gives a basic walk through of loading a <code>.sf2</code> file, selecting a sample and decoding it with the GUI. </p><h4>Step 1: Click brows and select .sf2 file to load into decoder</h4>
+<div class="image">
+<img src="../additional_pages/images/step_1.png" alt="Caption text"/>
+</div>
 <h4>Step 2: Select an Instrument to bring up its sample list</h4>
 <div class="image">
-<img src="../additional_pages/images/test.jpeg" alt="Caption text"/>
+<img src="../additional_pages/images/step_2.png" alt="Caption text"/>
 </div>
-<p> (image)</p>
 <h4>Step 3: Select samples to decode from instrument</h4>
 <div class="image">
-<img src="../additional_pages/images/test.jpeg" alt="Caption text"/>
+<img src="../additional_pages/images/step_3.png" alt="Caption text"/>
 </div>
-<p> (image)</p>
-<p>Note that multiple samples can be selected if the <code>ctrl</code> button on the keyboard is held during sample selection.</p>
+<p>Note: The selected samples are shown in grey. Also multiple samples can be selected if the <code>ctrl</code> button on the keyboard is held during sample selection.</p>
 <h4>Step 4: Click the decode button to decode samples</h4>
 <div class="image">
-<img src="../additional_pages/images/test.jpeg" alt="Caption text"/>
+<img src="../additional_pages/images/step_4.png" alt="Caption text"/>
 </div>
-<p> (image)</p>
 <h4>Step 5: Get confirmation message</h4>
 <div class="image">
-<img src="../additional_pages/images/test.jpeg" alt="Caption text"/>
+<img src="../additional_pages/images/step_5.png" alt="Caption text"/>
 </div>
-<p> (image)</p>
+<p>Note: The confirmation message is displayed in the status bar. (bottom right)</p>
 <p>At this point the decoded sample files (<code>.cpp</code> and <code>.h</code>) will be in the output directory and will be named after the selected instrument. By default this directory is the same that the decoder was launched from.</p>
 <h1><a class="anchor" id="decodercommandline"></a>
 3-0 Using the Decoder from the Command Line</h1>
