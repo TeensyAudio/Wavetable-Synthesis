@@ -8,7 +8,6 @@ import getopt
 import sf2utils
 
 class DecoderTestMethods(unittest.TestCase):
-    '''
     ## Create the first instrument and first sample for all files in Soundfonts folder
     @patch.object(decoder, 'safe_input', create=True)
     def test_decodeFileTest(self, safe_input):        
@@ -20,7 +19,6 @@ class DecoderTestMethods(unittest.TestCase):
                     argv = ['-i', '../Soundfonts/' + name.strip()]
                     decoder.main(argv)
                     self.assertIn("success", out.getvalue())
-    '''
 
     ## Check that an invalid .sf2 file throws a type error exception
     def test_invalidSF2FileThrowsTypeError(self):
