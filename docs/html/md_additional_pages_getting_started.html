@@ -99,13 +99,22 @@ $(document).ready(function(){initNavTree('md_additional_pages_getting_started.ht
 <h2>How do I use the Audio Synth Wavetable library?</h2>
 <p>To use the Audio Synth Wavetable library you must include the header file in your Arduino sketch (a <code>.ino</code> file):</p>
 <div class="fragment"><div class="line">#include &lt;AudioSynthWavetable.h&gt;</div></div><!-- fragment --><p>The <code><a class="el" href="_audio_synth_wavetable_8h_source.html">AudioSynthWavetable.h</a></code> and <code>AudioSynthWavetable.cpp</code> files need to be in your Arduino library folder.</p>
-<h2>Dependencies</h2>
-<p>To use the Audio Synth Wavetable library you must have decoded SoundFont files. The library retrieves its sound data from these files. The decoded SoundFont files must be in the same directory as your Arduino sketch.</p>
-<p>To learn how to decode a SoundFont file read <a href="https://teensyaudio.github.io/Wavetable-Synthesis/html/md_additional_pages_soundfont_decoder.html">SoundFont Decoder User-Guide</a>.</p>
-<h2>Using decoded SoundFont file and the library</h2>
-<p>The name of the data structures containing the sound data are in the decoded SoundFont's <code>.h</code> file.</p>
-<p>For example, in this example <code>.h</code></p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;AudioStream.h&gt;</span></div><div class="line"><span class="preprocessor">#include &lt;AudioSynthWavetable.h&gt;</span></div><div class="line"></div><div class="line"><span class="keyword">extern</span> <span class="keyword">const</span> sample_data nylonstrgtr_samples[3];</div><div class="line"><span class="keyword">const</span> uint8_t nylonstrgtr_ranges[] = {56, 77, 127, };</div><div class="line"><span class="keyword">const</span> instrument_data nylonstrgtr = {3, nylonstrgtr_ranges, nylonstrgtr_samples };</div><div class="line"><span class="keyword">extern</span> <span class="keyword">const</span> uint32_t sample_0_nylonstrgtr_nguitrf2[1920];</div><div class="line"><span class="keyword">extern</span> <span class="keyword">const</span> uint32_t sample_1_nylonstrgtr_nguitb2[2688];</div><div class="line"><span class="keyword">extern</span> <span class="keyword">const</span> uint32_t sample_2_nylonstrgtr_acgtrb3[3200];</div></div><!-- fragment --><h1>A very simple first program</h1>
+<h2>Decoding Soundfont Files</h2>
+<p>See <a href="https://teensyaudio.github.io/Wavetable-Synthesis/html/md_additional_pages_soundfont_decoder.html">https://teensyaudio.github.io/Wavetable-Synthesis/html/md_additional_pages_soundfont_decoder.html</a> for information on how to decode a .sf2 file to a usable format for the <code><a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a></code> class.</p>
+<h2>Including a Soundfont File in an Arduino Sketch</h2>
+<p>When creating a sketch that uses the <code><a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a></code> class, the output files from the soundfont decoder (in the form of .cpp and .h files) need to be placed in the same directory as the Arduino sketch. Once these files are in the same directory, within the Arduino sketch code, `#include "&lt;instrument-name&gt;_samples.h" must be added to the top of the sketch in order to use it with the wavetable class.</p>
+<h2>Locating the instrument_data Within the Decoded Files</h2>
+<p>An instance of the <code><a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a></code> object requires a complete instrument_data object to be passed to the wavetable object. The instrument_data object can be found in the &lt;instrument-name&gt;_samples.h file that was included from the output files from the SoundfontDecoder (see <code>Including a Soundfont File in an Arduino Sketch</code> above).</p>
+<h2>Setting up a <a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> Object</h2>
+<h3>Audio Connections</h3>
+<p>Before using an <a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> Object to synthesize music, it will be necessary to set up some audio connection objects. See the Teensy Audio Library documentation at <a href="https://www.pjrc.com/teensy/td_libs_Audio.html">https://www.pjrc.com/teensy/td_libs_Audio.html</a> for information on using AudioConnection objects to connect the <a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> object to mixers and audio output drivers for your specific Teensy board.</p>
+<h3>Setting an Object's Instrument</h3>
+<p>To set an object's instrument, be sure that the .h and .cpp files from the SoundfontDecoder have been included in your Arduino sketch, and locate the name of the instrument_data object in the &lt;instrument-name&gt;_samples.h file. For example it will look something like this for an instrument named "BasicFlute1":</p>
+<p><code>const instrument_data BasicFlute1 = {2, BasicFlute1_ranges, BasicFlute1_samples };</code></p>
+<p>In this example, assume that <code><a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> wavetable;</code> is already placed in the variable declaration section of the Arduino sketch, and assume the instrument_data object that gets passed to the <a class="el" href="class_audio_synth_wavetable.html">AudioSynthWavetable</a> object is named <code>BasicFlute1</code>. To set the instrument of a particular wavetable object, perform the following:</p>
+<p><code>wavetable.setInstrument(BasicFlute1);</code></p>
+<p>Now, the wavetable's instrument has been set, and the object can now be used to synthesize instrument sounds ~~~~~~~~~~~~~~~</p>
+<h1>A very simple first program</h1>
 <div class="fragment"><div class="line">#include &lt;AudioSynthWavetable.h&gt;</div></div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

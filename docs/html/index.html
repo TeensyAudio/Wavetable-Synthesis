@@ -103,12 +103,22 @@ $(document).ready(function(){initNavTree('index.html','');});
 <p>The project's source is available on GitHub: <a href="https://github.com/TeensyAudio/Wavetable-Synthesis">https://github.com/TeensyAudio/Wavetable-Synthesis</a></p>
 <h2>SoundFont Decoder</h2>
 <p>The SoundFont decoder is a python utility to decode a SoundFont file into native C++ datatypes. The decoder can be run via a GUI or via the command line.</p>
-<h3>GUI</h3>
-<p>To run the GUI you must use Python3, specifically 3.6 invoke with <code>$ python3 decoderGui.py</code></p>
-<h3>Command Line</h3>
+<h3>How To Run</h3>
+<p>To run the pre-built version of the SoundfontDecoder, simply execute the SoundfontDecoder.exe executable</p>
+<h3>To Run Soundfont Decoder Via Python</h3>
+<p>To run the GUI via Python, you must use Python3, specifically 3.6. The Sf2Utils Python package must be installed in order to run/build the decoder. Sf2Utils can be installed via <code>pip install sf2utils</code></p>
+<p>After dependancies have been installed, invoke with <code>$ python3 controller.py</code></p>
+<h3>Command Line Python Execution</h3>
 <p>How to invoke the script: The <code>-d</code> flag is for debug mode The <code>-i</code> flag precedes the input file <code>$ python decoder.py -i soundfont</code> <code>$ python decoder.py -d -i soundfont</code></p>
+<h3>How To Build SoundfontDecoder.exe</h3>
+<ol type="1">
+<li>Pull the latest version of PyInstaller from <a href="https://github.com/pyinstaller/pyinstaller">https://github.com/pyinstaller/pyinstaller</a> (at the time of this writing, PyInstaller in PIP doesn't support Python 3.6).</li>
+<li>Run the setup.py script from the PyInstaller repo.</li>
+<li>After PyInstaller is installed on the system, the pyinstaller.exe will be within the  folder of the system's Python directory. Navigate to this directory, and run the following command: <code>pyinstaller --onefile --noconsole --name SoundfontDecoder &lt;path-to-wavetable-code&gt;\controller.py</code></li>
+<li>This will produce an executable file named controller.exe which contains the Soundfont Decoder.</li>
+</ol>
 <h2>Audio Synth Wavetable</h2>
-<p>C++ class implementing wavetable synthesis. </p>
+<p>C++ class implementing wavetable synthesis. For in-depth class member and field descriptions, see <a href="https://teensyaudio.github.io/Wavetable-Synthesis/html/index.html">https://teensyaudio.github.io/Wavetable-Synthesis/html/index.html</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
