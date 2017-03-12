@@ -36,7 +36,7 @@ The `-i` flag precedes the input file
 1. Pull the latest version of PyInstaller from https://github.com/pyinstaller/pyinstaller (at the time of this writing, PyInstaller in PIP doesn't support Python 3.6).
 2. Run the setup.py script from the PyInstaller repo.
 3. After PyInstaller is installed on the system, the pyinstaller.exe will be within the \Scripts folder of the system's Python directory. Navigate to this directory, and run the following command:
-pyinstaller --onefile --noconsole <path-to-wavetable-code>\controller.py
+`pyinstaller --onefile --noconsole --name SoundfontDecoder <path-to-wavetable-code>\controller.py`
 4. This will produce an executable file named controller.exe which contains the Soundfont Decoder.
 
 ## Audio Synth Wavetable
