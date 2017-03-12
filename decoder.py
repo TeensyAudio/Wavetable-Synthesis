@@ -119,18 +119,17 @@ def print_usage():
     print("-o (output file) : output to selected file")
     print("-d : debug mode")
 
-## Main loop of the decoder when running from the command line
-def main(argv):
+## Get the options from command line and open file for menu
+# @param argv the list of command line arguments given to the program
+# @return returns the input file path and the output file path
+def read_args(argv):
     global DEBUG_FLAG
-    # Disable warning logging to prevent sf2utils from logging any un-needed messages
-    logging.disable(logging.WARNING)
-
-    # Check for command line options
+    
     path = None
+    outFile = None
     try:
-        opts, args = getopt.getopt(argv, 'di:o:', ['ifile=', 'ofile='])
-        single_opts = [opt[0] for opt in opts]
-        if '-i' not in single_opts and '--ifile' not in single_opts: raise getopt.GetoptError("Missing -i/--ifile option")
+        opts, args = getopt.getopt(argv, 'di:o:')
+        if '-i' not in [opt[0] for opt in opts]: raise getopt.GetoptError("Missing -i option")
     except getopt.GetoptError as err:
         print("ERROR: " + err.args[0])
         print_usage()
@@ -141,21 +140,31 @@ def main(argv):
         for opt, arg in opts:
             if opt == '-d':
                 DEBUG_FLAG = True
-            elif opt in ('-i', '--ifile'):
+            elif opt in ('-i'):
                 if(arg == None or arg[-4:].lower() != '.sf2'): 
+                    print(arg[-4:])
                     raise TypeError("Invalid .sf2 file given: " + arg)
                 path = arg
-            elif opt in ('-o', '--ofile'):
-                outFile = arg
-
-        with open(path, 'rb') as sf2_file:
-            sf2 = Sf2File(sf2_file)
     except TypeError as err:
         print("ERROR: " + str(err.args[0]))
         print_usage()
         sys.exit(2)
+
+    return path, outFile
+
+## Main loop of the decoder when running from the command line
+def main(argv):
+    global DEBUG_FLAG
+    # Disable warning logging to prevent sf2utils from logging any un-needed messages
+    logging.disable(logging.WARNING)
+
+    # Read args from the command line and open file
+    try:
+        path, outFile = read_args(argv)
+        with open(path, 'rb') as sf2_file:
+            sf2 = Sf2File(sf2_file)
     except FileNotFoundError as err:
-        print("ERROR: " + str(err.args[1]) + ": " + arg)
+        print("ERROR: " + str(err.args[1]) + ": " + path)
         print_usage()
         sys.exit(2)
     except:
@@ -202,7 +211,8 @@ def main(argv):
             method = menu(('Export All Samples', 'Select Samples to Export'))
             if method == 1: # decode all samples for instrument
                 decode_all(path, instrument, global_bag_index)
-                sys.exit('All samples for instrument decoded successfully. Exiting Program.')
+                print('All samples for instrument decoded successfully. Exiting Program.')
+                return
             else: # decode selected samples for instrument
                 selected_bags = []
                 while True: # select which samples to decode
@@ -218,11 +228,14 @@ def main(argv):
                         continue
                     elif i_result == 2: # decode list of selected samples
                         decode_selected(path, instrument, selected_bags, global_bag_index)
-                        sys.exit('Selected samples for instrument decoded successfully. Exiting Program.')
+                        print('Selected samples for instrument decoded successfully. Exiting Program.')
+                        return
         elif choice == 2: # exit
-            sys.exit('Program Terminated by User')
+            print('Program Terminated by User')
+            return
         else: # shouldn't be reached
             input("Wrong option selection. Enter any key to try again..")
+
 
 ## Decodes selected samples and outputs them to a file
 # @param path the path of the file that contains the samples 

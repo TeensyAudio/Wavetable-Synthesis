@@ -7,6 +7,7 @@ import decoder
 import getopt
 import sf2utils
 
+## This class is for testing the command line input for the decoder
 class DecoderTestMethods(unittest.TestCase):
     ## Create the first instrument and first sample for all files in Soundfonts folder
     @patch.object(decoder, 'safe_input', create=True)

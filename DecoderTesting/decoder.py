@@ -128,9 +128,8 @@ def read_args(argv):
     path = None
     outFile = None
     try:
-        opts, args = getopt.getopt(argv, 'di:o:', ['ifile=', 'ofile='])
-        single_opts = [opt[0] for opt in opts]
-        if '-i' not in single_opts and '--ifile' not in single_opts: raise getopt.GetoptError("Missing -i/--ifile option")
+        opts, args = getopt.getopt(argv, 'di:o:')
+        if '-i' not in [opt[0] for opt in opts]: raise getopt.GetoptError("Missing -i option")
     except getopt.GetoptError as err:
         print("ERROR: " + err.args[0])
         print_usage()
@@ -141,13 +140,11 @@ def read_args(argv):
         for opt, arg in opts:
             if opt == '-d':
                 DEBUG_FLAG = True
-            elif opt in ('-i', '--ifile'):
+            elif opt in ('-i'):
                 if(arg == None or arg[-4:].lower() != '.sf2'): 
                     print(arg[-4:])
                     raise TypeError("Invalid .sf2 file given: " + arg)
                 path = arg
-            elif opt in ('-o', '--ofile'):
-                outFile = arg
     except TypeError as err:
         print("ERROR: " + str(err.args[0]))
         print_usage()
