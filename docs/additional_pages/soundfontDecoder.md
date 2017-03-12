@@ -19,7 +19,7 @@ https://www.pjrc.com/teensy/index.html
 
 The following section covers what each component of the GUI does.
 
-(Image of the GUI with numbers corresponding to descriptions needs to go here)
+![Caption text](../additional_pages/images/layout_nocircle.jpg)
 
 1. Select Teensy Version: Select the current version of the Teensy that is being decoded for. The size selected will affect the Teensy % usage estimate given when selecting samples. The output files for both options is the same.
 
@@ -41,21 +41,28 @@ This window also displays a confirmation message and list of decoded samples whe
 ## 2-2 Decoding a Sample {#decodesampleGUI}
 
 This section gives a basic walk through of loading a `.sf2` file, selecting a sample and decoding it with the GUI.
-####Step 1: Load .sf2 file into decoder
-(image)
+####Step 1: Click brows and select .sf2 file to load into decoder
+![Caption text](../additional_pages/images/step_1.png)
 
 #### Step 2: Select an Instrument to bring up its sample list
-(image)
+
+![Caption text](../additional_pages/images/step_2.png)
 
 #### Step 3: Select samples to decode from instrument
-(image)
-Note that multiple samples can be selected if the `ctrl` button on the keyboard is held during sample selection.
+
+![Caption text](../additional_pages/images/step_3.png)
+
+Note: The selected samples are shown in grey. Also multiple samples can be selected if the `ctrl` button on the keyboard is held during sample selection.
 
 #### Step 4: Click the decode button to decode samples
-(image)
+
+![Caption text](../additional_pages/images/step_4.png)
 
 #### Step 5: Get confirmation message
-(image)
+
+![Caption text](../additional_pages/images/step_5.png)
+
+Note: The confirmation message is displayed in the status bar. (bottom right)
 
 At this point the decoded sample files (`.cpp` and `.h`) will be in the output directory and will be named after the selected instrument. By default this directory is the same that the decoder was launched from.
 
