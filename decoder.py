@@ -286,6 +286,7 @@ def decode_all(path, inst_index, global_bag_index):
 # @param file_dir the output directory for the decoded samples
 def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir="."):
     instrument_name = file_title
+    instrument_name = ''.join([i for i in instrument_name if not i.isdigit()])
     h_file_name = "{}_samples.h".format(instrument_name)
     cpp_file_name = "{}_samples.cpp".format(instrument_name)
     with open(file_dir + "/" + cpp_file_name, "w") as cpp_file, open(file_dir + "/" + h_file_name, "w") as h_file:

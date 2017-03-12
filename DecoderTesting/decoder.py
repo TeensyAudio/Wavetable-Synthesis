@@ -126,7 +126,7 @@ def read_args(argv):
     global DEBUG_FLAG
     
     path = None
-    outFile = None
+    out_name = None
     try:
         opts, args = getopt.getopt(argv, 'di:o:')
         if '-i' not in [opt[0] for opt in opts]: raise getopt.GetoptError("Missing -i option")
@@ -145,12 +145,14 @@ def read_args(argv):
                     print(arg[-4:])
                     raise TypeError("Invalid .sf2 file given: " + arg)
                 path = arg
+            elif opt == '-o':
+                out_name = arg
     except TypeError as err:
         print("ERROR: " + str(err.args[0]))
         print_usage()
         sys.exit(2)
 
-    return path, outFile
+    return path, out_name
 
 ## Main loop of the decoder when running from the command line
 def main(argv):
@@ -160,7 +162,7 @@ def main(argv):
 
     # Read args from the command line and open file
     try:
-        path, outFile = read_args(argv)
+        path, out_name = read_args(argv)
         with open(path, 'rb') as sf2_file:
             sf2 = Sf2File(sf2_file)
     except FileNotFoundError as err:
@@ -227,7 +229,7 @@ def main(argv):
                     if i_result == 1: # select another sample
                         continue
                     elif i_result == 2: # decode list of selected samples
-                        decode_selected(path, instrument, selected_bags, global_bag_index)
+                        decode_selected(path, instrument, selected_bags, global_bag_index, out_name)
                         print('Selected samples for instrument decoded successfully. Exiting Program.')
                         return
         elif choice == 2: # exit
@@ -286,6 +288,7 @@ def decode_all(path, inst_index, global_bag_index):
 # @param file_dir the output directory for the decoded samples
 def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir="."):
     instrument_name = file_title
+    instrument_name = ''.join([i for i in instrument_name if not i.isdigit()])
     h_file_name = "{}_samples.h".format(instrument_name)
     cpp_file_name = "{}_samples.cpp".format(instrument_name)
     with open(file_dir + "/" + cpp_file_name, "w") as cpp_file, open(file_dir + "/" + h_file_name, "w") as h_file:
