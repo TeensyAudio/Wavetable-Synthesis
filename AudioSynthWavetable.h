@@ -115,7 +115,7 @@ public:
 	 * @return a MIDI note (between 0 - 127)
 	 */
 	static int freqToNote(float freq) {
-		return 12*log2f(freq) - 36.3763164;
+		return 12*log2f(freq) - 35.8763164;
 	}
 
 	// Defined in AudioSynthWavetable.cpp
