@@ -44,15 +44,25 @@ class MyView(Frame):
         self.parent = parent
 
         #control variables
+        # i_names = instruments to be shown in the instrument listbox
         self.i_names = StringVar()
+        # s_names = samples to be shown in the sample listbox
         self.s_names = StringVar()
+        # version = teensy version reflected in the selected element
+        # of the radiobutton in the 'select teensy version' frame.
         self.version = IntVar(value=1)
+        # out_dir = reflects contents of the 'folder' entry in the
+        # 'output settings' frame
         self.out_dir = StringVar(value='Select Directory...')
         self.default_out_name = 'Default is Instrument Name'
+        # out_name = reflects contents of the 'name' entyr in the
+        # 'output settings' frame
         self.out_name = StringVar(value=self.default_out_name)
         self.total_sample_size = IntVar(value=0)
         self.num_samples_selected = IntVar(value=0)
         self.teensy_percent_used = IntVar(value=0.0)
+        # inFile = reflects the filepath that the user chooses as the
+        # soundfont file to decode samples from
         self.inFile = StringVar(value='Select a Soundfont File to Continue')
 
         #formating variables
@@ -183,7 +193,7 @@ class MyView(Frame):
             self.controller.setTeensyMemSize(1048) #teensy 3.6 size in kb
 
 
-    #Getters and setters for the control variables.
+    # Setters and Getters for the control variables and such
     def setInstrumentList(self, _newInstruments):
         self.i_names.set(_newInstruments)
         for i in range(0, len(self.i_names.get()), 2):
