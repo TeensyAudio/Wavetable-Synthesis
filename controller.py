@@ -29,6 +29,7 @@ from tkinter import Tk, filedialog, messagebox
 import view
 import model
 import decoder
+import os
 
 class MyController():
     def __init__(self,parent):
@@ -38,6 +39,8 @@ class MyController():
 
     #Input Handlers
     def inBrowseSelected(self):
+        # All of the actions that need to occur when the user is
+        # selecting a soundfont to use.
         temp = filedialog.askopenfilename(filetypes=(("sf2 files", "*.sf2"), ("SF2 files", "*.SF2")))
         self.model.setInFile(temp)
         self.view.setInFile(temp)
@@ -49,6 +52,8 @@ class MyController():
         self.view.setOutDirectory(self.model.out_dir)
 
     def instrumentSelected(self, _selection):
+        # Receives the index of the most recently selected instrument
+        # Invokes the actions needed when selected instrument changes.
         idxs = _selection
         if len(idxs) == 1:
             self.model.setCurrInstrument(int(idxs[0]))
@@ -95,9 +100,10 @@ class MyController():
 
         for samp in self.model.getCurrSamples():
             selected_bags.append(samp.bag_idx)
-        if decoder.decode_selected(inFile, curr_inst.getOriginalIndex(),
-                selected_bags, curr_inst.getGlobalBag(), out_name, self.model.getOutDir()):
-            self.view.setStatus('Decode Successful!')
+        (success, outdir) = decoder.decode_selected(inFile, curr_inst.getOriginalIndex(),
+                selected_bags, curr_inst.getGlobalBag(), out_name, self.model.getOutDir())
+        if success:
+            self.view.setStatus('Samples saved to: ' + outdir)
             self.decodeConfirmation()
         else:
             self.view.setStatus('ERROR! Failed to Decode!')

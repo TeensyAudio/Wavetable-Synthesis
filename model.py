@@ -33,15 +33,18 @@ class MyModel():
     def __init__(self,vc):
         #set delegate/callback pointer
         self.controller = vc
-        #initialize model
+        # infile = Soundfont file loaded by user.
         self.inFile = None
-        # currInst logic needs to be changed if implementing ordering
+        # Most recently selected Instrument
         self.curr_instrument = None
+        # out_dir = filepath to the folder where the output will be saved
         self.out_dir = None
+        # out_name = name of the output files. Default is intrument name.
         self.out_name = None
+        # curr_samples = list of 'sf2elements.Sample
         self.curr_samples = list()
+        # Instruments = list of 'sf2elements.Instrument' objects
         self.Instruments = list()
-
         self.total_sample_size = 0
         self.teensy_mem_size = 250 #default 250kb Teensy 3.2
 
@@ -50,8 +53,10 @@ class MyModel():
         self.controller.modelChanged()
 #Setters and getters for the model
     def setInFile(self, _new):
+    # Set the Soundfont file that the user has selected.
         self.inFile =_new
     def getInFile(self):
+    # Return the currently loaded Soundfont file.
         return self.inFile
     def setOutDir(self, _new):
         self.out_dir = _new
@@ -66,6 +71,11 @@ class MyModel():
     def getInstrumentList(self):
         return self.Instruments
     def setCurrSamples(self, _idxs):
+        """
+        Takes a sequence of indices corresponding to selected items
+        and uses those indices to set the corresponding samples in
+        the current instrument as the current samples.
+        """
         temp = list()
         samps = self.curr_instrument.getSamples()
         for idx in _idxs:

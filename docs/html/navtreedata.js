@@ -3,7 +3,18 @@ var NAVTREE =
   [ "Teensy Wavetable Synthesis", "index.html", [
     [ "Wavetable-Synthesis", "index.html", null ],
     [ "Examples", "md_additional_pages_examples.html", null ],
-    [ "Getting started", "md_additional_pages_getting_started.html", null ],
+    [ "Getting started", "md_additional_pages_getting_started.html", [
+      [ "What is the Audio Synth Wavetable library?", "md_additional_pages_getting_started.html#WhatIs", null ],
+      [ "How do I use the Audio Synth Wavetable library?", "md_additional_pages_getting_started.html#howtoUse", null ],
+      [ "Decoding Soundfont Files", "md_additional_pages_getting_started.html#decoder", null ],
+      [ "Including a Soundfont File in an Arduino Sketch", "md_additional_pages_getting_started.html#including", null ],
+      [ "Locating the instrument_data Within the Decoded Files", "md_additional_pages_getting_started.html#locating", null ],
+      [ "Setting up an AudioSynthWavetable Object", "md_additional_pages_getting_started.html#settingObject", [
+        [ "Audio Connections", "md_additional_pages_getting_started.html#AudioConnectios", null ],
+        [ "Setting an Object's Instrument", "md_additional_pages_getting_started.html#settingInst", null ]
+      ] ],
+      [ "A very simple first program", "md_additional_pages_getting_started.html#firstProg", null ]
+    ] ],
     [ "SoundFont Decoder User-Guide", "md_additional_pages_soundfont_decoder.html", [
       [ "1-0 About", "md_additional_pages_soundfont_decoder.html#about", null ],
       [ "2-0 Using the Decoder with the GUI", "md_additional_pages_soundfont_decoder.html#decoderGUI", [
@@ -19,7 +30,7 @@ var NAVTREE =
         [ "4-2 .h file", "md_additional_pages_soundfont_decoder.html#hfile", null ]
       ] ]
     ] ],
-    [ "Classes", "annotated.html", [
+    [ "AudioSynthWavetable Class", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
       [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],

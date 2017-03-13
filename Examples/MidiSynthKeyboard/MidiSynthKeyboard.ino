@@ -33,28 +33,28 @@ AudioSynthWavetable wavetable[TOTAL_VOICES];
 AudioMixer4 mixer[TOTAL_MIXERS];
 AudioOutputI2S i2s1;
 AudioConnection patchCord[] = {
-	{wavetable[ 0], 0, mixer[ 0], 0}, {wavetable[ 1], 0, mixer[ 0], 1}, {wavetable[ 2], 0, mixer[0],  2}, {wavetable[ 3], 0, mixer[0],  3}, {mixer[ 0], 0, mixer[TOTAL_MIXERS-2], 0},
-	{wavetable[ 4], 0, mixer[ 1], 0}, {wavetable[ 5], 0, mixer[ 1], 1}, {wavetable[ 6], 0, mixer[1],  2}, {wavetable[ 7], 0, mixer[1],  3}, {mixer[ 1], 0, mixer[TOTAL_MIXERS-2], 1},
-	{wavetable[ 8], 0, mixer[ 2], 0}, {wavetable[ 9], 0, mixer[ 2], 1}, {wavetable[10], 0, mixer[2],  2}, {wavetable[11], 0, mixer[2],  3}, {mixer[ 2], 0, mixer[TOTAL_MIXERS-2], 2},
-	{wavetable[12], 0, mixer[ 3], 0}, {wavetable[13], 0, mixer[ 3], 1}, {wavetable[14], 0, mixer[3],  2}, {wavetable[15], 0, mixer[3],  3}, {mixer[ 3], 0, mixer[TOTAL_MIXERS-2], 3},
-	{wavetable[16], 0, mixer[ 4], 0}, {wavetable[17], 0, mixer[ 4], 1}, {wavetable[18], 0, mixer[4],  2}, {wavetable[19], 0, mixer[4],  3}, {mixer[ 4], 0, mixer[TOTAL_MIXERS-3], 0},
-	{wavetable[20], 0, mixer[ 5], 0}, {wavetable[21], 0, mixer[ 5], 1}, {wavetable[22], 0, mixer[5],  2}, {wavetable[23], 0, mixer[5],  3}, {mixer[ 5], 0, mixer[TOTAL_MIXERS-3], 1},
-	{wavetable[24], 0, mixer[ 6], 0}, {wavetable[25], 0, mixer[ 6], 1}, {wavetable[26], 0, mixer[6],  2}, {wavetable[27], 0, mixer[6],  3}, {mixer[ 6], 0, mixer[TOTAL_MIXERS-3], 2},
-	{wavetable[28], 0, mixer[ 7], 0}, {wavetable[29], 0, mixer[ 7], 1}, {wavetable[30], 0, mixer[7],  2}, {wavetable[31], 0, mixer[7],  3}, {mixer[ 7], 0, mixer[TOTAL_MIXERS-3], 3},
-	{wavetable[32], 0, mixer[ 8], 0}, {wavetable[33], 0, mixer[ 8], 1}, {wavetable[34], 0, mixer[8],  2}, {wavetable[35], 0, mixer[8],  3}, {mixer[ 8], 0, mixer[TOTAL_MIXERS-4], 0},
-	{wavetable[36], 0, mixer[ 9], 0}, {wavetable[37], 0, mixer[ 9], 1}, {wavetable[38], 0, mixer[9],  2}, {wavetable[39], 0, mixer[9],  3}, {mixer[ 9], 0, mixer[TOTAL_MIXERS-4], 1},
-	{wavetable[40], 0, mixer[10], 0}, {wavetable[41], 0, mixer[10], 1}, {wavetable[42], 0, mixer[10], 2}, {wavetable[43], 0, mixer[10], 3}, {mixer[10], 0, mixer[TOTAL_MIXERS-4], 2},
-	{wavetable[44], 0, mixer[11], 0}, {wavetable[45], 0, mixer[11], 1}, {wavetable[46], 0, mixer[11], 2}, {wavetable[47], 0, mixer[11], 3}, {mixer[11], 0, mixer[TOTAL_MIXERS-4], 3},
-	{wavetable[48], 0, mixer[12], 0}, {wavetable[49], 0, mixer[12], 1}, {wavetable[50], 0, mixer[12], 2}, {wavetable[51], 0, mixer[12], 3}, {mixer[12], 0, mixer[TOTAL_MIXERS-5], 0},
-	{wavetable[52], 0, mixer[13], 0}, {wavetable[53], 0, mixer[13], 1}, {wavetable[54], 0, mixer[13], 2}, {wavetable[55], 0, mixer[13], 3}, {mixer[13], 0, mixer[TOTAL_MIXERS-5], 1},
-	{wavetable[56], 0, mixer[14], 0}, {wavetable[57], 0, mixer[14], 1}, {wavetable[58], 0, mixer[14], 2}, {wavetable[59], 0, mixer[14], 3}, {mixer[14], 0, mixer[TOTAL_MIXERS-5], 2},
-	{wavetable[60], 0, mixer[15], 0}, {wavetable[61], 0, mixer[15], 1}, {wavetable[62], 0, mixer[15], 2}, {wavetable[63], 0, mixer[15], 3}, {mixer[15], 0, mixer[TOTAL_MIXERS-5], 3},
-	{mixer[TOTAL_MIXERS-2], 0, mixer[TOTAL_MIXERS-1], 0},
-	{mixer[TOTAL_MIXERS-3], 0, mixer[TOTAL_MIXERS-1], 1},
-	{mixer[TOTAL_MIXERS-4], 0, mixer[TOTAL_MIXERS-1], 2},
-	{mixer[TOTAL_MIXERS-5], 0, mixer[TOTAL_MIXERS-1], 3},
-	{mixer[TOTAL_MIXERS-1], 0, i2s1, 0},
-	{mixer[TOTAL_MIXERS-1], 0, i2s1, 1},
+	{wavetable[0], 0, mixer[0], 0}, {wavetable[1], 0, mixer[0], 1}, {wavetable[2], 0, mixer[0],  2}, {wavetable[3], 0, mixer[0],  3}, {mixer[0], 0, mixer[TOTAL_MIXERS - 2], 0},
+	{wavetable[4], 0, mixer[1], 0}, {wavetable[5], 0, mixer[1], 1}, {wavetable[6], 0, mixer[1],  2}, {wavetable[7], 0, mixer[1],  3}, {mixer[1], 0, mixer[TOTAL_MIXERS - 2], 1},
+	{wavetable[8], 0, mixer[2], 0}, {wavetable[9], 0, mixer[2], 1}, {wavetable[10], 0, mixer[2],  2}, {wavetable[11], 0, mixer[2],  3}, {mixer[2], 0, mixer[TOTAL_MIXERS - 2], 2},
+	{wavetable[12], 0, mixer[3], 0}, {wavetable[13], 0, mixer[3], 1}, {wavetable[14], 0, mixer[3],  2}, {wavetable[15], 0, mixer[3],  3}, {mixer[3], 0, mixer[TOTAL_MIXERS - 2], 3},
+	{wavetable[16], 0, mixer[4], 0}, {wavetable[17], 0, mixer[4], 1}, {wavetable[18], 0, mixer[4],  2}, {wavetable[19], 0, mixer[4],  3}, {mixer[4], 0, mixer[TOTAL_MIXERS - 3], 0},
+	{wavetable[20], 0, mixer[5], 0}, {wavetable[21], 0, mixer[5], 1}, {wavetable[22], 0, mixer[5],  2}, {wavetable[23], 0, mixer[5],  3}, {mixer[5], 0, mixer[TOTAL_MIXERS - 3], 1},
+	{wavetable[24], 0, mixer[6], 0}, {wavetable[25], 0, mixer[6], 1}, {wavetable[26], 0, mixer[6],  2}, {wavetable[27], 0, mixer[6],  3}, {mixer[6], 0, mixer[TOTAL_MIXERS - 3], 2},
+	{wavetable[28], 0, mixer[7], 0}, {wavetable[29], 0, mixer[7], 1}, {wavetable[30], 0, mixer[7],  2}, {wavetable[31], 0, mixer[7],  3}, {mixer[7], 0, mixer[TOTAL_MIXERS - 3], 3},
+	{wavetable[32], 0, mixer[8], 0}, {wavetable[33], 0, mixer[8], 1}, {wavetable[34], 0, mixer[8],  2}, {wavetable[35], 0, mixer[8],  3}, {mixer[8], 0, mixer[TOTAL_MIXERS - 4], 0},
+	{wavetable[36], 0, mixer[9], 0}, {wavetable[37], 0, mixer[9], 1}, {wavetable[38], 0, mixer[9],  2}, {wavetable[39], 0, mixer[9],  3}, {mixer[9], 0, mixer[TOTAL_MIXERS - 4], 1},
+	{wavetable[40], 0, mixer[10], 0}, {wavetable[41], 0, mixer[10], 1}, {wavetable[42], 0, mixer[10], 2}, {wavetable[43], 0, mixer[10], 3}, {mixer[10], 0, mixer[TOTAL_MIXERS - 4], 2},
+	{wavetable[44], 0, mixer[11], 0}, {wavetable[45], 0, mixer[11], 1}, {wavetable[46], 0, mixer[11], 2}, {wavetable[47], 0, mixer[11], 3}, {mixer[11], 0, mixer[TOTAL_MIXERS - 4], 3},
+	{wavetable[48], 0, mixer[12], 0}, {wavetable[49], 0, mixer[12], 1}, {wavetable[50], 0, mixer[12], 2}, {wavetable[51], 0, mixer[12], 3}, {mixer[12], 0, mixer[TOTAL_MIXERS - 5], 0},
+	{wavetable[52], 0, mixer[13], 0}, {wavetable[53], 0, mixer[13], 1}, {wavetable[54], 0, mixer[13], 2}, {wavetable[55], 0, mixer[13], 3}, {mixer[13], 0, mixer[TOTAL_MIXERS - 5], 1},
+	{wavetable[56], 0, mixer[14], 0}, {wavetable[57], 0, mixer[14], 1}, {wavetable[58], 0, mixer[14], 2}, {wavetable[59], 0, mixer[14], 3}, {mixer[14], 0, mixer[TOTAL_MIXERS - 5], 2},
+	{wavetable[60], 0, mixer[15], 0}, {wavetable[61], 0, mixer[15], 1}, {wavetable[62], 0, mixer[15], 2}, {wavetable[63], 0, mixer[15], 3}, {mixer[15], 0, mixer[TOTAL_MIXERS - 5], 3},
+	{mixer[TOTAL_MIXERS - 2], 0, mixer[TOTAL_MIXERS - 1], 0},
+	{mixer[TOTAL_MIXERS - 3], 0, mixer[TOTAL_MIXERS - 1], 1},
+	{mixer[TOTAL_MIXERS - 4], 0, mixer[TOTAL_MIXERS - 1], 2},
+	{mixer[TOTAL_MIXERS - 5], 0, mixer[TOTAL_MIXERS - 1], 3},
+	{mixer[TOTAL_MIXERS - 1], 0, i2s1, 0},
+	{mixer[TOTAL_MIXERS - 1], 0, i2s1, 1},
 };
 Bounce buttons[] = { {0, 15}, {1, 15}, {2, 15}, };
 const int TOTAL_BUTTONS = sizeof(buttons) / sizeof(Bounce);
@@ -62,7 +62,7 @@ const int TOTAL_BUTTONS = sizeof(buttons) / sizeof(Bounce);
 void guitarHeroMode();
 void printVoices();
 void setVolume() {
-	sgtl5000_1.volume(0.8*(analogRead(PIN_A2)-1)/1022.0);
+	sgtl5000_1.volume(0.8*(analogRead(PIN_A2) - 1) / 1022.0);
 }
 
 struct voice_t {
@@ -95,29 +95,29 @@ void setup() {
 		voices[i].channel = voices[i].note = 0xFF;
 	}
 
-	for (int i = 0; i < TOTAL_MIXERS-1; ++i)
+	for (int i = 0; i < TOTAL_MIXERS - 1; ++i)
 		for (int j = 0; j < 4; ++j)
 			mixer[i].gain(j, 0.50);
 	for (int i = 0; i < 4; ++i)
 		mixer[TOTAL_MIXERS - 1].gain(i, i < SECONDARY_MIXERS ? 1.0 / SECONDARY_MIXERS : 0.0);
-	
-  Serial.println("USB Host Testing");
-  myusb.begin();
-  keyboard1.attachPress(OnPress);
-  keyboard2.attachPress(OnPress);
-  midi1.setHandleNoteOff(OnNoteOff);
-  midi1.setHandleNoteOn(OnNoteOn);
-  midi1.setHandleControlChange(OnControlChange);
+
+	Serial.println("USB Host Testing");
+	myusb.begin();
+	keyboard1.attachPress(OnPress);
+	keyboard2.attachPress(OnPress);
+	midi1.setHandleNoteOff(OnNoteOff);
+	midi1.setHandleNoteOn(OnNoteOn);
+	midi1.setHandleControlChange(OnControlChange);
 	//volumeTimer.begin(setVolume, 100000);
-	guitarHeroTimer.begin(guitarHeroMode, 1000000/120);
+	guitarHeroTimer.begin(guitarHeroMode, 1000000 / 120);
 	//midiMapTimer.begin(printVoices, 5000);
 
-  delay(2000);
+	delay(2000);
 }
 
 void loop() {
 	myusb.Task();
-  midi1.read();
+	midi1.read();
 	//for (int i = 0; i < TOTAL_BUTTONS; ++i) buttons[i].update();
 	//if (buttons[0].fallingEdge()) AudioSynthWavetable::print_performance();
 	//if (buttons[1].risingEdge()) {
@@ -141,26 +141,26 @@ int notes_played = 0;
 
 void OnPress(int key)
 {
-  Serial.print("key '");
-  Serial.print((char)key);
-  Serial.print("'  ");
-  Serial.println(key);
-  //Serial.print("key ");
-  //Serial.print((char)keyboard1.getKey());
-  //Serial.print("  ");
-  //Serial.print((char)keyboard2.getKey());
-  //Serial.println();
+	Serial.print("key '");
+	Serial.print((char)key);
+	Serial.print("'  ");
+	Serial.println(key);
+	//Serial.print("key ");
+	//Serial.print((char)keyboard1.getKey());
+	//Serial.print("  ");
+	//Serial.print((char)keyboard2.getKey());
+	//Serial.println();
 }
 
 void OnControlChange(byte channel, byte control, byte value)
 {
-  Serial.print("Control Change, ch=");
-  Serial.print(channel);
-  Serial.print(", control=");
-  Serial.print(control);
-  Serial.print(", value=");
-  Serial.print(value);
-  Serial.println();
+	Serial.print("Control Change, ch=");
+	Serial.print(channel);
+	Serial.print(", control=");
+	Serial.print(control);
+	Serial.print(", value=");
+	Serial.print(value);
+	Serial.println();
 }
 
 void OnNoteOn(byte channel, byte note, byte velocity) {
@@ -171,26 +171,26 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
 #endif //DEBUG_ALLOC
 	freeVoices();
 	int wavetable_id = allocateVoice(channel, note);
-  switch (channel) {
-    case 1:
-      wavetable[wavetable_id].setInstrument(BasicFlute1);
-      break;
-    case 2:
-      wavetable[wavetable_id].setInstrument(FrenchHorns);
-      break;
-    case 3:
-      wavetable[wavetable_id].setInstrument(Ocarina);
-      break;
-    case 4:
-      wavetable[wavetable_id].setInstrument(Ocarina);
-      break;
-    case 5:
-      wavetable[wavetable_id].setInstrument(Pizzicato);
-      break;
-    default:
-      wavetable[wavetable_id].setInstrument(Pizzicato);
-      break;
-  }
+	switch (channel) {
+	case 1:
+		wavetable[wavetable_id].setInstrument(BasicFlute1);
+		break;
+	case 2:
+		wavetable[wavetable_id].setInstrument(FrenchHorns);
+		break;
+	case 3:
+		wavetable[wavetable_id].setInstrument(Ocarina);
+		break;
+	case 4:
+		wavetable[wavetable_id].setInstrument(Ocarina);
+		break;
+	case 5:
+		wavetable[wavetable_id].setInstrument(Pizzicato);
+		break;
+	default:
+		wavetable[wavetable_id].setInstrument(Pizzicato);
+		break;
+	}
 	wavetable[wavetable_id].playNote(note, velocity);
 #ifdef DEBUG_ALLOC
 	printVoices();
@@ -222,7 +222,8 @@ int allocateVoice(byte channel, byte note) {
 		}
 		i = nonfree_voices;
 		used_voices++;
-	} else {
+	}
+	else {
 		if (stopped_voices) {
 			i = evict_voice % stopped_voices;
 			voice_t temp = voices[i];
@@ -276,18 +277,16 @@ void freeVoices() {
 void guitarHeroMode() { // now unicorn friendly
 	const int RESET = 4;
 	const int MIDI_NOTES = 128;
-	static char line[MIDI_NOTES+1] = { 0 };
+	static char line[MIDI_NOTES + 1] = { 0 };
 	static int accumulated = 0;
 	if (!accumulated) {
 		for (int i = 0; i < MIDI_NOTES; ++i) line[i] = '-';
 		++accumulated;
 	}
-	for (int i = stopped_voices; i < used_voices+stopped_voices; ++i) line[voices[i].note] = '*';
-	if (accumulated == RESET) {
+	for (int i = stopped_voices; i < used_voices + stopped_voices; ++i) line[voices[i].note] = '*';
+	if (accumulated++ == RESET) {
 		Serial.println(line);
 		accumulated = 0;
-	} else {
-		++accumulated;
 	}
 }
 
@@ -301,8 +300,8 @@ void printVoices() {
 		return;
 	last_notes_played = notes_played;
 	int usage = AudioProcessorUsage();
-	Serial.printf("\nCPU:%03i voices:%02i CPU/Voice:%02i evict:%02i", usage, used_voices, usage/used_voices, evict_voice);
+	Serial.printf("\nCPU:%03i voices:%02i CPU/Voice:%02i evict:%02i", usage, used_voices, usage / used_voices, evict_voice);
 	for (int i = 0; i < used_voices; ++i)
-		Serial.printf(" %02hhu %-2s", voices[i].channel, note_map[voices[i].note%12]);
+		Serial.printf(" %02hhu %-2s", voices[i].channel, note_map[voices[i].note % 12]);
 
 }
