@@ -2,7 +2,7 @@
  * Copyright (c) 2017, TeensyAudio PSU Team
  *
  * Development of this audio library was sponsored by PJRC.COM, LLC.
- * Please support PJRC's efforts to develop open source 
+ * Please support PJRC's efforts to develop open source
  * software by purchasing Teensy or other PJRC products.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,9 +28,13 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-#define TIME_TEST_ON
+//#define TIME_TEST_ON
 //#define ENVELOPE_DEBUG
 
+// Performance testing macro generally unrelated to the wavetable object, but was used to
+// fine tune the performance of specific blocks of code in update(); usage is to specify a
+// display interval in ms, then place the code block to be tracked *IN* the macro parens as
+// the second argument
 #ifdef TIME_TEST_ON
 #define TIME_TEST(INTERVAL, CODE_BLOCK_TO_TEST) \
 static float MICROS_AVG = 0.0; \
@@ -55,6 +59,7 @@ if (NEXT_DISPLAY < micros_end) { \
 CODE_BLOCK_TO_TEST
 #endif
 
+// Debug code to track state variables for the volume envelope
 #ifdef ENVELOPE_DEBUG
 #define PRINT_ENV(NAME) Serial.printf("%14s-- env_mult:%06.4f%% of UNITY_GAIN env_incr:%06.4f%% of UNITY_GAIN env_count:%i\n", #NAME, float(env_mult)/float(UNITY_GAIN), float(env_incr)/float(UNITY_GAIN), env_count);
 #else
@@ -76,14 +81,14 @@ void AudioSynthWavetable::stop(void) {
 	if (env_count == 0) env_count = 1;
 	env_incr = -(env_mult) / (env_count * ENVELOPE_PERIOD);
 	PRINT_ENV(STATE_RELEASE)
-	sei();
+		sei();
 }
 
 /**
  * @brief Play waveform at defined frequency, amplitude.
  *
- * @param freq freqency of the generated output (between 0 and the board-specific sample rate)
- * @param amp the amplitude level at which playback should occur
+ * @param freq Frequency of note to playback, value between 1.0 and half of AUDIO_SAMPLE_RATE_EXACT
+ * @param amp Amplitude scaling of note, value between 0-127, with 127 being base volume
  */
 void AudioSynthWavetable::playFrequency(float freq, int amp) {
 	setState(freqToNote(freq), amp, freq);
@@ -92,18 +97,17 @@ void AudioSynthWavetable::playFrequency(float freq, int amp) {
 /**
  * @brief Play sample at specified note, amplitude.
  *
- * @param note the midi note number (a value between 0 and 127)
- * @param amp amplitude of generated output
+ * @param note Midi note number to playback, value between 0-127
+ * @param amp Amplitude scaling of playback, value between 0-127, with 127 being base volume
  */
 void AudioSynthWavetable::playNote(int note, int amp) {
 	setState(note, amp, noteToFreq(note));
 }
 
 /**
- * @brief Set various state information for the wavetable object before playing.
- * Selects the sample from within the instrument_data struct to be played.
+ * @brief Initializes object state variables, sets freq/amp, and chooses appropriate sample
  *
- * @param note the note that the wavetable object should play
+ * @param note Midi note number to play, value between 0-127
  * @param amp the amplitude level at which playback should occur
  * @param freq exact frequency of the note to be played played
  */
@@ -111,14 +115,20 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 	cli();
 	int i;
 	env_state = STATE_IDLE;
+	// note ranges calculated by sound font decoder
 	for (i = 0; note > instrument->sample_note_ranges[i]; i++);
 	current_sample = &instrument->samples[i];
-	if (current_sample == NULL) return;
+	if (current_sample == NULL) {
+		sei();
+		return;
+	}
 	setFrequency(freq);
 	vib_count = mod_count = tone_phase = env_incr = env_mult = 0;
 	vib_phase = mod_phase = TRIANGLE_INITIAL_PHASE;
 	env_count = current_sample->DELAY_COUNT;
+	// linear scalar for amp with UINT16_MAX being no attenuation
 	tone_amp = amp * (UINT16_MAX / 127);
+	// scale relative to initial attenuation defined by soundfont file
 	tone_amp = current_sample->INITIAL_ATTENUATION_SCALAR * tone_amp >> 16;
 	env_state = STATE_DELAY;
 	PRINT_ENV(STATE_DELAY);
@@ -127,7 +137,11 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
 }
 
 /**
- * @brief Change the frequency of the waveform to the defined freq.
+ * @brief Set various integer offsets to values that will produce intended frequencies
+ * @details the main integer offset, tone_incr, is used to step through the current sample's 16-bit PCM audio sample.
+ * Specifically, the tone_incr is the rate at which the interpolation code in update() steps through uint32_t space.
+ * The remaining offset variables represent a minimum and maximum offset allowed for tone_incr, which allows for low-frequency
+ * variation in playback frequency (aka vibrato). Further details on implementation in update() and in sample_data.h.
  *
  * @param freq frequency of the generated output (between 0 and the board-specific sample rate)
  */
@@ -142,10 +156,12 @@ void AudioSynthWavetable::setFrequency(float freq) {
 
 /**
  * @brief Called by the AudioStream library to fill the audio output buffer.
- * Performs interpolation and enveloping of output audio values.
+ * The major parts are the interpoalation stage, and the volume envelope stage.
+ * Further details on implementation included inline.
  *
  */
 void AudioSynthWavetable::update(void) {
+	// locally copy object state
 	cli();
 	if (env_state == STATE_IDLE) {
 		sei();
@@ -174,22 +190,22 @@ void AudioSynthWavetable::update(void) {
 	int32_t mod_pitch_offset_scnd = this->mod_pitch_offset_scnd;
 	sei();
 
+	// 
 	if (s->LOOP == false && tone_phase >= s->MAX_PHASE) return;
 
 	audio_block_t* block;
 	block = allocate();
 	if (block == NULL) return;
 
-	uint32_t* p, * end;
+	uint32_t* p, *end;
 	uint32_t index, scale;
 	int32_t s1, s2;
 	uint32_t tmp1, tmp2;
 
-	TIME_TEST(5000,
 	p = (uint32_t*)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
-	while(p < end) {
+	while (p < end) {
 		if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
 
 		int32_t tone_incr_offset = 0;
@@ -199,7 +215,7 @@ void AudioSynthWavetable::update(void) {
 			int32_t vib_pitch_offset = vib_scale >= 0 ? vib_pitch_offset_init : vib_pitch_offset_scnd;
 			tone_incr_offset = multiply_accumulate_32x32_rshift32_rounded(tone_incr_offset, vib_scale, vib_pitch_offset);
 
-			tone_incr_offset += (int32_t(vib_scale>>15) * vib_pitch_offset) >> 15;
+			tone_incr_offset += (int32_t(vib_scale >> 15) * vib_pitch_offset) >> 15;
 		}
 
 		int32_t mod_amp = tone_amp;
@@ -215,7 +231,7 @@ void AudioSynthWavetable::update(void) {
 			mod_amp = signed_multiply_accumulate_32x16b(mod_amp, mod_scale, mod_amp);
 		}
 
-		for (int i = LFO_PERIOD/2; i; --i, ++p) {
+		for (int i = LFO_PERIOD / 2; i; --i, ++p) {
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
 			scale = (tone_phase << s->INDEX_BITS) >> 16;
@@ -241,7 +257,6 @@ void AudioSynthWavetable::update(void) {
 			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		}
 	}
-	); //end TIME_TEST
 
 	p = (uint32_t *)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
@@ -324,7 +339,8 @@ void AudioSynthWavetable::update(void) {
 			this->vib_phase = vib_phase;
 			this->mod_count = mod_count;
 			this->mod_phase = mod_phase;
-		} else {
+		}
+		else {
 			this->vib_count = this->mod_count = 0;
 			this->vib_phase = this->mod_phase = TRIANGLE_INITIAL_PHASE;
 		}
