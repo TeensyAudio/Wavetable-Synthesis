@@ -39,6 +39,10 @@ The `-i` flag precedes the input file
 `pyinstaller --onefile --noconsole --name SoundfontDecoder <path-to-wavetable-code>\controller.py`
 4. This will produce an executable file named controller.exe which contains the Soundfont Decoder.
 
+Additional Instructions for building on Ubuntu:
+- for step 2, make sure to use python3 when installing: i.e. python3 setup.py install -- this is because tkinter has been renamed to Tkinter in python3
+- the executable file will be in the dist directory
+
 ## Audio Synth Wavetable
 
 C++ class implementing wavetable synthesis. For in-depth class member and field descriptions, see https://teensyaudio.github.io/Wavetable-Synthesis/html/index.html
