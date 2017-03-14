@@ -32,7 +32,7 @@
 #include <sample_data.h>
 #include <stdint.h>
 
-#define UNITY_GAIN INT32_MAX // Max amplitude
+#define UNITY_GAIN INT32_MAX // Max amplitude / no attenuation
 #define DEFAULT_AMPLITUDE 127
 #define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define TRIANGLE_INITIAL_PHASE (-0x40000000)
