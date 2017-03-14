@@ -205,12 +205,12 @@ void AudioSynthWavetable::update(void) {
 	p = (uint32_t*)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
-	// Main loop to handle interpolation, virbrato (virbrato LFO and modulation LFO), and tremolo (modulation LFO only)
+	// Main loop to handle interpolation, vibrato (vibrato LFO and modulation LFO), and tremolo (modulation LFO only)
 	// Virbrato and modulation offsets/multipliers are updated depending on the LFO_SMOOTHNESS, with max smoothness (7) being one
 	// update per loop interation, and minimum smoothness (1) being once per loop. Hence there is a configurable trade-off
-	// between performance and the smoothness of LFO changes to pitch/amplitude as well as the virbrato/modulation delay granularity
+	// between performance and the smoothness of LFO changes to pitch/amplitude as well as the vibrato/modulation delay granularity
 
-	// also note that the vibrato/tremolo for the two LFO are defined in the SoundFont spec to be a cents (virbrato) or centibel (tremolo)
+	// also note that the vibrato/tremolo for the two LFO are defined in the SoundFont spec to be a cents (vibrato) or centibel (tremolo)
 	// diviation oscillating with a triangle wave at a given frequency; the following implementation gets the critical points of those
 	// oscillations correct, but linearly interpolates the *frequency* and *amplitude* range between those points, which technically results
 	// in a "bowing" of the triangle wave curve relative to what it should be (although this typically isn't audible)
@@ -218,7 +218,7 @@ void AudioSynthWavetable::update(void) {
 		// TODO: more elegant support of non-looping samples
 		if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
 
-		// variable to accumulate LFO pitch offsets; stays 0 if still in virbrato/modulation delay
+		// variable to accumulate LFO pitch offsets; stays 0 if still in vibrato/modulation delay
 		int32_t tone_incr_offset = 0; 
 		if (vib_count++ > s->VIBRATO_DELAY) {
 			vib_phase += s->VIBRATO_INCREMENT;
