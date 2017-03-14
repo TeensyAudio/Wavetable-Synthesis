@@ -67,6 +67,10 @@ class MyController():
             self.view.setSampleList(curr_inst.samplesForDisplay())
 
     def sampleSelected(self, _selection):
+        # Invoked when the user selects one or more samples and receives
+        # the 0-based index/indices of those samples in the list.
+        # Update the model to reflect what those samples are and update
+        # all of the sample details/info.
         idxs = _selection
         if(len(idxs) > 0):
             self.model.setCurrSamples(idxs)  
@@ -81,6 +85,11 @@ class MyController():
         self.model.setTeensyMemSize(size)
         self.view.setTeensyPercent(self.model.getTeensyPercentUsage())
     def decode(self, _selection):
+        # Invoked when the user selects the decode button or double clicks
+        # the sample listbox. The index/indices of selected items must be
+        # passed in as '_selection'.
+        # Appropriate info is collected and passed into the invocation
+        # of the 'decode' function in the 'decoder' module.
         if(len(_selection) == 0):
             return
         print('decode')
@@ -109,6 +118,8 @@ class MyController():
             self.view.setStatus('ERROR! Failed to Decode!')
 
     def decodeConfirmation(self):
+        # On a successful decode, populate the sample listbox with the
+        # samples that were decoded.
         decoded_samples = ['Decoded sample(s):']
         for samp in self.model.getCurrSamples():
             decoded_samples.append(str(samp.getName()) + str(samp.getKeyRange()))
