@@ -81,9 +81,11 @@ class MyController():
             self.view.setTotalSampleSize(self.model.getTotalSampleSize())
             #percent teensy usage
             self.view.setTeensyPercent(self.model.getTeensyPercentUsage())
+
     def setTeensyMemSize(self, size):
         self.model.setTeensyMemSize(size)
         self.view.setTeensyPercent(self.model.getTeensyPercentUsage())
+
     def decode(self, _selection):
         # Invoked when the user selects the decode button or double clicks
         # the sample listbox. The index/indices of selected items must be
@@ -109,10 +111,18 @@ class MyController():
 
         for samp in self.model.getCurrSamples():
             selected_bags.append(samp.bag_idx)
-        (success, outdir) = decoder.decode_selected(inFile, curr_inst.getOriginalIndex(),
-                selected_bags, curr_inst.getGlobalBag(), out_name, self.model.getOutDir())
+
+        success = decoder.decode_selected(
+            inFile,
+            curr_inst.getOriginalIndex(),
+            selected_bags,
+            curr_inst.getGlobalBag(),
+            self.model.out_dir,
+            user_title=out_name,
+        )
+
         if success:
-            self.view.setStatus('Samples saved to: ' + outdir)
+            self.view.setStatus('Samples saved to: ' + self.model.out_dir)
             self.decodeConfirmation()
         else:
             self.view.setStatus('ERROR! Failed to Decode!')

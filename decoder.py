@@ -244,7 +244,8 @@ def main(argv):
 # @param global_bag_index the index of the insrument global bag if it exists otherwise value is None
 # @param user_title a user selected filename for the samples output file
 # @param user_dir the output directory for the decoded samples
-def decode_selected(path, inst_index, selected_bags, global_bag_index, user_title=None, user_dir=None):
+def decode_selected(path, inst_index, selected_bags, global_bag_index, user_dir,
+                    user_title=None):
     with open(path, 'rb') as file:
         sf2 = Sf2File(file)
 
@@ -265,10 +266,10 @@ def decode_selected(path, inst_index, selected_bags, global_bag_index, user_titl
         global_bag = sf2.instruments[inst_index].bags[global_bag_index] if global_bag_index != None else None
         file_title = user_title if user_title else sf2.instruments[inst_index].name
         file_title = re.sub(r'[\W]+', '', file_title)
-        if user_dir is not None:
-            export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title, file_dir=user_dir)
-        else:
-            export_samples(bags_to_decode, global_bag, len(bags_to_decode), file_title=file_title)
+        
+        export_samples(bags_to_decode, global_bag, len(bags_to_decode), user_dir,
+                       file_title=file_title)
+
         return True
 
 ## Decodes all the samples for an instrument
@@ -284,7 +285,7 @@ def decode_all(path, inst_index, global_bag_index):
 # @param num_samples number of samples to decode
 # @param file_title the title of the ouptut file
 # @param file_dir the output directory for the decoded samples
-def export_samples(bags, global_bag, num_samples, file_title="samples", file_dir="."):
+def export_samples(bags, global_bag, num_samples, file_dir, file_title="samples"):
     instrument_name = file_title
     instrument_name = ''.join([i for i in instrument_name if not i.isdigit()])
     h_file_name = "{}_samples.h".format(instrument_name)

@@ -38,7 +38,7 @@ class MyModel():
         # Most recently selected Instrument
         self.curr_instrument = None
         # out_dir = filepath to the folder where the output will be saved
-        self.out_dir = None
+        self.out_dir = "."
         # out_name = name of the output files. Default is intrument name.
         self.out_name = None
         # curr_samples = list of 'sf2elements.Sample
