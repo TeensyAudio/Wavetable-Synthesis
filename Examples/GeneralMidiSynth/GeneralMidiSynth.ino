@@ -99,7 +99,7 @@ void setup() {
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		wavetable[i].setInstrument(nylonstrgtr);
-		wavetable[i].amplitude(1);
+		wavetable[i].amplitude(1.0);
 		voices[i].wavetable_id = i;
 		voices[i].channel = voices[i].note = 0xFF;
 	}
@@ -144,17 +144,6 @@ int stopped_voices = 0;
 int evict_voice = 0;
 int notes_played = 0;
 
-void OnControlChange(byte channel, byte control, byte value)
-{
-	Serial.print("Control Change, ch=");
-	Serial.print(channel);
-	Serial.print(", control=");
-	Serial.print(control);
-	Serial.print(", value=");
-	Serial.print(value);
-	Serial.println();
-}
-
 void OnPress(int key)
 {
 	Serial.print("key '");
@@ -170,7 +159,7 @@ void OnPress(int key)
 
 const instrument_data* const midi_map[] = {
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 000: pianos
-	&vibraphone, &glockenspiel, &vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, // 008: chrom percus
+	&vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, // 008: chrom percus
 	&harmonica, &harmonica, &harmonica, &harmonica, &harmonica, &harmonica, &harmonica, &harmonica, // 016: organs
 	&nylonstrgtr, &steelstrgtr, &nylonstrgtr, &nylonstrgtr, &mutedgtr, &overdrivegt, &distortiongt, &nylonstrgtr, // 024: guitars
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 032: bass
@@ -183,19 +172,39 @@ const instrument_data* const midi_map[] = {
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 088: synth pad
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 096: synth effect
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 104: ethnic
-	&standard_DRUMS, &standard_DRUMS, &standard_DRUMS, &standard_DRUMS, &standard_DRUMS, &standard_DRUMS, &standard_DRUMS, &standard_DRUMS, // 112: percussive
+	&timpani, &timpani, &timpani, &timpani, &timpani, &timpani, &timpani, &timpani, // 112: percussive
 	&gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, // 120: sound effects
 };
 
-const instrument_data* channel_map[] = {
-	&nylonstrgtr, &nylonstrgtr, &nylonstrgtr, &nylonstrgtr,
-	&nylonstrgtr, &nylonstrgtr, &nylonstrgtr, &nylonstrgtr,
-	&nylonstrgtr, &nylonstrgtr, &nylonstrgtr, &nylonstrgtr,
-	&nylonstrgtr, &nylonstrgtr, &nylonstrgtr, &nylonstrgtr,
+const instrument_data* channel_map[17] = {
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, &standard_DRUMS, &piano, &piano, &piano, &piano, &piano, &piano,
 };
 
+int channel_vol[] = {
+	90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 
+};
+
+void OnControlChange(byte channel, byte control, byte value)
+{
+	switch (control) {
+	case 7: //volume
+		channel_vol[channel] = value;
+		break;
+	default:
+		break;
+	}
+	Serial.print("Control Change, ch=");
+	Serial.print(channel);
+	Serial.print(", control=");
+	Serial.print(control);
+	Serial.print(", value=");
+	Serial.print(value);
+	Serial.println();
+}
+
+
 void OnProgramChange(byte channel, byte program) {
-	channel_map[channel] = midi_map[program];
+	channel_map[channel] = channel != 10 ? midi_map[program] : &standard_DRUMS;
 }
 
 void OnNoteOn(byte channel, byte note, byte velocity) {
@@ -207,7 +216,7 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
 	freeVoices();
 	int wavetable_id = allocateVoice(channel, note);
 	wavetable[wavetable_id].setInstrument(*channel_map[channel]);
-	wavetable[wavetable_id].playNote(note, velocity);
+	wavetable[wavetable_id].playNote(note, (velocity*channel_vol[channel] + 0x80) >> 7);
 #ifdef DEBUG_ALLOC
 	printVoices();
 #endif //DEBUG_ALLOC

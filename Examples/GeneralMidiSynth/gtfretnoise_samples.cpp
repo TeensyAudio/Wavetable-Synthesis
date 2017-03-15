@@ -9,7 +9,7 @@ const sample_data gtfretnoise_samples[1] = {
 		((uint32_t)3567 - 1) << (32 - 12), // LOOP_PHASE_END
 		(((uint32_t)3567 - 1) << (32 - 12)) - (((uint32_t)7 - 1) << (32 - 12)), // LOOP_PHASE_LENGTH
 		uint16_t(UINT16_MAX * DECIBEL_SHIFT(-0.0)), // INITIAL_ATTENUATION_SCALAR
-		uint32_t(1.00 * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // DELAY_COUNT
+		uint32_t(0.00 * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // DELAY_COUNT
 		uint32_t(6.20 * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // ATTACK_COUNT
 		uint32_t(20.01 * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // HOLD_COUNT
 		uint32_t(20.01 * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // DECAY_COUNT
