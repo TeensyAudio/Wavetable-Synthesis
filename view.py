@@ -184,8 +184,9 @@ class MyView(Frame):
     def sampleSelected(self, *args):
         self.controller.sampleSelected(self.samp_listbox.getCurrSelection())
     def samplesSelected(self, *args):
-        self.samp_listbox.list_box.config(state=DISABLED)
-        self.controller.decode(self.samp_listbox.getCurrSelection())
+        if len(self.samp_listbox.getCurrSelection()) > 0:
+            self.samp_listbox.list_box.config(state=DISABLED)
+            self.controller.decode(self.samp_listbox.getCurrSelection())
     def teensyButtonSelect(self, value):
         if value == 1:
             self.controller.setTeensyMemSize(250) #teensy 3.2 size in kb
