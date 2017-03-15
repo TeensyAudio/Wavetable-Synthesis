@@ -439,9 +439,9 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
 
     env_vals = {
         # bag numbers correspond to generator numbers in the SoundFont spec
-        "DELAY_ENV": get_timecents_value(33, 1, 1),
+        "DELAY_ENV": get_timecents_value(33, 0, 0),
         "ATTACK_ENV": get_timecents_value(34, 1, 1),
-        "HOLD_ENV": get_timecents_value(35, 1, 1),
+        "HOLD_ENV": get_timecents_value(35, 0, 0),
         "DECAY_ENV": get_timecents_value(36, 1, 1),
         "SUSTAIN_FRAC": -get_decibel_value(37, 0, 0, 144),
         "RELEASE_ENV": get_timecents_value(38, 1, 1),
