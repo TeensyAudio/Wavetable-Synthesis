@@ -2,7 +2,7 @@
 # Copyright (c) 2017, TeensyAudio PSU Team
 #
 # Development of this audio library was sponsored by PJRC.COM, LLC.
-# Please support PJRC's efforts to develop open source 
+# Please support PJRC's efforts to develop open source
 # software by purchasing Teensy or other PJRC products.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -101,10 +101,10 @@ class MyView(Frame):
         self.box_1.grid(column=0, row=0, padx=self.box_pad, pady=self.box_pad, sticky=N + S + E + W)
         self.version_frame = pjrc.JJFrame(self.box_1, 2, 1, 1, 1)
         self.version_frame.grid(row=1, padx=def_pad, sticky=N + E + W)
-        self.ver_32 = Radiobutton(self.version_frame, text='Teensy 3.2 (default)', 
+        self.ver_32 = Radiobutton(self.version_frame, text='Teensy 3.2 (default)',
                 variable=self.version, command=lambda: self.teensyButtonSelect(1), value=1)
         self.ver_32.grid(row=0, column=0, sticky=N + S + E + W, padx=def_pad)
-        self.ver_36 = Radiobutton(self.version_frame, text='Teensy 3.6', 
+        self.ver_36 = Radiobutton(self.version_frame, text='Teensy 3.6',
                 variable=self.version, command=lambda: self.teensyButtonSelect(2), value=2)
         self.ver_36.grid(row=1, column=0, sticky=N + S + E + W, padx=def_pad)
 
@@ -150,7 +150,7 @@ class MyView(Frame):
         self.under_frame.grid(column=1, row=1, sticky=N + S + E + W)
         self.decode_button = Button(self.under_frame, text='Decode', command=self.samplesSelected)
         self.decode_button.grid(row=1, column=0, padx=2, pady=2)
-        
+
         # Displays sample size, num selected and memory usage percentage for teensy
         #TODO put in different frame to fix listbox stretching
         self.stats_frame = pjrc.JJLabelFrame(self.under_frame, 3, 2, 1, 1, text='Sample Stats')
@@ -197,13 +197,13 @@ class MyView(Frame):
     # Setters and Getters for the control variables and such
     def setInstrumentList(self, _newInstruments):
         self.i_names.set(_newInstruments)
-        for i in range(0, len(self.i_names.get()), 2):
+        for i in range(0, len(_newInstruments), 2):
             self.inst_listbox.list_box.itemconfigure(i, background='#f0f0ff')
     def getInstrumentList(self):
         return self.i_names.get()
     def setSampleList(self, _newSamples):
         self.s_names.set(_newSamples)
-        for i in range(0, len(self.s_names.get()), 2):
+        for i in range(0, len(_newSamples), 2):
             self.samp_listbox.list_box.itemconfigure(i, background='#f0f0ff')
     def getSampleList(self):
         return self.s_names.get()
