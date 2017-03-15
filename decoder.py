@@ -459,7 +459,10 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "MOD_AMP_SCND_GAIN": -get_decibel_value(13, 0, -96, 96)
     }
 
-    return out_fmt_str.format(**out_vals, **env_vals)
+    # dictionary comprehesion to merge out_vals and env_vals
+    fmt_vals = {k: v for d in [out_vals, env_vals] for k, v in d.items()}
+
+    return out_fmt_str.format(**fmt_vals)
 
 
 # Checks if the selected sample is valid
