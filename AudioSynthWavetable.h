@@ -123,14 +123,13 @@ public:
 	void playFrequency(float freq, int amp = DEFAULT_AMPLITUDE);
 	void playNote(int note, int amp = DEFAULT_AMPLITUDE);
 	bool isPlaying(void) { return env_state != STATE_IDLE; }
+    void setFrequency(float freq);
 	virtual void update(void);
 	
 	envelopeStateEnum getEnvState(void) { return env_state; }
 
 private:
 	void setState(int note, int amp, float freq);
-	void setFrequency(float freq);
-
 	volatile bool state_change = false;
 
 	volatile const instrument_data* instrument = NULL;
