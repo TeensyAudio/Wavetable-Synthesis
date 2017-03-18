@@ -1,24 +1,50 @@
-from tkinter import *
+# Audio Library for Teensy 3.X
+# Copyright (c) 2017, TeensyAudio PSU Team
+#
+# Development of this audio library was sponsored by PJRC.COM, LLC.
+# Please support PJRC's efforts to develop open source 
+# software by purchasing Teensy or other PJRC products.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice, development funding notice, and this permission
+# notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
 import sf2elements
 from sf2utils.sf2parse import Sf2File
-import decoder
-from tkinter import Tk, Label, Button, filedialog
-from tkinter.ttk import *
+
 
 
 class MyModel():
     def __init__(self,vc):
         #set delegate/callback pointer
         self.controller = vc
-        #initialize model
+        # infile = Soundfont file loaded by user.
         self.inFile = None
-        # currInst logic needs to be changed if implementing ordering
+        # Most recently selected Instrument
         self.curr_instrument = None
-        self.out_dir = None
+        # out_dir = filepath to the folder where the output will be saved
+        self.out_dir = "."
+        # out_name = name of the output files. Default is intrument name.
         self.out_name = None
+        # curr_samples = list of 'sf2elements.Sample
         self.curr_samples = list()
+        # Instruments = list of 'sf2elements.Instrument' objects
         self.Instruments = list()
-
         self.total_sample_size = 0
         self.teensy_mem_size = 250 #default 250kb Teensy 3.2
 
@@ -27,8 +53,10 @@ class MyModel():
         self.controller.modelChanged()
 #Setters and getters for the model
     def setInFile(self, _new):
+    # Set the Soundfont file that the user has selected.
         self.inFile =_new
     def getInFile(self):
+    # Return the currently loaded Soundfont file.
         return self.inFile
     def setOutDir(self, _new):
         self.out_dir = _new
@@ -43,6 +71,11 @@ class MyModel():
     def getInstrumentList(self):
         return self.Instruments
     def setCurrSamples(self, _idxs):
+        """
+        Takes a sequence of indices corresponding to selected items
+        and uses those indices to set the corresponding samples in
+        the current instrument as the current samples.
+        """
         temp = list()
         samps = self.curr_instrument.getSamples()
         for idx in _idxs:
