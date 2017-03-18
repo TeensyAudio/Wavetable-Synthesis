@@ -317,6 +317,7 @@ void AudioSynthWavetable::update(void) {
 
 	// State defintions:
 	// idle - not playing (generally should never arrive here)
+	// play - start playing (immediate transition to STATE_DELAY)
 	// delay - full attenuation
 	// attack - linear ramp from full attenuation to no attenuation
 	// hold - no attenuation
@@ -333,13 +334,7 @@ void AudioSynthWavetable::update(void) {
 	// other points of note are that one env_count corresponds to 1 second * ENVELOPE_PERIOD / AUDIO_SAMPLE_RATE_EXACT;
 	// the ENVELOPE_PERIOD is the number of samples processed per iteration of the following loop
 	while (p < end) {
-		cli();
-		if (this->state_change) {
-			env_state = this->env_state == STATE_STOP ? STATE_IDLE;
-			env_count = 0;
-		}
-		sei();
-
+		// state change control
 		if (env_count <= 0) switch (env_state) {
 		case STATE_PLAY:
 			env_state = STATE_DELAY;
@@ -351,7 +346,7 @@ void AudioSynthWavetable::update(void) {
 			env_state = STATE_ATTACK;
 			env_count = s->ATTACK_COUNT;
 			env_mult = 0;
-			env_incr = UNITY_GAIN / (env_count * (ENVELOPE_PERIOD / ENVELOPE_ATTACK_UPDATE_RATE));
+			env_incr = UNITY_GAIN / env_count;
 			DEBUG_PRINT_ENV(STATE_ATTACK);
 			continue;
 		case STATE_ATTACK:
@@ -369,14 +364,9 @@ void AudioSynthWavetable::update(void) {
 			DEBUG_PRINT_ENV(STATE_DECAY);
 			continue;
 		case STATE_DECAY:
-			// MINIMUM_VOL_MULT is effectively silence
-			if (env_mult < MINIMUM_VOL_MULT) {
-				env_state = STATE_IDLE;
-				continue;
-			}
-			env_state = STATE_SUSTAIN
+			env_state = STATE_SUSTAIN;
 		case STATE_SUSTAIN:
-			env_count = INT32_MAX; //repeat forever, until stop() called
+			env_count = INT32_MAX; // repeat until STATE_STOP
 			env_incr = 0;
 			DEBUG_PRINT_ENV(STATE_SUSTAIN);
 			continue;
@@ -398,66 +388,55 @@ void AudioSynthWavetable::update(void) {
 			continue;
 		}
 
+		// update env_mult, fill output, or trigger state transition
 		switch (env_state) {
-		case STATE_DELAY:
-			while (env_count && p < end) { 
-				p[0] = p[1] = p[2] = p[3] = 0; 
-				p += ENVELOPE_PERIOD / 2;
-				env_count--;
-			}
-			break;
-		case STATE_ATTACK:
-			env_mult += env_incr;
-			tmp1 = signed_multiply_32x16b(env_mult, p[0]) << 1;
-			tmp2 = signed_multiply_32x16t(env_mult, p[0]) << 1;
-			p[0] = pack_16t_16t(tmp2, tmp1);
-			env_mult += env_incr;
-			tmp1 = signed_multiply_32x16b(env_mult, p[1]) << 1;
-			tmp2 = signed_multiply_32x16t(env_mult, p[1]) << 1;
-			p[1] = pack_16t_16t(tmp2, tmp1);
-			env_mult += env_incr;
-			tmp1 = signed_multiply_32x16b(env_mult, p[2]) << 1;
-			tmp2 = signed_multiply_32x16t(env_mult, p[2]) << 1;
-			p[2] = pack_16t_16t(tmp2, tmp1);
-			env_mult += env_incr;
-			tmp1 = signed_multiply_32x16b(env_mult, p[3]) << 1;
-			tmp2 = signed_multiply_32x16t(env_mult, p[3]) << 1;
-			p[3] = pack_16t_16t(tmp2, tmp1);
+		// states requiring transition
+		case STATE_PLAY:
+		case STATE_STOP:
+		case STATE_IDLE:
+			env_count = 0;
+			continue;
+
+		//states with no output scaling
+		case STATE_DELAY: // all 0s for output
+			p[0] = p[1] = p[2] = p[3] = 0; 
+		case STATE_HOLD: // unchanged output
 			p += ENVELOPE_PERIOD / 2;
 			env_count--;
+			continue;
+
+		//states requiring output scaling
+		case STATE_ATTACK: // linear scale to amplitude
+			env_mult += env_incr;
 			break;
-		case STATE_HOLD:
-			p += ENVELOPE_PERIOD / 2;
-			env_count--;
-			break;
-		case STATE_DECAY:
+		case STATE_DECAY: // linear scale to decibels
 		case STATE_RELEASE:
 			env_mult = multiply_32x32_rshift32_rounded(env_mult, env_incr) << 1;
-			if (env_mult < UNITY_GAIN * DECIBEL_SHIFT(-100)) {
-				env_state = STATE_RELEASE;
+			if (env_mult < MINIMUM_VOL_MULT) { // transition point for infinite attenuation
+				env_state = STATE_IDLE;
 				env_count = 0;
-				break;
+				continue;
 			}
-		case STATE_SUSTAIN:
-			tmp1 = signed_multiply_32x16b(env_mult, p[0]) << 1;
-			tmp2 = signed_multiply_32x16t(env_mult, p[0]) << 1;
-			p[0] = pack_16t_16t(tmp2, tmp1);
-			tmp1 = signed_multiply_32x16b(env_mult, p[1]) << 1;
-			tmp2 = signed_multiply_32x16t(env_mult, p[1]) << 1;
-			p[1] = pack_16t_16t(tmp2, tmp1);
-			tmp1 = signed_multiply_32x16b(env_mult, p[2]) << 1;
-			tmp2 = signed_multiply_32x16t(env_mult, p[2]) << 1;
-			p[2] = pack_16t_16t(tmp2, tmp1);
-			tmp1 = signed_multiply_32x16b(env_mult, p[3]) << 1;
-			tmp2 = signed_multiply_32x16t(env_mult, p[3]) << 1;
-			p[3] = pack_16t_16t(tmp2, tmp1);
-			p += ENVELOPE_PERIOD / 2;
-			env_count--;
 			break;
-		case STATE_STOP:
-			env_count = 0;
+		case STATE_SUSTAIN: // constant scaling
 			break;
 		}
+
+		// STATE_ATTACK, STATE_DECAY, STATE_SUSTAIN, or STATE_RELEASE
+		tmp1 = signed_multiply_32x16b(env_mult, p[0]) << 1;
+		tmp2 = signed_multiply_32x16t(env_mult, p[0]) << 1;
+		p[0] = pack_16t_16t(tmp2, tmp1);
+		tmp1 = signed_multiply_32x16b(env_mult, p[1]) << 1;
+		tmp2 = signed_multiply_32x16t(env_mult, p[1]) << 1;
+		p[1] = pack_16t_16t(tmp2, tmp1);
+		tmp1 = signed_multiply_32x16b(env_mult, p[2]) << 1;
+		tmp2 = signed_multiply_32x16t(env_mult, p[2]) << 1;
+		p[2] = pack_16t_16t(tmp2, tmp1);
+		tmp1 = signed_multiply_32x16b(env_mult, p[3]) << 1;
+		tmp2 = signed_multiply_32x16t(env_mult, p[3]) << 1;
+		p[3] = pack_16t_16t(tmp2, tmp1);
+		p += ENVELOPE_PERIOD / 2;
+		env_count--;
 	}
 
 	cli();
