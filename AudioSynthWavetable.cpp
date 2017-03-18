@@ -323,6 +323,7 @@ void AudioSynthWavetable::update(void) {
 	// hold - no attenuation
 	// decay - linear ramp down to a given level of attenuation (SUSTAIN_MULT)
 	// sustain - constant attenuation at a given level (SUSTAIN_MULT)
+	// stop - stop playing (immediate transition to release)
 	// release - linear ramp down from current attenuation level to full attenuation
 	
 	// Definitions of the states generally follow the SoundFont spec, with a major exception being that all
@@ -390,14 +391,14 @@ void AudioSynthWavetable::update(void) {
 
 		// update env_mult, fill output, or trigger state transition
 		switch (env_state) {
-		// states requiring transition
+		// requiring transition
 		case STATE_PLAY:
 		case STATE_STOP:
 		case STATE_IDLE:
 			env_count = 0;
 			continue;
 
-		//states with no output scaling
+		// no output scaling
 		case STATE_DELAY: // all 0s for output
 			p[0] = p[1] = p[2] = p[3] = 0; 
 		case STATE_HOLD: // unchanged output
@@ -405,7 +406,7 @@ void AudioSynthWavetable::update(void) {
 			env_count--;
 			continue;
 
-		//states requiring output scaling
+		// with output scaling
 		case STATE_ATTACK: // linear scale to amplitude
 			env_mult += env_incr;
 			break;
