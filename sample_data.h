@@ -27,9 +27,15 @@
 #pragma once
 #include <stdint.h>
 
-#define CENTS_SHIFT(C) (pow(2.0, C/1200.0))
-#define NOTE(N) (440.0 * pow(2.0, (N - 69) / 12.0))
-#define DECIBEL_SHIFT(dB) (pow(10.0, dB/20.0))
+#define CENTS_SHIFT(C) (pow(2.0, (C)/1200.0))
+#define NOTE(N) (440.0 * pow(2.0, ((N) - 69) / 12.0))
+#define DECIBEL_SHIFT(dB) (pow(10.0, (dB)/20.0))
+#define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
+
+#define RATE_NORMALIZED_ENV_COUNT(ms) uint32_t((ms) * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5)
+#define SUSTAIN_DROP(dB, ms) int32_t(DECIBEL_SHIFT(-float(dB) / RATE_NORMALIZED_ENV_COUNT(ms)) * UNITY_GAIN)
+#define LFO_NORMALIZED_DELAY_COUNT(ms) uint32_t((ms) * SAMPLES_PER_MSEC / (2 * LFO_PERIOD))
+#define NEG_INV_COUNT(ms) (-1.0/RATE_NORMALIZED_ENV_COUNT(ms))
 
 struct sample_data {
 	// SAMPLE VALUES
@@ -48,6 +54,7 @@ struct sample_data {
 	const uint32_t HOLD_COUNT;
 	const uint32_t DECAY_COUNT;
 	const uint32_t RELEASE_COUNT;
+	const float RELEASE_COUNT_NEG_INV;
 	const int32_t SUSTAIN_MULT;
 
 	// VIRBRATO VALUES

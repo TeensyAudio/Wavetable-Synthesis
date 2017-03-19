@@ -34,7 +34,6 @@
 
 #define UNITY_GAIN INT32_MAX // Max amplitude / no attenuation
 #define DEFAULT_AMPLITUDE 90
-#define SAMPLES_PER_MSEC (AUDIO_SAMPLE_RATE_EXACT/1000.0)
 #define TRIANGLE_INITIAL_PHASE (-0x40000000)
 
 // int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-1 (1..7 for AUDIO_BLOCK_SAMPLES == 128)
@@ -135,10 +134,11 @@ public:
 
 private:
 	void setState(int note, int amp, float freq);
-	volatile bool state_change = false;
 
 	volatile const instrument_data* instrument = NULL;
 	volatile const sample_data* current_sample = NULL;
+
+	volatile bool state_change = false;
 
 	//sample output state
 	volatile uint32_t tone_phase = 0;

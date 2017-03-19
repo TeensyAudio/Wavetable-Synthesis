@@ -369,17 +369,18 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "\t\t((uint32_t){LOOP_END} - 1) << (32 - {LENGTH_BITS}), // LOOP_PHASE_END\n" \
         "\t\t(((uint32_t){LOOP_END} - 1) << (32 - {LENGTH_BITS})) - (((uint32_t){LOOP_START} - 1) << (32 - {LENGTH_BITS})), // LOOP_PHASE_LENGTH\n" \
         "\t\tuint16_t(UINT16_MAX * DECIBEL_SHIFT({INIT_ATTENUATION})), // INITIAL_ATTENUATION_SCALAR\n" \
-        "\t\tuint32_t({DELAY_ENV:.2f} * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // DELAY_COUNT\n" \
-        "\t\tuint32_t({ATTACK_ENV:.2f} * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // ATTACK_COUNT\n" \
-        "\t\tuint32_t({HOLD_ENV:.2f} * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // HOLD_COUNT\n" \
-        "\t\tuint32_t({DECAY_ENV:.2f} * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // DECAY_COUNT\n" \
-        "\t\tuint32_t({RELEASE_ENV:.2f} * SAMPLES_PER_MSEC / ENVELOPE_PERIOD + 0.5), // RELEASE_COUNT\n" \
-        "\t\tint32_t((1.0 - DECIBEL_SHIFT({SUSTAIN_FRAC:.1f})) * UNITY_GAIN), // SUSTAIN_MULT\n" \
-        "\t\tuint32_t({VIB_DELAY_ENV:.2f} * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // VIBRATO_DELAY\n" \
+        "\t\tRATE_NORMALIZED_ENV_COUNT({DELAY_ENV:.2f}), // DELAY_COUNT\n" \
+        "\t\tRATE_NORMALIZED_ENV_COUNT({ATTACK_ENV:.2f}), // ATTACK_COUNT\n" \
+        "\t\tRATE_NORMALIZED_ENV_COUNT({HOLD_ENV:.2f}), // HOLD_COUNT\n" \
+        "\t\tRATE_NORMALIZED_ENV_COUNT({DECAY_ENV:.2f}), // DECAY_COUNT\n" \
+        "\t\tRATE_NORMALIZED_ENV_COUNT({RELEASE_ENV:.2f}), // RELEASE_COUNT\n" \
+        "\t\tNEG_INV_COUNT({RELEASE_ENV:.2f}), // RELEASE_COUNT\n" \
+        "\t\tSUSTAIN_DROP({SUSTAIN_DROP:.1f}, {DECAY_ENV:.2f}), // SUSTAIN_MULT\n" \
+        "\t\tLFO_NORMALIZED_DELAY_COUNT({VIB_DELAY_ENV:.2f}), // VIBRATO_DELAY\n" \
         "\t\tuint32_t({VIB_INC_ENV:.1f} * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT\n" \
         "\t\t(CENTS_SHIFT({VIB_PITCH_INIT}) - 1.0) * 4, // VIBRATO_PITCH_COEFFICIENT_INITIAL\n" \
         "\t\t(1.0 - CENTS_SHIFT({VIB_PITCH_SCND})) * 4, // VIBRATO_COEFFICIENT_SECONDARY\n" \
-        "\t\tuint32_t({MOD_DELAY_ENV:.2f} * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY\n" \
+        "\t\tLFO_NORMALIZED_DELAY_COUNT({MOD_DELAY_ENV:.2f}), // MODULATION_DELAY\n" \
         "\t\tuint32_t({MOD_INC_ENV:.1f} * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT\n" \
         "\t\t(CENTS_SHIFT({MOD_PITCH_INIT}) - 1.0) * 4, // MODULATION_PITCH_COEFFICIENT_INITIAL\n" \
         "\t\t(1.0 - CENTS_SHIFT({MOD_PITCH_SCND})) * 4, // MODULATION_PITCH_COEFFICIENT_SECOND\n" \
@@ -444,7 +445,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "ATTACK_ENV": get_timecents_value(34, 1, 1),
         "HOLD_ENV": get_timecents_value(35, 0, 0),
         "DECAY_ENV": get_timecents_value(36, 1, 1),
-        "SUSTAIN_FRAC": -get_decibel_value(37, 0, 0, 144),
+        "SUSTAIN_DROP": get_decibel_value(37, 0, 0, 144),
         "RELEASE_ENV": get_timecents_value(38, 1, 1),
         "VIB_DELAY_ENV": get_timecents_value(23, 0, 0),
         "VIB_INC_ENV": get_hertz(24, 8.176, 0.1, 100),

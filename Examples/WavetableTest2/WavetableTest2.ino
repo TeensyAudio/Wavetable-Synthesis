@@ -84,20 +84,19 @@ void setup() {
 
 	for (int i = 0; i < TOTAL_VOICES; ++i) {
 		wavetable[i].setInstrument(nylonstrgtr);
-		wavetable[i].amplitude(1);
 		voices[i].wavetable_id = i;
 		voices[i].channel = voices[i].note = 0xFF;
 	}
 
-	for (int i = 0; i < TOTAL_MIXERS-1; ++i)
-		for (int j = 0; j < 4; ++j)
-			mixer[i].gain(j, 0.4);
+	//for (int i = 0; i < TOTAL_MIXERS-1; ++i)
+	//	for (int j = 0; j < 4; ++j)
+	//		mixer[i].gain(j, 0.4);
 	//for (int i = 0; i < 4; ++i)
 	//	mixer[TOTAL_MIXERS - 1].gain(i, i < SECONDARY_MIXERS ? 1.0 / SECONDARY_MIXERS : 0.0);
-	mixer[TOTAL_MIXERS - 1].gain(0, .5);
-	mixer[TOTAL_MIXERS - 1].gain(1, .5);
-	mixer[TOTAL_MIXERS - 1].gain(2, .5);
-	mixer[TOTAL_MIXERS - 1].gain(3, .5);
+	//mixer[TOTAL_MIXERS - 1].gain(0, .5);
+	//mixer[TOTAL_MIXERS - 1].gain(1, .5);
+	//mixer[TOTAL_MIXERS - 1].gain(2, .5);
+	//mixer[TOTAL_MIXERS - 1].gain(3, .5);
 	
 	usbMIDI.setHandleNoteOn(OnNoteOn);
 	usbMIDI.setHandleNoteOff(OnNoteOff);

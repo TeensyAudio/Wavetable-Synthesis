@@ -1,27 +1,10 @@
-#include "bassoon_samples.h"
-#include "clarinet_samples.h"
+#include "accousticbs_samples.h"
 #include "distortiongt_samples.h"
-#include "epiano_samples.h"
-#include "flute_samples.h"
-#include "frenchhorn_samples.h"
-#include "glockenspiel_samples.h"
-#include "gtfretnoise_samples.h"
-#include "harmonica_samples.h"
-#include "harp_samples.h"
+#include "fingeredbs_samples.h"
 #include "mutedgtr_samples.h"
-#include "nylonstrgtr_samples.h"
-#include "oboe_samples.h"
-#include "overdrivegt_samples.h"
-#include "recorder_samples.h"
-#include "standard_DRUMS_samples.h"
-#include "steelstrgtr_samples.h"
-#include "strings_samples.h"
-#include "timpani_samples.h"
-#include "trombone_samples.h"
-#include "trumpet_samples.h"
-#include "tuba_samples.h"
 #include "piano_samples.h"
-#include "vibraphone_samples.h"
+#include "standard_DRUMS_samples.h"
+#include "strings_samples.h"
 
 #include <AudioSynthWavetable.h>
 #include <Bounce.h>
@@ -157,21 +140,21 @@ void OnPress(int key)
 
 const instrument_data* const midi_map[] = {
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 000: pianos
-	&vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, &vibraphone, // 008: chrom percus
-	&harmonica, &harmonica, &harmonica, &harmonica, &harmonica, &harmonica, &harmonica, &harmonica, // 016: organs
-	&nylonstrgtr, &steelstrgtr, &nylonstrgtr, &nylonstrgtr, &mutedgtr, &overdrivegt, &distortiongt, &nylonstrgtr, // 024: guitars
-	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 032: bass
-	&strings, &strings, &strings, &strings, &strings, &strings, &harp, &timpani, // 040: strings
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 008: chrom percus
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 016: organs
+	&distortiongt, &distortiongt, &distortiongt, &distortiongt, &mutedgtr, &distortiongt, &distortiongt, &distortiongt, // 024: guitars
+	&accousticbs, &fingeredbs, &fingeredbs, &fingeredbs, &fingeredbs, &fingeredbs, &fingeredbs, &fingeredbs, // 032: bass
+	&strings, &strings, &strings, &strings, &strings, &strings, &strings, &strings, // 040: strings
 	&strings, &strings, &strings, &strings, &strings, &strings, &strings, &strings, // 048: ensemble
-	&trumpet, &trombone, &tuba, &frenchhorn, &frenchhorn, &frenchhorn, &frenchhorn, &frenchhorn, // 056: brass
-	&oboe, &oboe, &oboe, &oboe, &oboe, &oboe, &bassoon, &clarinet, // 064: reed
-	&flute, &flute, &recorder, &flute, &flute, &flute, &flute, &flute, // 072: pipe
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 056: brass
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 064: reed
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 072: pipe
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 080: synth lead
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 088: synth pad
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 096: synth effect
 	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 104: ethnic
-	&timpani, &timpani, &timpani, &timpani, &timpani, &timpani, &timpani, &timpani, // 112: percussive
-	&gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, // 120: sound effects
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 112: percussive
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, // 120: sound effects
 };
 
 const instrument_data* channel_map[17] = {
