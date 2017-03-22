@@ -51,12 +51,12 @@ Additional Instructions for building on Ubuntu:
 C++ class implementing wavetable synthesis. For in-depth class member and field descriptions, see https://teensyaudio.github.io/Wavetable-Synthesis/html/index.html
 
 ### Developed By:
-Ryan Mellmer (rmellmer)
-Nicholas Craig (beroberobaa)
-Joshua Bucklin (jdbucklin)
-Aida Keifer (aidakeifer)
-Jonathan Jensen (itsjonnyjyo)
-Yu Tang (27tang)
-Connor Delaplane (ConnorReilly)
+- Ryan Mellmer (rmellmer)
+- Nicholas Craig (beroberobaa)
+- Joshua Bucklin (jdbucklin)
+- Aida Keifer (aidakeifer)
+- Jonathan Jensen (itsjonnyjyo)
+- Yu Tang (27tang)
+- Connor Delaplane (ConnorReilly)
 
 
