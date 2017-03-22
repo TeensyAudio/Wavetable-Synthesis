@@ -50,7 +50,7 @@ Additional Instructions for building on Ubuntu:
 
 C++ class implementing wavetable synthesis. For in-depth class member and field descriptions, see https://teensyaudio.github.io/Wavetable-Synthesis/html/index.html
 
-###Developed By:
+### Developed By:
 Ryan Mellmer (rmellmer)
 Nicholas Craig (beroberobaa)
 Joshua Bucklin (jdbucklin)
