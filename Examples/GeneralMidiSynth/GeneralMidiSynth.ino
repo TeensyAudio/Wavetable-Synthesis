@@ -32,6 +32,7 @@
 #include <SerialFlash.h>
 
 //#define DEBUG_ALLOC
+//#define DEBUG_CONTROL
 
 const int TOTAL_VOICES = 64;
 const int TOTAL_MIXERS = 21;
@@ -174,23 +175,37 @@ const instrument_data* const midi_map[] = {
 	&gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, &gtfretnoise, // 120: sound effects
 };
 
-const instrument_data* channel_map[17] = {
-	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, &standard_DRUMS, &piano, &piano, &piano, &piano, &piano, &piano,
+const instrument_data* channel_map[16] = {
+	&piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, &piano, &standard_DRUMS, &piano, &piano, &piano, &piano, &piano, &piano,
 };
 
 int channel_vol[] = {
-	90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 
+	90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90,
 };
 
-void OnControlChange(byte channel, byte control, byte value)
-{
+void OnControlChange(byte channel, byte control, byte value) {
+	--channel;
 	switch (control) {
 	case 7: //volume
 		channel_vol[channel] = value;
 		break;
+	case 121:
+		for (int i = 0; i < 16; ++i) channel_vol[i] = 90;
+		break;
+	case 123:
+		for (int i = stopped_voices; i < stopped_voices + used_voices; ++i) if (voices[i].channel == channel) {
+			wavetable[voices[i].wavetable_id].stop();
+			voice_t temp = voices[i];
+			voices[i] = voices[stopped_voices];
+			voices[stopped_voices] = temp;
+			--used_voices;
+			++stopped_voices;
+		}
+		break;
 	default:
 		break;
 	}
+#ifdef DEBUG_CONTROL
 	Serial.print("Control Change, ch=");
 	Serial.print(channel);
 	Serial.print(", control=");
@@ -198,14 +213,17 @@ void OnControlChange(byte channel, byte control, byte value)
 	Serial.print(", value=");
 	Serial.print(value);
 	Serial.println();
+#endif
 }
 
 
 void OnProgramChange(byte channel, byte program) {
-	channel_map[channel] = channel != 10 ? midi_map[program] : &standard_DRUMS;
+	--channel;
+	channel_map[channel] = channel != 9 ? midi_map[program] : &standard_DRUMS;
 }
 
 void OnNoteOn(byte channel, byte note, byte velocity) {
+	--channel;
 	notes_played++;
 #ifdef DEBUG_ALLOC
 	//Serial.printf("**** NoteOn: channel==%hhu,note==%hhu ****\n", channel, note);
@@ -221,6 +239,7 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
 }
 
 void OnNoteOff(byte channel, byte note, byte velocity) {
+	--channel;
 #ifdef DEBUG_ALLOC
 	//Serial.printf("\n**** NoteOff: channel==%hhu,note==%hhu ****", channel, note);
 	printVoices();

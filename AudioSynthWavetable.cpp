@@ -171,8 +171,7 @@ void AudioSynthWavetable::update(void) {
 
 	cli();
 
-	if (env_state == STATE_IDLE || (current_sample->LOOP == false && tone_phase >= current_sample->MAX_PHASE)) {
-		env_state = STATE_IDLE;
+	if (env_state == STATE_IDLE) {
 		sei();
 		return;
 	}
@@ -256,9 +255,7 @@ void AudioSynthWavetable::update(void) {
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 	while (p < end) {
-		if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
-
-		int32_t tone_incr_offset = 0; 
+		int32_t tone_incr_offset = 0;
 		if (vib_count++ > s->VIBRATO_DELAY) {
 			vib_phase += s->VIBRATO_INCREMENT;
 			int32_t vib_scale = vib_phase & 0x80000000 ? 0x40000000 + vib_phase : 0x3FFFFFFF - vib_phase;
@@ -279,8 +276,18 @@ void AudioSynthWavetable::update(void) {
 			mod_scale = multiply_32x32_rshift32(mod_scale, mod_amp_offset);
 			mod_amp = signed_multiply_accumulate_32x16b(mod_amp, mod_scale, mod_amp);
 		}
+		p[0] = (uint32_t)tone_incr_offset;
+		p[1] = (uint32_t)mod_amp;
+		p += LFO_PERIOD/2;
+	}
 
-		for (int i = LFO_PERIOD / 2; i; --i, ++p) {
+	p = (uint32_t*)block->data;
+	end = p + AUDIO_BLOCK_SAMPLES / 2;
+
+	if (s->LOOP) while (p < end) {
+		int32_t tone_incr_offset = p[0];
+		int32_t mod_amp = p[1];
+		for (int i = 0; i < LFO_PERIOD/2; ++i, ++p) {
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
 			phase_scale = (tone_phase << s->INDEX_BITS) >> 16;
@@ -289,8 +296,7 @@ void AudioSynthWavetable::update(void) {
 			s1 = signed_multiply_32x16b(mod_amp, s1);
 
 			tone_phase += tone_incr + tone_incr_offset;
-			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
-			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;;
+			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;;
 
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
@@ -300,21 +306,55 @@ void AudioSynthWavetable::update(void) {
 			s2 = signed_multiply_32x16b(mod_amp, s2);
 
 			tone_phase += tone_incr + tone_incr_offset;
-			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
-			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+
+			*p = pack_16b_16b(s2, s1);
+
+			//static int disp = 0;
+			//if (!disp) {
+			//	disp = 32;
+			//	Serial.printf("max_phase=%u, tone_phase=%u, index=%u, phase_scale=%u, tone_incr=%u, tone_incr_offset=%i, mod_amp=%i\n", s->MAX_PHASE, tone_phase, index, phase_scale, tone_incr, tone_incr_offset, mod_amp);
+			//	Serial.flush();
+			//}
+			//disp--;
+		}
+	} else while (tone_phase < s->MAX_PHASE && p < end) {
+		int32_t tone_incr_offset = p[0];
+		int32_t mod_amp = p[1];
+
+
+		for (int i = 0; i < LFO_PERIOD/2; ++i, ++p) {
+			index = tone_phase >> (32 - s->INDEX_BITS);
+			tmp1 = *((uint32_t*)(s->sample + index));
+			phase_scale = (tone_phase << s->INDEX_BITS) >> 16;
+			s1 = signed_multiply_32x16t(phase_scale, tmp1);
+			s1 = signed_multiply_accumulate_32x16b(s1, 0xFFFF - phase_scale, tmp1);
+			s1 = signed_multiply_32x16b(mod_amp, s1);
+
+			tone_phase += tone_incr + tone_incr_offset;
+			if (tone_phase >= s->MAX_PHASE) {
+				*p = pack_16b_16b(0, s1);
+				p++;
+				break;
+			}
+
+			index = tone_phase >> (32 - s->INDEX_BITS);
+			tmp1 = *((uint32_t*)(s->sample + index));
+			phase_scale = (tone_phase << s->INDEX_BITS) >> 16;
+			s2 = signed_multiply_32x16t(phase_scale, tmp1);
+			s2 = signed_multiply_accumulate_32x16b(s2, 0xFFFF - phase_scale, tmp1);
+			s2 = signed_multiply_32x16b(mod_amp, s2);
+
+			tone_phase += tone_incr + tone_incr_offset;
 
 			*p = pack_16b_16b(s2, s1);
 		}
 	}
-	if (p < end) {
-		env_state = STATE_IDLE;
-		env_count = 0;
-		while (p < end) *p++ = 0;
-	}
+	while (p < end) *p++ = 0;
 
 	p = (uint32_t *)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
-
+		
 	while (p < end) {
 		if (env_count <= 0) switch (env_state) {
 		case STATE_PLAY:
@@ -416,6 +456,10 @@ void AudioSynthWavetable::update(void) {
 		env_count--;
 	}
 
+	//for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i+=8) {
+	//	Serial.printf("%hi,%hi,%hi,%hi,%hi,%hi,%hi,%hi,", block->data[i],block->data[i+1],block->data[i+2],block->data[i+3],block->data[i+4],block->data[i+5],block->data[i+6],block->data[i+7]);
+	//}
+
 	transmit(block);
 	release(block);
 
@@ -434,6 +478,5 @@ void AudioSynthWavetable::update(void) {
 	this->mod_count = mod_count;
 	this->mod_phase = mod_phase;
 	sei();
-
-	); //END TIME_TEST
+	); //TIME_TEST_END
 }

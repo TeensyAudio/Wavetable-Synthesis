@@ -36,8 +36,9 @@
 #define DEFAULT_AMPLITUDE 90
 #define TRIANGLE_INITIAL_PHASE (-0x40000000)
 
-// int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-1 (1..7 for AUDIO_BLOCK_SAMPLES == 128)
+// int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-2 (1..6 for AUDIO_BLOCK_SAMPLES == 128)
 // where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
+// 6 updates LFO values every 4th sample, 1 updates every 128 samples
 #define LFO_SMOOTHNESS 3
 #define LFO_PERIOD (AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1)))
 
