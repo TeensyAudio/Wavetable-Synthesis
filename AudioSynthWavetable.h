@@ -39,7 +39,7 @@
 // int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-2 (1..6 for AUDIO_BLOCK_SAMPLES == 128)
 // where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
 // 6 updates LFO values every 4th sample, 1 updates every 128 samples
-#define LFO_SMOOTHNESS 3
+#define LFO_SMOOTHNESS 6
 #define LFO_PERIOD (AUDIO_BLOCK_SAMPLES/(1 << (LFO_SMOOTHNESS-1)))
 
 #define ENVELOPE_PERIOD 8
@@ -135,6 +135,7 @@ public:
 
 private:
 	void setState(int note, int amp, float freq);
+	void update_interpolation(audio_block_t*& block, const sample_data* s, uint32_t& tone_phase, uint32_t tone_incr);
 
 	volatile const instrument_data* instrument = NULL;
 	volatile const sample_data* current_sample = NULL;
