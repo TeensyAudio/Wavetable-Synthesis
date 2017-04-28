@@ -46,6 +46,7 @@
 #define MINIMUM_VOL_MULT UINT16_MAX
 
 enum envelopeStateEnum { STATE_IDLE, STATE_PLAY, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE, STATE_STOP };
+enum lfoStateEnum { LFO_STATE_VIBRATO_NEXT, LFO_STATE_MODULATION_NEXT, LFO_STATE_BOTH_NEXT, LFO_STATE_VIBRATO, LFO_STATE_MODULATION, LFO_STATE_BOTH };
 
 class AudioSynthWavetable : public AudioStream
 {
@@ -153,15 +154,13 @@ private:
 	volatile int32_t env_mult = 0;
 	volatile int32_t env_incr = 0;
 
-	//vibrato LFO state
-	volatile uint32_t vib_count = 0;
-	volatile uint32_t vib_phase = 0;
+	//LFO state
+	volatile lfoStateEnum lfo_state = LFO_STATE_BOTH_NEXT;
+	volatile uint32_t lfo_count = 0;
+	volatile uint32_t vib_phase = TRIANGLE_INITIAL_PHASE;
+	volatile uint32_t mod_phase = TRIANGLE_INITIAL_PHASE;
 	volatile int32_t vib_pitch_offset_init = 0;
 	volatile int32_t vib_pitch_offset_scnd = 0;
-
-	//modulation LFO state
-	volatile uint32_t mod_count = 0;
-	volatile uint32_t mod_phase = TRIANGLE_INITIAL_PHASE;
 	volatile int32_t mod_pitch_offset_init = 0;
 	volatile int32_t mod_pitch_offset_scnd = 0;
 };
