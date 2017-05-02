@@ -31,6 +31,8 @@
 #define TIME_TEST_ON
 //#define ENVELOPE_DEBUG
 //#define STATE_DEBUG
+//#define LFO_DEBUG
+//#define LFO_OUTPUT_DEBUG
 
 // Performance testing macro generally unrelated to the wavetable object, but was used to
 // fine tune the performance of specific blocks of code in update(); usage is to specify a
@@ -149,12 +151,8 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
  * @param freq frequency of the generated output (between 0 and the board-specific sample rate)
  */
 void AudioSynthWavetable::setFrequency(float freq) {
-	float tone_incr_temp = freq * current_sample->PER_HERTZ_PHASE_INCREMENT;
-	tone_incr = tone_incr_temp;
-	vib_pitch_offset_init = tone_incr_temp * current_sample->VIBRATO_PITCH_COEFFICIENT_INITIAL;
-	vib_pitch_offset_scnd = tone_incr_temp * current_sample->VIBRATO_PITCH_COEFFICIENT_SECOND;
-	mod_pitch_offset_init = tone_incr_temp * current_sample->MODULATION_PITCH_COEFFICIENT_INITIAL;
-	mod_pitch_offset_scnd = tone_incr_temp * current_sample->MODULATION_PITCH_COEFFICIENT_SECOND;
+	vib_tone_incr = mod_tone_incr = freq * current_sample->PER_HERTZ_PHASE_INCREMENT;
+	vib_phase = mod_phase = LFO_INITIAL_PHASE;
 }
 
 /**
@@ -170,7 +168,6 @@ void AudioSynthWavetable::update(void) {
 	uint32_t tmp1, tmp2;
 
 	cli();
-
 	if (env_state == STATE_IDLE) {
 		sei();
 		return;
@@ -180,35 +177,34 @@ void AudioSynthWavetable::update(void) {
 	const sample_data* s = (const sample_data*)current_sample;
 
 	if (env_state == STATE_PLAY) {
-		vib_phase = mod_phase = TRIANGLE_INITIAL_PHASE;
+		this->vib_delay_count = s->VIBRATO_DELAY;
+		this->mod_delay_count = s->MODULATION_DELAY;
 
-		lfo_count =
-			current_sample->VIBRATO_DELAY <= current_sample->MODULATION_DELAY ? current_sample->VIBRATO_DELAY : current_sample->MODULATION_DELAY;
-		lfo_state =
-			current_sample->VIBRATO_DELAY < current_sample->MODULATION_DELAY ? LFO_STATE_VIBRATO_NEXT :
-			current_sample->VIBRATO_DELAY > current_sample->MODULATION_DELAY ? LFO_STATE_MODULATION_NEXT :
-			LFO_STATE_BOTH_NEXT;
+		this->tone_phase = 0;
+
+		this->vib_freq_mult = 0;
+		this->mod_freq_mult = 0;
+		this->mod_amp_mult = 0;
 	}
 
 	uint32_t tone_phase = this->tone_phase;
-	uint32_t tone_incr = this->tone_incr;
-	uint16_t tone_amp = this->tone_amp;
+	uint32_t tone_amp = this->tone_amp;
 
 	envelopeStateEnum env_state = this->env_state;
 	int32_t env_count = this->env_count;
 	int32_t env_mult = this->env_mult;
 	int32_t env_incr = this->env_incr;
 
-	lfoStateEnum lfo_sate = this->lfo_state;
-	uint32_t lfo_count = this->lfo_count;
+	int32_t vib_delay_count = this->vib_delay_count;
+	int32_t vib_phase = this->vib_phase;
+	uint32_t vib_tone_incr = this->vib_tone_incr;
+	int32_t vib_freq_mult = this->vib_freq_mult;
 
-	uint32_t vib_phase = this->vib_phase;
-	int32_t vib_pitch_offset_init = this->vib_pitch_offset_init;
-	int32_t vib_pitch_offset_scnd = this->vib_pitch_offset_scnd;
-
-	uint32_t mod_phase = this->mod_phase;
-	int32_t mod_pitch_offset_init = this->mod_pitch_offset_init;
-	int32_t mod_pitch_offset_scnd = this->mod_pitch_offset_scnd;
+	int32_t mod_delay_count = this->mod_delay_count;
+	int32_t mod_phase = this->mod_phase;
+	uint32_t mod_tone_incr = this->mod_tone_incr;
+	int32_t mod_freq_mult = this->mod_freq_mult;
+	int32_t mod_amp_mult = this->mod_amp_mult;
 	sei();
 
 #ifdef STATE_DEBUG
@@ -216,38 +212,26 @@ void AudioSynthWavetable::update(void) {
 	if (env_state != previous_state) {
 		Serial.printf(
 			"\n"
-			"tone_phase = %u\n"
-			"tone_incr = %u\n"
-			"tone_amp = %hu\n"
-			"\n"
-			"env_count = %i\n"
-			"env_mult = %i\n"
+			"tone_phase = %u,"
+			"tone_incr = %u,"
+			"tone_amp = %u\n"
+			"env_count = %i,"
+			"env_mult = %i,"
 			"env_incr = %i\n"
-			"\n"
-			"vib_count = %u\n"
+			"vib_delay_count = %u,"
 			"vib_phase = %u\n"
-			"vib_pitch_offset_init = %i\n"
-			"vib_pitch_offset_scnd = %i\n"
-			"\n"
-			"mod_count = %u\n"
-			"mod_phase = %u\n"
-			"mod_pitch_offset_init = %i\n"
-			"mod_pitch_offset_scnd = %i\n"
-			"\n",
+			"mod_delay_count = %u,"
+			"mod_phase = %u\n",
 			tone_phase,
-			tone_incr,
+			(vib_tone_incr + mod_tone_incr) / 2,
 			tone_amp,
 			env_count,
 			env_mult,
 			env_incr,
-			vib_count,
+			vib_delay_count,
 			vib_phase,
-			vib_pitch_offset_init,
-			vib_pitch_offset_scnd,
-			mod_count,
-			mod_phase,
-			mod_pitch_offset_init,
-			mod_pitch_offset_scnd
+			mod_delay_count,
+			mod_phase
 		);
 		previous_state = env_state;
 	}
@@ -260,86 +244,105 @@ void AudioSynthWavetable::update(void) {
 	p = (uint32_t*)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
-	TIME_TEST(5000,
+	TIME_TEST(5000, 
+	uint32_t vib_incr = vib_delay_count > 0 ? 0 : s->VIBRATO_INCREMENT;
+	uint32_t mod_incr = mod_delay_count > 0 ? 0 : s->MODULATION_INCREMENT;
+
+	if (!vib_delay_count) {
+		vib_freq_mult = s->VIBRATO_FREQ_MULT;
+	}
+	if (!mod_delay_count) {
+		mod_freq_mult = s->MODULATION_FREQ_MULT;
+		mod_amp_mult = s->MODULATION_AMP_MULT;
+	}
+	
+	vib_delay_count--;
+	mod_delay_count--;
+
+	// lfo freq variance
 	while (p < end) {
-		if (lfo_count <= 0) switch (lfo_state) {
-		case LFO_STATE_VIBRATO_NEXT:
-			lfo_count = s->MODULATION_DELAY - s->VIBRATO_DELAY;
-			lfo_state = LFO_STATE_VIBRATO;
-			break;
-		case LFO_STATE_MODULATION_NEXT:
-			lfo_count = s->VIBRATO_DELAY - s->MODULATION_DELAY;
-			lfo_state = LFO_STATE_MODULATION;
-			break;
-		default:
-			lfo_count = UINT32_MAX;
-			lfo_state = LFO_STATE_BOTH;
-			break;
+		vib_tone_incr = multiply_accumulate_32x32_rshift32_rounded(vib_tone_incr, vib_tone_incr, vib_freq_mult);
+		mod_tone_incr = multiply_accumulate_32x32_rshift32_rounded(mod_tone_incr, mod_tone_incr, mod_freq_mult);
+		//tone_amp = multiply_accumulate_32x32_rshift32_rounded(tone_amp, tone_amp, mod_amp_mult);
+		*p++ = (vib_tone_incr + mod_tone_incr) / 2;
+		*p++ = tone_amp;
+
+		vib_phase += vib_incr;
+		if (vib_phase < 0) {
+			vib_phase += INT32_MAX;
+			vib_freq_mult = -vib_freq_mult;
 		}
 
-		int32_t lfo_scale, lfo_offset;
-
-		switch (lfo_state) {
-		case LFO_STATE_BOTH_NEXT:
-		case LFO_STATE_VIBRATO_NEXT:
-		case LFO_STATE_MODULATION_NEXT:
-			while (p < end && lfo_count--) {
-				p[0] = (uint32_t)0;
-				p[1] = (uint32_t)tone_amp;
-				p += LFO_PERIOD/2;
-			}
-			break;
-		case LFO_STATE_VIBRATO:
-			while (p < end && lfo_count--) {
-				vib_phase += s->VIBRATO_INCREMENT;
-
-				lfo_scale = vib_phase & 0x80000000 ? 0x40000000 + vib_phase : 0x3FFFFFFF - vib_phase;
-				lfo_offset = lfo_scale >= 0 ? vib_pitch_offset_init : vib_pitch_offset_scnd;
-
-				p[0] = (uint32_t)multiply_32x32_rshift32_rounded(lfo_scale, lfo_offset);
-				p[1] = (uint32_t)tone_amp;
-				p += LFO_PERIOD/2;
-			}
-			break;
-		case LFO_STATE_MODULATION:
-			while (p < end && lfo_count--) {
-				mod_phase += s->MODULATION_INCREMENT;
-
-				lfo_scale = mod_phase & 0x80000000 ? 0x40000000 + mod_phase : 0x3FFFFFFF - mod_phase;
-				lfo_offset = lfo_scale >= 0 ? mod_pitch_offset_init : mod_pitch_offset_scnd;
-				p[0] = (uint32_t)multiply_32x32_rshift32_rounded(lfo_scale, lfo_offset);
-
-				lfo_offset = (lfo_scale >= 0 ? s->MODULATION_AMPLITUDE_INITIAL_GAIN : s->MODULATION_AMPLITUDE_SECOND_GAIN);
-				lfo_scale = multiply_32x32_rshift32(lfo_scale, lfo_offset);
-				p[1] = (uint32_t)signed_multiply_accumulate_32x16b(tone_amp, lfo_scale, tone_amp);
-
-				p += LFO_PERIOD/2;
-			}
-			break;
-		case LFO_STATE_BOTH:
-			while (p < end && lfo_count--) {
-				vib_phase += s->VIBRATO_INCREMENT;
-				lfo_scale = vib_phase & 0x80000000 ? 0x40000000 + vib_phase : 0x3FFFFFFF - vib_phase;
-				lfo_offset = lfo_scale >= 0 ? vib_pitch_offset_init : vib_pitch_offset_scnd;
-				int32_t lfo_offset_temp = multiply_32x32_rshift32_rounded(lfo_scale, lfo_offset);
-
-				mod_phase += s->MODULATION_INCREMENT;
-				lfo_scale = mod_phase & 0x80000000 ? 0x40000000 + mod_phase : 0x3FFFFFFF - mod_phase;
-				lfo_offset = lfo_scale >= 0 ? mod_pitch_offset_init : mod_pitch_offset_scnd;
-				p[0] = (uint32_t)multiply_accumulate_32x32_rshift32_rounded(lfo_offset_temp, lfo_scale, lfo_offset);
-
-				lfo_offset = (lfo_scale >= 0 ? s->MODULATION_AMPLITUDE_INITIAL_GAIN : s->MODULATION_AMPLITUDE_SECOND_GAIN);
-				lfo_scale = multiply_32x32_rshift32(lfo_scale, lfo_offset);
-				p[1] = (uint32_t)signed_multiply_accumulate_32x16b(tone_amp, lfo_scale, tone_amp);
-
-				p += LFO_PERIOD/2;
-			}
-			break;
+		mod_phase += mod_incr;
+		if (mod_phase < 0) {
+			mod_phase += INT32_MAX;
+			mod_freq_mult = -mod_freq_mult;
+			mod_amp_mult = -mod_amp_mult;
 		}
 	}
-	); //TIME_TEST END
+	); //TIME_TEST end
 
-	update_interpolation(block, s, tone_phase, tone_incr);
+#ifdef LFO_OUTPUT_DEBUG
+	p = (uint32_t*)block->data;
+
+	uint32_t max_incr = 0;
+	uint32_t min_incr = UINT32_MAX;
+	float avg_incr = 0.0;
+	uint32_t max_amp = 0;
+	uint32_t min_amp = UINT32_MAX;
+	float avg_amp = 0.0;
+
+	for (int i = 0; i < AUDIO_BLOCK_SAMPLES / 2; i++) {
+		max_incr = p[i] > max_incr ? p[i] : max_incr;
+		min_incr = p[i] < min_incr ? p[i] : min_incr;
+		avg_incr += p[i];
+		i++;
+		max_amp = p[i] > max_amp ? p[i] : max_amp;
+		min_amp = p[i] < min_amp ? p[i] : min_amp;
+		avg_amp += p[i];
+	}
+
+	avg_incr /= 32.0;
+	avg_amp /= 32.0;
+
+	Serial.printf("incr: {%u, %u, %f}, amp: {%u, %u, %f}\n", max_incr, min_incr, avg_incr, max_amp, min_amp, avg_amp);
+#endif
+
+#ifdef LFO_DEBUG
+	Serial.printf(
+		"\n"
+		"tone_phase = %u\n"
+		"tone_amp = %hu\n"
+		"\n"
+		"vib_delay_count = %i\n"
+		"mod_delay_count = %i\n"
+		"vib_phase = %i\n"
+		"mod_phase = %i\n"
+		"vib_tone_incr = %u\n"
+		"mod_tone_incr = %u\n"
+		"vib_freq_mult = %i\n"
+		"mod_freq_mult = %i\n"
+		"mod_amp_mult = %i\n"
+		"vib_incr = %u\n"
+		"mod_incr = %u\n"
+		"\n",
+		tone_phase,
+		tone_amp,
+		vib_delay_count,
+		mod_delay_count,
+		vib_phase,
+		mod_phase,
+		vib_tone_incr,
+		mod_tone_incr,
+		vib_freq_mult,
+		mod_freq_mult,
+		mod_amp_mult,
+		vib_incr,
+		mod_incr
+	);
+#endif
+
+	update_interpolation(block, s, tone_phase);
 
 	p = (uint32_t *)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
@@ -454,20 +457,25 @@ void AudioSynthWavetable::update(void) {
 
 	cli();
 	this->tone_phase = tone_phase;
+	//this->tone_amp = tone_amp;
 
 	this->env_state = state_change ? this->env_state : env_state;
+	this->env_count = env_count;
 	this->env_mult = env_mult;
 	this->env_incr = env_incr;
-	this->env_count = env_count;
 
-	this->lfo_state = lfo_state;
-	this->lfo_count = lfo_count;
+	this->vib_delay_count = vib_delay_count;
+	this->mod_delay_count = mod_delay_count;
 	this->vib_phase = vib_phase;
 	this->mod_phase = mod_phase;
+	this->vib_tone_incr = vib_tone_incr;
+	this->mod_tone_incr = mod_tone_incr;
+	this->vib_freq_mult = vib_freq_mult;
+	this->mod_freq_mult = mod_freq_mult;
 	sei();
 }
 
-void AudioSynthWavetable::update_interpolation(audio_block_t*& block, const sample_data* s, uint32_t& tone_phase_ext, uint32_t tone_incr) {
+void AudioSynthWavetable::update_interpolation(audio_block_t*& block, const sample_data* s, uint32_t& tone_phase_ext) {
 	uint32_t* p, *end;
 	uint32_t index;
 	uint16_t phase_scale;
@@ -479,10 +487,10 @@ void AudioSynthWavetable::update_interpolation(audio_block_t*& block, const samp
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 	if (s->LOOP) while (p < end) {
-		int32_t tone_incr_offset = tone_incr + p[0];
+		int32_t tone_incr = p[0];
 		int32_t mod_amp = p[1];
 
-		for (int i = 0; i < LFO_PERIOD/2; ++i, ++p) {
+		for (int i = 0; i < 2; ++i, ++p) {
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
 			phase_scale = tone_phase >> (16 - s->INDEX_BITS);
@@ -491,7 +499,7 @@ void AudioSynthWavetable::update_interpolation(audio_block_t*& block, const samp
 			s1 = signed_multiply_accumulate_32x16b(s1, phase_scale, tmp1);
 			s1 = signed_multiply_32x16b(mod_amp, s1);
 
-			tone_phase += tone_incr_offset;
+			tone_phase += tone_incr;
 			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 
 			index = tone_phase >> (32 - s->INDEX_BITS);
@@ -504,14 +512,14 @@ void AudioSynthWavetable::update_interpolation(audio_block_t*& block, const samp
 
 			*p = pack_16b_16b(s2, s1);
 
-			tone_phase += tone_incr_offset;
+			tone_phase += tone_incr;
 			tone_phase = tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
 		}
 	} else while (tone_phase < s->MAX_PHASE && p < end) {
-		int32_t tone_incr_offset = tone_incr + p[0];
+		int32_t tone_incr = p[0];
 		int32_t mod_amp = p[1];
 
-		for (int i = 0; i < LFO_PERIOD/2; ++i, ++p) {
+		for (int i = 0; i < 2; ++i, ++p) {
 			index = tone_phase >> (32 - s->INDEX_BITS);
 			tmp1 = *((uint32_t*)(s->sample + index));
 			phase_scale = tone_phase >> (16 - s->INDEX_BITS);
@@ -520,7 +528,7 @@ void AudioSynthWavetable::update_interpolation(audio_block_t*& block, const samp
 			s1 = signed_multiply_accumulate_32x16b(s1, phase_scale, tmp1);
 			s1 = signed_multiply_32x16b(mod_amp, s1);
 
-			tone_phase += tone_incr_offset;
+			tone_phase += tone_incr;
 			if (tone_phase >= s->MAX_PHASE) {
 				*p = pack_16b_16b(0, s1);
 				p++;
@@ -535,7 +543,7 @@ void AudioSynthWavetable::update_interpolation(audio_block_t*& block, const samp
 			s2 = signed_multiply_accumulate_32x16b(s2, phase_scale, tmp1);
 			s2 = signed_multiply_32x16b(mod_amp, s2);
 
-			tone_phase += tone_incr_offset;
+			tone_phase += tone_incr;
 
 			*p = pack_16b_16b(s2, s1);
 		}

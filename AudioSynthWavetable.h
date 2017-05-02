@@ -34,7 +34,7 @@
 
 #define UNITY_GAIN INT32_MAX // Max amplitude / no attenuation
 #define DEFAULT_AMPLITUDE 90
-#define TRIANGLE_INITIAL_PHASE (-0x40000000)
+#define LFO_INITIAL_PHASE (INT32_MAX/2)
 
 // int n in range 1..log2(AUDIO_BLOCK_SAMPLES/2)-2 (1..6 for AUDIO_BLOCK_SAMPLES == 128)
 // where AUDIO_BLOCK_SAMPLES%n == 0, higher == more smooth and more CPU usage
@@ -46,7 +46,6 @@
 #define MINIMUM_VOL_MULT UINT16_MAX
 
 enum envelopeStateEnum { STATE_IDLE, STATE_PLAY, STATE_DELAY, STATE_ATTACK, STATE_HOLD, STATE_DECAY, STATE_SUSTAIN, STATE_RELEASE, STATE_STOP };
-enum lfoStateEnum { LFO_STATE_VIBRATO_NEXT, LFO_STATE_MODULATION_NEXT, LFO_STATE_BOTH_NEXT, LFO_STATE_VIBRATO, LFO_STATE_MODULATION, LFO_STATE_BOTH };
 
 class AudioSynthWavetable : public AudioStream
 {
@@ -136,7 +135,7 @@ public:
 
 private:
 	void setState(int note, int amp, float freq);
-	void update_interpolation(audio_block_t*& block, const sample_data* s, uint32_t& tone_phase, uint32_t tone_incr);
+	void update_interpolation(audio_block_t*& block, const sample_data* s, uint32_t& tone_phase);
 
 	volatile const instrument_data* instrument = NULL;
 	volatile const sample_data* current_sample = NULL;
@@ -145,8 +144,7 @@ private:
 
 	//sample output state
 	volatile uint32_t tone_phase = 0;
-	volatile uint32_t tone_incr = 0;
-	volatile uint16_t tone_amp = 0;
+	volatile uint32_t tone_amp = 0;
 
 	//volume environment state
 	volatile envelopeStateEnum  env_state = STATE_IDLE;
@@ -155,13 +153,14 @@ private:
 	volatile int32_t env_incr = 0;
 
 	//LFO state
-	volatile lfoStateEnum lfo_state = LFO_STATE_BOTH_NEXT;
-	volatile uint32_t lfo_count = 0;
-	volatile uint32_t vib_phase = TRIANGLE_INITIAL_PHASE;
-	volatile uint32_t mod_phase = TRIANGLE_INITIAL_PHASE;
-	volatile int32_t vib_pitch_offset_init = 0;
-	volatile int32_t vib_pitch_offset_scnd = 0;
-	volatile int32_t mod_pitch_offset_init = 0;
-	volatile int32_t mod_pitch_offset_scnd = 0;
+	volatile int32_t vib_delay_count = 0;
+	volatile int32_t mod_delay_count = 0;
+	volatile int32_t vib_phase = LFO_INITIAL_PHASE;
+	volatile int32_t mod_phase = LFO_INITIAL_PHASE;
+	volatile uint32_t vib_tone_incr = 0;
+	volatile uint32_t mod_tone_incr = 0;
+	volatile int32_t vib_freq_mult = 0;
+	volatile int32_t mod_freq_mult = 0;
+	volatile int32_t mod_amp_mult = 0;
 };
 
