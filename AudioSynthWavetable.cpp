@@ -265,12 +265,15 @@ void AudioSynthWavetable::update(void) {
 		vib_phase += vib_incr;
 		if (vib_phase < 0) {
 			vib_phase += INT32_MAX;
+			vib_tone_incr = multiply_accumulate_32x32_rshift32_rounded(vib_tone_incr, vib_tone_incr, abs(vib_freq_mult));
 			vib_freq_mult = -vib_freq_mult;
 		}
 
 		mod_phase += mod_incr;
 		if (mod_phase < 0) {
 			mod_phase += INT32_MAX;
+			mod_tone_incr = multiply_accumulate_32x32_rshift32_rounded(mod_tone_incr, mod_tone_incr, abs(mod_freq_mult));
+			tone_amp = multiply_accumulate_32x32_rshift32_rounded(tone_amp, tone_amp, abs(mod_amp_mult));
 			mod_freq_mult = -mod_freq_mult;
 			mod_amp_mult = -mod_amp_mult;
 		}
