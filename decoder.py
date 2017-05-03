@@ -376,16 +376,13 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "\t\tRATE_NORMALIZED_ENV_COUNT({RELEASE_ENV:.2f}), // RELEASE_COUNT\n" \
         "\t\tNEG_INV_COUNT({RELEASE_ENV:.2f}), // RELEASE_COUNT\n" \
         "\t\tSUSTAIN_DROP({SUSTAIN_DROP:.1f}, {DECAY_ENV:.2f}), // SUSTAIN_MULT\n" \
-        "\t\tLFO_NORMALIZED_DELAY_COUNT({VIB_DELAY_ENV:.2f}), // VIBRATO_DELAY\n" \
-        "\t\tuint32_t({VIB_INC_ENV:.1f} * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // VIBRATO_INCREMENT\n" \
-        "\t\t(CENTS_SHIFT({VIB_PITCH_INIT}) - 1.0) * 4, // VIBRATO_PITCH_COEFFICIENT_INITIAL\n" \
-        "\t\t(1.0 - CENTS_SHIFT({VIB_PITCH_SCND})) * 4, // VIBRATO_COEFFICIENT_SECONDARY\n" \
-        "\t\tLFO_NORMALIZED_DELAY_COUNT({MOD_DELAY_ENV:.2f}), // MODULATION_DELAY\n" \
-        "\t\tuint32_t({MOD_INC_ENV:.1f} * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT\n" \
-        "\t\t(CENTS_SHIFT({MOD_PITCH_INIT}) - 1.0) * 4, // MODULATION_PITCH_COEFFICIENT_INITIAL\n" \
-        "\t\t(1.0 - CENTS_SHIFT({MOD_PITCH_SCND})) * 4, // MODULATION_PITCH_COEFFICIENT_SECOND\n" \
-        "\t\tint32_t(UINT16_MAX * (DECIBEL_SHIFT({MOD_AMP_INIT_GAIN}) - 1.0)) * 4, // MODULATION_AMPLITUDE_INITIAL_GAIN\n" \
-        "\t\tint32_t(UINT16_MAX * (1.0 - DECIBEL_SHIFT({MOD_AMP_SCND_GAIN}))) * 4, // MODULATION_AMPLITUDE_FINAL_GAIN\n" \
+        "\t\tLFO_NORMALIZED_DELAY_COUNT({VIB_DELAY_ENV:.3f}), // VIBRATO_DELAY\n" \
+        "\t\tLFO_INCREMENT({VIB_INC_ENV:.3f}), // VIBRATO_INCREMENT\n" \
+        "\t\tLFO_FREQ_MULT({VIB_INC_ENV:.3f}, {VIB_PITCH}), // VIRBRATO_FREQ_MULT\n" \
+        "\t\tLFO_NORMALIZED_DELAY_COUNT({MOD_DELAY_ENV:.3f}), // MODULATION_DELAY\n" \
+        "\t\tLFO_INCREMENT({MOD_INC_ENV:.3f}), // MODULATION_INCREMENT\n" \
+        "\t\tLFO_FREQ_MULT({MOD_INC_ENV:.3f}, {MOD_PITCH}), // MODULATION_FREQ_MULT\n" \
+        "\t\tLFO_AMP_MULT({MOD_INC_ENV:.3f}, {MOD_AMP}), // MODULTATION_AMP_MULT\n" \
         "\t}},\n"
 
     length_bits = 0
@@ -441,6 +438,7 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
 
     env_vals = {
         # bag numbers correspond to generator numbers in the SoundFont spec
+        "INIT_ATTENUATION": -get_decibel_value(48, 0, 0, 144),
         "DELAY_ENV": get_timecents_value(33, 0, 0),
         "ATTACK_ENV": get_timecents_value(34, 1, 1),
         "HOLD_ENV": get_timecents_value(35, 0, 0),
@@ -448,16 +446,12 @@ def gen_sample_meta_data_string(bag, global_bag, sample_num, instrument_name, ke
         "SUSTAIN_DROP": get_decibel_value(37, 0, 0, 144),
         "RELEASE_ENV": get_timecents_value(38, 1, 1),
         "VIB_DELAY_ENV": get_timecents_value(23, 0, 0),
-        "VIB_INC_ENV": get_hertz(24, 8.176, 0.1, 100),
+        "VIB_INC_ENV": get_hertz(24, 8.176, 0.001, 100),
+        "VIB_PITCH": get_pitch_cents(6, 0, -12000, 12000),
         "MOD_DELAY_ENV": get_timecents_value(21, 0, 0),
-        "MOD_INC_ENV": get_hertz(22, 8.176, 0.1, 100),
-        "VIB_PITCH_INIT": get_pitch_cents(6, 0, -12000, 12000),
-        "VIB_PITCH_SCND": -get_pitch_cents(6, 0, -12000, 12000),
-        "MOD_PITCH_INIT": get_pitch_cents(5, 0, -12000, 12000),
-        "MOD_PITCH_SCND": -get_pitch_cents(5, 0, -12000, 12000),
-        "INIT_ATTENUATION": -get_decibel_value(48, 0, 0, 144),
-        "MOD_AMP_INIT_GAIN": get_decibel_value(13, 0, -96, 96),
-        "MOD_AMP_SCND_GAIN": -get_decibel_value(13, 0, -96, 96)
+        "MOD_INC_ENV": get_hertz(22, 8.176, 0.001, 100),
+        "MOD_PITCH": get_pitch_cents(5, 0, -12000, 12000),
+        "MOD_AMP": get_decibel_value(13, 0, -96, 96),
     }
 
     # dictionary comprehesion to merge out_vals and env_vals

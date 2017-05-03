@@ -28,11 +28,11 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-#define TIME_TEST_ON
+//#define TIME_TEST_ON
 //#define ENVELOPE_DEBUG
 //#define STATE_DEBUG
 //#define LFO_DEBUG
-//#define LFO_OUTPUT_DEBUG
+#define LFO_OUTPUT_DEBUG
 
 // Performance testing macro generally unrelated to the wavetable object, but was used to
 // fine tune the performance of specific blocks of code in update(); usage is to specify a
@@ -152,7 +152,6 @@ void AudioSynthWavetable::setState(int note, int amp, float freq) {
  */
 void AudioSynthWavetable::setFrequency(float freq) {
 	vib_tone_incr = mod_tone_incr = freq * current_sample->PER_HERTZ_PHASE_INCREMENT;
-	vib_phase = mod_phase = LFO_INITIAL_PHASE;
 }
 
 /**
@@ -177,14 +176,10 @@ void AudioSynthWavetable::update(void) {
 	const sample_data* s = (const sample_data*)current_sample;
 
 	if (env_state == STATE_PLAY) {
-		this->vib_delay_count = s->VIBRATO_DELAY;
-		this->mod_delay_count = s->MODULATION_DELAY;
-
-		this->tone_phase = 0;
-
-		this->vib_freq_mult = 0;
-		this->mod_freq_mult = 0;
-		this->mod_amp_mult = 0;
+		vib_delay_count = s->VIBRATO_DELAY;
+		mod_delay_count = s->MODULATION_DELAY;
+		vib_phase = mod_phase = LFO_INITIAL_PHASE;
+		tone_phase = vib_freq_mult = mod_freq_mult = mod_amp_mult = 0;
 	}
 
 	uint32_t tone_phase = this->tone_phase;
@@ -263,7 +258,7 @@ void AudioSynthWavetable::update(void) {
 	while (p < end) {
 		vib_tone_incr = multiply_accumulate_32x32_rshift32_rounded(vib_tone_incr, vib_tone_incr, vib_freq_mult);
 		mod_tone_incr = multiply_accumulate_32x32_rshift32_rounded(mod_tone_incr, mod_tone_incr, mod_freq_mult);
-		//tone_amp = multiply_accumulate_32x32_rshift32_rounded(tone_amp, tone_amp, mod_amp_mult);
+		tone_amp = multiply_accumulate_32x32_rshift32_rounded(tone_amp, tone_amp, mod_amp_mult);
 		*p++ = (vib_tone_incr + mod_tone_incr) / 2;
 		*p++ = tone_amp;
 
@@ -285,27 +280,67 @@ void AudioSynthWavetable::update(void) {
 #ifdef LFO_OUTPUT_DEBUG
 	p = (uint32_t*)block->data;
 
-	uint32_t max_incr = 0;
-	uint32_t min_incr = UINT32_MAX;
-	float avg_incr = 0.0;
-	uint32_t max_amp = 0;
-	uint32_t min_amp = UINT32_MAX;
-	float avg_amp = 0.0;
+	static uint32_t samples = 0;
+
+	static uint32_t max_incr = 0;
+	static uint32_t min_incr = UINT32_MAX;
+	static double sum_incr = 0.0;
+
+	static uint32_t max_amp = 0;
+	static uint32_t min_amp = UINT32_MAX;
+	static double sum_amp = 0.0;
+
+	uint32_t cur_max_incr = 0;
+	uint32_t cur_min_incr = UINT32_MAX;
+	uint32_t cur_max_incr_idx = 0;
+	uint32_t cur_min_incr_idx = 0;
+
+	uint32_t cur_max_amp = 0;
+	uint32_t cur_min_amp = UINT32_MAX;
+	uint32_t cur_max_amp_idx = 0;
+	uint32_t cur_min_amp_idx = 0;
 
 	for (int i = 0; i < AUDIO_BLOCK_SAMPLES / 2; i++) {
 		max_incr = p[i] > max_incr ? p[i] : max_incr;
 		min_incr = p[i] < min_incr ? p[i] : min_incr;
-		avg_incr += p[i];
+		if (p[i] > cur_max_incr) {
+			cur_max_incr = p[i];
+			cur_max_incr_idx = i;
+		}
+		if (p[i] < cur_min_incr) {
+			cur_min_incr = p[i];
+			cur_min_incr_idx = i;
+		}
 		i++;
 		max_amp = p[i] > max_amp ? p[i] : max_amp;
 		min_amp = p[i] < min_amp ? p[i] : min_amp;
-		avg_amp += p[i];
+		if (p[i] > cur_max_amp) {
+			cur_max_amp = p[i];
+			cur_max_amp_idx = i;
+		}
+		if (p[i] < cur_min_amp) {
+			cur_min_amp = p[i];
+			cur_min_amp_idx = i;
+		}
 	}
 
-	avg_incr /= 32.0;
-	avg_amp /= 32.0;
+	samples++;
+	sum_incr += p[((cur_max_incr_idx + cur_min_incr_idx) / 2) & ~1];
+	sum_amp += p[((cur_max_amp_idx + cur_min_amp_idx) / 2) | 1U];
 
-	Serial.printf("incr: {%u, %u, %f}, amp: {%u, %u, %f}\n", max_incr, min_incr, avg_incr, max_amp, min_amp, avg_amp);
+	if (!(samples % 100)) {
+		Serial.printf(
+			"incr: {%u, %u, %f}, "
+			"amp: {%u, %u, %f}\n",
+			max_incr, min_incr, float(sum_incr / samples),
+			max_amp, min_amp, float(sum_amp / samples)
+		);
+		max_incr = 0;
+		min_incr = UINT32_MAX;
+
+		max_amp = 0;
+		min_amp = UINT32_MAX;
+	}
 #endif
 
 #ifdef LFO_DEBUG
@@ -456,10 +491,11 @@ void AudioSynthWavetable::update(void) {
 	release(block);
 
 	cli();
-	this->tone_phase = tone_phase;
-	//this->tone_amp = tone_amp;
-
 	this->env_state = state_change ? this->env_state : env_state;
+
+	this->tone_phase = tone_phase;
+	this->tone_amp = this->env_state == STATE_PLAY ? this->tone_amp : tone_amp;
+
 	this->env_count = env_count;
 	this->env_mult = env_mult;
 	this->env_incr = env_incr;

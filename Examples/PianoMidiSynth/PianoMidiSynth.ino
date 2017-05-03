@@ -200,6 +200,7 @@ void OnProgramChange(byte channel, byte program) {
 }
 
 void OnNoteOn(byte channel, byte note, byte velocity) {
+	if (channel == 10) return;
 	--channel;
 	notes_played++;
 #ifdef DEBUG_ALLOC
@@ -216,6 +217,7 @@ void OnNoteOn(byte channel, byte note, byte velocity) {
 }
 
 void OnNoteOff(byte channel, byte note, byte velocity) {
+	if (channel == 10) return;
 	--channel;
 #ifdef DEBUG_ALLOC
 	//Serial.printf("\n**** NoteOff: channel==%hhu,note==%hhu ****", channel, note);
