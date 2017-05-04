@@ -2,14 +2,24 @@
 #include <AudioStream.h>
 #include <AudioSynthWavetable.h>
 
-extern const sample_data piano_samples[3];
-const uint8_t piano_ranges[] = {58, 84, 127, };
+extern const sample_data piano_samples[8];
+const uint8_t piano_ranges[] = {50, 57, 66, 76, 81, 88, 91, 127, };
 
-const instrument_data piano = {3, piano_ranges, piano_samples };
+const instrument_data piano = {8, piano_ranges, piano_samples };
 
 
 extern const uint32_t sample_0_piano_kpianob1[8704];
 
-extern const uint32_t sample_1_piano_kpianob4[12672];
+extern const uint32_t sample_1_piano_kpianog2[11136];
 
-extern const uint32_t sample_2_piano_kpianob5[2816];
+extern const uint32_t sample_2_piano_kpianocx4[10880];
+
+extern const uint32_t sample_3_piano_kpianob4[12672];
+
+extern const uint32_t sample_4_piano_kpianof5[3584];
+
+extern const uint32_t sample_5_piano_kpianodx5[3200];
+
+extern const uint32_t sample_6_piano_kpianof502[2304];
+
+extern const uint32_t sample_7_piano_kpianob5[2816];

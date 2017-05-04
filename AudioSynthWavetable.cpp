@@ -28,11 +28,11 @@
 #include <dspinst.h>
 #include <SerialFlash.h>
 
-//#define TIME_TEST_ON
+#define TIME_TEST_ON
 //#define ENVELOPE_DEBUG
 //#define STATE_DEBUG
 //#define LFO_DEBUG
-#define LFO_OUTPUT_DEBUG
+//#define LFO_OUTPUT_DEBUG
 
 // Performance testing macro generally unrelated to the wavetable object, but was used to
 // fine tune the performance of specific blocks of code in update(); usage is to specify a
@@ -236,10 +236,10 @@ void AudioSynthWavetable::update(void) {
 	block = allocate();
 	if (block == NULL) return;
 
+	TIME_TEST(5000, 
 	p = (uint32_t*)block->data;
 	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
-	TIME_TEST(5000, 
 	uint32_t vib_incr = vib_delay_count > 0 ? 0 : s->VIBRATO_INCREMENT;
 	uint32_t mod_incr = mod_delay_count > 0 ? 0 : s->MODULATION_INCREMENT;
 
@@ -256,29 +256,26 @@ void AudioSynthWavetable::update(void) {
 
 	// lfo freq variance
 	while (p < end) {
+		*p++ = (vib_tone_incr + mod_tone_incr) / 2;
+		*p++ = tone_amp;
+
 		vib_tone_incr = multiply_accumulate_32x32_rshift32_rounded(vib_tone_incr, vib_tone_incr, vib_freq_mult);
 		mod_tone_incr = multiply_accumulate_32x32_rshift32_rounded(mod_tone_incr, mod_tone_incr, mod_freq_mult);
 		tone_amp = multiply_accumulate_32x32_rshift32_rounded(tone_amp, tone_amp, mod_amp_mult);
-		*p++ = (vib_tone_incr + mod_tone_incr) / 2;
-		*p++ = tone_amp;
 
 		vib_phase += vib_incr;
 		if (vib_phase < 0) {
 			vib_phase += INT32_MAX;
-			vib_tone_incr = multiply_accumulate_32x32_rshift32_rounded(vib_tone_incr, vib_tone_incr, abs(vib_freq_mult));
-			vib_freq_mult = -vib_freq_mult;
+			vib_freq_mult = int32_t(UINT64_MAX / (uint64_t(UINT32_MAX) + vib_freq_mult) - UINT32_MAX);
 		}
 
 		mod_phase += mod_incr;
 		if (mod_phase < 0) {
 			mod_phase += INT32_MAX;
-			mod_tone_incr = multiply_accumulate_32x32_rshift32_rounded(mod_tone_incr, mod_tone_incr, abs(mod_freq_mult));
-			tone_amp = multiply_accumulate_32x32_rshift32_rounded(tone_amp, tone_amp, abs(mod_amp_mult));
-			mod_freq_mult = -mod_freq_mult;
-			mod_amp_mult = -mod_amp_mult;
+			mod_freq_mult = int32_t(UINT64_MAX / (uint64_t(UINT32_MAX) + mod_freq_mult) - UINT32_MAX);
+			mod_amp_mult = int32_t(UINT64_MAX / (uint64_t(UINT32_MAX) + mod_amp_mult) - UINT32_MAX);
 		}
 	}
-	); //TIME_TEST end
 
 #ifdef LFO_OUTPUT_DEBUG
 	p = (uint32_t*)block->data;
@@ -485,6 +482,7 @@ void AudioSynthWavetable::update(void) {
 		p += ENVELOPE_PERIOD / 2;
 		env_count--;
 	}
+	); //TIME_TEST end
 
 	//for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i+=8) {
 	//	Serial.printf("%hi,%hi,%hi,%hi,%hi,%hi,%hi,%hi,", block->data[i],block->data[i+1],block->data[i+2],block->data[i+3],block->data[i+4],block->data[i+5],block->data[i+6],block->data[i+7]);
