@@ -11,6 +11,8 @@
  8 4186  4435  4699  4978  5274  5588  5920  6272  6645  7040  7459  7902
 */
 
+// Written by Connor Delaplane
+
 #include <SerialFlash.h>
 #include <Audio.h>
 #include <Wire.h>
@@ -47,7 +49,7 @@ bool flag_stop = false;
 const int TICK = 500;           // Timer period (ms)
 const int DELAY = 2;            // Spin count for analyzer
 const int LOWER_BOUND = 22;     // Lowest tested note
-const float TOLERANCE = 0.01; // Allowed error
+const float TOLERANCE = 0.01;   // Allowed error
 const int NUM_TESTS = count - LOWER_BOUND + 1;
 
 void setup() {
@@ -75,7 +77,8 @@ void loop() {
         if (error < TOLERANCE) {
           Serial.println("Passed!\n");
           passed++;
-        } else Serial.println("Failed...\n");
+        } else 
+          Serial.println("Failed...\n");
         analysis_count = freqSum = delay_count = 0;
       }
       

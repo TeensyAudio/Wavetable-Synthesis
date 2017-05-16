@@ -11,6 +11,8 @@
  8 4186  4435  4699  4978  5274  5588  5920  6272  6645  7040  7459  7902
 */
 
+// Written by Connor Delaplane
+
 // Selectively perform tests by commenting/uncommenting these define statements
 #define TEST_LATENCY
 #define TEST_PROC
@@ -147,7 +149,7 @@ const String STATE_TO_STR[] = {
 const instrument_data* SAMPLES_LATENCY = &Viola;
 const instrument_data* SAMPLES_PROC = &Viola;
 const instrument_data* SAMPLES_ENV = &Viola;
-const int NUM_SAMPLES_ENV = 8; // Must be less than or equal to SAMPLES_ENV->sample_count
+const int NUM_SAMPLES_ENV = 8;    // Must be less than or equal to SAMPLES_ENV->sample_count
 
 float ENV_EXPECTED[NUM_SAMPLES_ENV][7];
 
@@ -213,6 +215,13 @@ void printResults_Proc() {
 }
 
 void setup() {
+  pinMode(0, INPUT_PULLUP);
+  pinMode(1, INPUT_PULLUP);
+  pinMode(2, INPUT_PULLUP);
+  AudioMemory(100);
+  sgtl5000_1.enable();
+  sgtl5000_1.volume(0.3);
+  
   // Store expected section lengths for each sample.
   // IDLE and SUSTAIN states have no length.
   for (int i = 0; i < SAMPLES_ENV->sample_count; i++) {
@@ -224,10 +233,8 @@ void setup() {
     ENV_EXPECTED[i][5] = -1;
     ENV_EXPECTED[i][6] = (SAMPLES_ENV->samples[i].RELEASE_COUNT - 0.5) * ENVELOPE_PERIOD/SAMPLES_PER_MSEC;
   }
-  if (NUM_SAMPLES_ENV > 2) flag_env = true;
-  AudioMemory(100);
-  sgtl5000_1.enable();
-  sgtl5000_1.volume(0.3);
+  if (NUM_SAMPLES_ENV > 2) 
+    flag_env = true;
   while (timer < 2000);   // Spin for serial monitor
 }
 
@@ -274,9 +281,12 @@ void loop() {
       if (latency <= TOLERANCE_LATENCY) {
         Serial.println("Passed!\n");
         passed_latency++;
-      } else Serial.println("Failed...\n");
-      if (latency > longest_latency) longest_latency = latency;
-      if (latency < shortest_latency) shortest_latency = latency;
+      } else 
+        Serial.println("Failed...\n");
+      if (latency > longest_latency) 
+        longest_latency = latency;
+      if (latency < shortest_latency) 
+        shortest_latency = latency;
       flag_latency = true;
     }
     
@@ -327,9 +337,11 @@ void loop() {
           if (count != NUM_SAMPLES_ENV) {
             note = SAMPLES_ENV->sample_note_ranges[count-1];
             note -= note % (SAMPLES_ENV->sample_note_ranges[count-2] - note);
-          } else note = UPPER_BOUND;
+          } else 
+            note = UPPER_BOUND;
         }
-      } else note = count > 1 ? (count - 1) * UPPER_BOUND / (NUM_TESTS_ENV_DEF-1) : 1;
+      } else 
+        note = count > 1 ? (count - 1) * UPPER_BOUND / (NUM_TESTS_ENV_DEF-1) : 1;
 
       // Start playing note and start timer
       Serial.printf("---------NOTE = %d---------\n\n", note);
@@ -350,14 +362,18 @@ void loop() {
       Serial.printf("Duration: %dms\n", duration);
       Serial.printf("Expected: %dms\n", (int)ENV_EXPECTED[i][(int)current_section]);
       int error = duration - (int)ENV_EXPECTED[i][(int)current_section];
-      if (error < 0) error = -error;
+      if (error < 0) 
+        error = -error;
       Serial.printf("Error = %dms\n", error);
-      if (error < smallest_error_env) smallest_error_env = error;
-      if (error > largest_error_env) largest_error_env = error;
+      if (error < smallest_error_env) 
+        smallest_error_env = error;
+      if (error > largest_error_env)
+        largest_error_env = error;
       if (error <= TOLERANCE_ENV) {
         Serial.println("Passed!\n");
         passed_env++;
-      } else Serial.println("Failed...\n");
+      } else 
+        Serial.println("Failed...\n");
       total_tests_env++;
 
       current_section = wavetable[0].getEnvState();
@@ -459,5 +475,7 @@ void loop() {
     }
   }
 }
+
+
 
 
